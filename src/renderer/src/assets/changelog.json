@@ -1,5 +1,27 @@
 [
   {
+    "version": "1.1.8",
+    "date": "2026-04-21",
+    "title": "In-app updates",
+    "notes": [
+      "New update indicator in the sidebar footer — shows a spinner while checking, an arrow when a new version is ready to install",
+      "One-click restart to apply updates without leaving the app",
+      "Manual check button always available next to the version number",
+      "Update status persists if you dismiss the prompt — the indicator stays until you restart"
+    ]
+  },
+  {
+    "version": "1.1.0",
+    "date": "2026-04-18",
+    "title": "Bible translations & data protection",
+    "notes": [
+      "Multiple Bible translation support — switch between WEB, ESV, KJV, and more in Settings",
+      "Vault system for data portability — your notes live in ~/Documents/Berean and can be moved",
+      "Welcome screen on first launch to guide vault setup",
+      "Bible versioning and chapter navigation improvements"
+    ]
+  },
+  {
     "version": "1.0.0",
     "date": "2026-04-16",
     "title": "Welcome to Berean",
