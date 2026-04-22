@@ -718,6 +718,18 @@ body.dark .welcome-btn-secondary { border-color: #444; color: #AAA; }
 .reading-note-meta.cat-personal    { color: #D4537E; }
 .reading-note-meta.cat-none        { color: #BBB; }
 
+.reading-subnote-meta {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.reading-subnote-meta.cat-observation { color: #7F77DD; }
+.reading-subnote-meta.cat-historical  { color: #1D9E75; }
+.reading-subnote-meta.cat-application { color: #BA7517; }
+.reading-subnote-meta.cat-personal    { color: #D4537E; }
+
 /* Sub-notes nested inside a note card */
 .reading-subnotes {
   margin-top: 6px;
@@ -1061,11 +1073,29 @@ body.dark .welcome-btn-secondary { border-color: #444; color: #AAA; }
 
 /* Chapter selector */
 .chapter-selector-wrap {
-  padding: 12px 36px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
   border-bottom: 0.5px solid #EDEBE6;
   flex-shrink: 0;
-  overflow: hidden;
 }
+
+.chapter-nav-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #BBB;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s, color 0.1s;
+}
+.chapter-nav-btn:hover { background: #F0EEE9; color: #555; }
 
 .chapter-selector {
   display: flex;

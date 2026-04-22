@@ -130,7 +130,7 @@ export function registerHandlers(db: Database.Database): void {
       JOIN Sessions s ON s.id = n.session_id
       JOIN Passages p ON p.id = s.passage_id
       WHERE p.book_id = ?
-      ORDER BY p.chapter_start, n.anchor_start_verse
+      ORDER BY p.chapter_start, n.created_at, n.id
     `).all(bookId)
   })
 
@@ -139,7 +139,7 @@ export function registerHandlers(db: Database.Database): void {
       SELECT n.* FROM Notes n
       JOIN Sessions s ON s.id = n.session_id
       WHERE s.passage_id = ?
-      ORDER BY n.anchor_start_verse NULLS LAST, n.created_at
+      ORDER BY n.created_at, n.id
     `).all(passageId)
   })
 

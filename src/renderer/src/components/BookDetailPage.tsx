@@ -64,7 +64,7 @@ function ChapterView({ bookName, chapter, notes, onCaptureChapter, onNotesChange
   )
 
   const byVerse = new Map<number | null, NoteGroup[]>()
-  const sortedChapterNotes = [...chapterNotes].sort((a, b) => a.created_at.localeCompare(b.created_at))
+  const sortedChapterNotes = [...chapterNotes].sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id - b.id)
   let currentGroup: NoteGroup | null = null
   for (const n of sortedChapterNotes) {
     if (n.indent_level === 0) {
@@ -270,6 +270,11 @@ function ChapterView({ bookName, chapter, notes, onCaptureChapter, onNotesChange
                   ) : (
                     <>
                       <div style={{ flex: 1 }} onClick={() => handleNoteClick(sub)}>
+                        {sub.category && (
+                          <div className={`reading-subnote-meta cat-${sub.category}`}>
+                            {CATEGORY_LABELS[sub.category]}
+                          </div>
+                        )}
                         <RenderedNoteContent content={sub.content} />
                       </div>
                       {renderNoteActions(sub)}
@@ -430,6 +435,12 @@ export default function BookDetailPage({
     sel?.scrollIntoView({ inline: 'nearest', behavior: 'smooth' })
   }, [selectedChapter])
 
+  const scrollChapters = (dir: number): void => {
+    const el = chapterSelectorRef.current
+    if (!el) return
+    el.scrollBy({ left: dir * el.clientWidth * 0.6, behavior: 'smooth' })
+  }
+
   const studiedCount = chaptersWithNotes.size
 
   return (
@@ -451,6 +462,9 @@ export default function BookDetailPage({
       </div>
 
       <div className="chapter-selector-wrap">
+        <button className="chapter-nav-btn" onClick={() => scrollChapters(-1)} aria-label="Scroll left">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
         <div className="chapter-selector" ref={chapterSelectorRef}>
           {Array.from({ length: bibleBook.chapters }, (_, i) => i + 1).map(ch => {
             const hasNotes = chaptersWithNotes.has(ch)
@@ -467,6 +481,9 @@ export default function BookDetailPage({
             )
           })}
         </div>
+        <button className="chapter-nav-btn" onClick={() => scrollChapters(1)} aria-label="Scroll right">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
       </div>
 
       <div className="book-detail-content">

@@ -76,7 +76,7 @@ export default function ReadingMode({ passage, onCapture, onRefresh, onPassageDe
 
   const notesByVerse = useCallback((): Map<number | null, NoteGroup[]> => {
     const map = new Map<number | null, NoteGroup[]>()
-    const sorted = [...notes].sort((a, b) => a.created_at.localeCompare(b.created_at))
+    const sorted = [...notes].sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id - b.id)
     let currentGroup: NoteGroup | null = null
     for (const note of sorted) {
       if (note.indent_level === 0) {
@@ -266,6 +266,11 @@ export default function ReadingMode({ passage, onCapture, onRefresh, onPassageDe
                   ) : (
                     <>
                       <div style={{ flex: 1 }} onClick={() => handleNoteClick(sub)}>
+                        {sub.category && (
+                          <div className={`reading-subnote-meta cat-${sub.category}`}>
+                            {CATEGORY_LABELS[sub.category]}
+                          </div>
+                        )}
                         <RenderedNoteContent content={sub.content} />
                       </div>
                       {renderNoteActions(sub)}

@@ -133,6 +133,25 @@ export default function NoteEditor({
   const filteredTags = tagDropdown ? filterTags(tagDropdown.query) : []
   const hasDropdown = filteredTags.length > 0 && tagDropdown !== null
 
+  // When an indented line is focused, merge parent's verse range so the passage
+  // pane keeps highlighting the root verse context.
+  const getEffectiveParsed = useCallback((lineId: string, text: string): ReturnType<typeof parseNoteLine> => {
+    const parsed = parseNoteLine(text)
+    const lineIdx = lines.findIndex(l => l.id === lineId)
+    if (lineIdx < 0 || lines[lineIdx].indent === 0) return parsed
+    const parent = lines.slice(0, lineIdx).reverse().find(l => l.indent === 0)
+    if (!parent) return parsed
+    const pp = parseNoteLine(parent.text)
+    if (pp.anchorStart === null) return parsed
+    const pStart = pp.anchorStart
+    const pEnd = pp.anchorEnd ?? pStart
+    const cStart = parsed.anchorStart
+    const cEnd = cStart !== null ? (parsed.anchorEnd ?? cStart) : null
+    const mergedStart = cStart !== null ? Math.min(pStart, cStart) : pStart
+    const mergedEnd = cEnd !== null ? Math.max(pEnd, cEnd) : pEnd
+    return { ...parsed, anchorStart: mergedStart, anchorEnd: mergedEnd !== mergedStart ? mergedEnd : null }
+  }, [lines])
+
   // ── tag selection ──────────────────────────────────────────────────────────
   const selectTag = useCallback((tag: TagOption) => {
     if (!tagDropdown) return
@@ -147,7 +166,7 @@ export default function NoteEditor({
 
     onChange(lines.map(l => l.id === lineId ? { ...l, text: newText } : l))
     setTagDropdown(null)
-    onCursorLine(parseNoteLine(newText))
+    onCursorLine(getEffectiveParsed(lineId, newText))
 
     setTimeout(() => {
       const el = elRefs.current.get(lineId)
@@ -173,7 +192,7 @@ export default function NoteEditor({
     if (modified) setRawCursorPos(el, cur)
 
     onChange(lines.map(l => l.id === id ? { ...l, text } : l))
-    onCursorLine(parseNoteLine(text))
+    onCursorLine(getEffectiveParsed(id, text))
 
     const before = text.slice(0, cur)
     const m = /@(\w*)$/.exec(before)
@@ -328,7 +347,7 @@ export default function NoteEditor({
     renderRich(el, newText)
     setRawCursorPos(el, cur + pasteText.length)
     onChange(lines.map(l => l.id === id ? { ...l, text: newText } : l))
-    onCursorLine(parseNoteLine(newText))
+    onCursorLine(getEffectiveParsed(id, newText))
   }, [lines, onChange, onCursorLine])
 
   // Close dropdown on outside click
@@ -379,7 +398,7 @@ export default function NoteEditor({
                 suppressContentEditableWarning
                 onInput={e => handleInput(e, line.id)}
                 onKeyDown={e => handleKeyDown(e, line.id)}
-                onFocus={() => onCursorLine(parseNoteLine(line.text))}
+                onFocus={() => onCursorLine(getEffectiveParsed(line.id, line.text))}
                 onBlur={handleBlur}
                 onPaste={e => handlePaste(e, line.id)}
                 data-placeholder={line.id === lines[0]?.id ? 'Type a note… (v4, @obs, Matt 5:9)' : ''}
