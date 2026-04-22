@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { Passage, Note, BiblePassage, NoteCategory } from '../types'
 import { parseNoteLine } from '../utils/noteParser'
 import InlineTagInput from './InlineTagInput'
+import RichEditInput from './RichEditInput'
 import ConfirmDialog from './ConfirmDialog'
 
 interface ReadingModeProps {
@@ -18,6 +19,11 @@ const CATEGORY_LABELS: Record<NoteCategory, string> = {
   personal: 'Personal'
 }
 
+interface NoteGroup {
+  main: Note
+  subnotes: Note[]
+}
+
 function RenderedNoteContent({ content }: { content: string }): React.ReactElement {
   const { segments } = parseNoteLine(content)
   return (
@@ -27,7 +33,7 @@ function RenderedNoteContent({ content }: { content: string }): React.ReactEleme
           case 'verse-anchor':
             return <span key={i} className="pill-verse">{seg.display}</span>
           case 'tag':
-            return <span key={i} className={`pill-tag-${seg.data?.category || 'observation'}`}>{seg.display}</span>
+            return null
           case 'cross-ref':
             return <span key={i} className="pill-crossref">{seg.display}</span>
           default:
@@ -68,12 +74,24 @@ export default function ReadingMode({ passage, onCapture, onRefresh, onPassageDe
     }).finally(() => setLoading(false))
   }, [passage.id])
 
-  const notesByVerse = useCallback((): Map<number | null, Note[]> => {
-    const map = new Map<number | null, Note[]>()
-    for (const n of notes) {
-      const key = n.anchor_start_verse
-      if (!map.has(key)) map.set(key, [])
-      map.get(key)!.push(n)
+  const notesByVerse = useCallback((): Map<number | null, NoteGroup[]> => {
+    const map = new Map<number | null, NoteGroup[]>()
+    const sorted = [...notes].sort((a, b) => a.created_at.localeCompare(b.created_at))
+    let currentGroup: NoteGroup | null = null
+    for (const note of sorted) {
+      if (note.indent_level === 0) {
+        currentGroup = { main: note, subnotes: [] }
+        const key = note.anchor_start_verse
+        if (!map.has(key)) map.set(key, [])
+        map.get(key)!.push(currentGroup)
+      } else if (currentGroup) {
+        currentGroup.subnotes.push(note)
+      } else {
+        currentGroup = { main: note, subnotes: [] }
+        const key = note.anchor_start_verse
+        if (!map.has(key)) map.set(key, [])
+        map.get(key)!.push(currentGroup)
+      }
     }
     return map
   }, [notes])
@@ -128,7 +146,8 @@ export default function ReadingMode({ passage, onCapture, onRefresh, onPassageDe
         anchor_end_verse: parsed.anchorEnd,
         anchor_book_override: null,
         anchor_chapter_override: null,
-        category: parsed.category
+        category: parsed.category,
+        indent_level: 0
       })
       setNotes(prev => [...prev, note])
       setInlineVerse(null)
@@ -182,58 +201,79 @@ export default function ReadingMode({ passage, onCapture, onRefresh, onPassageDe
   const byVerse = notesByVerse()
   const hasAnyHighlightedVerse = highlightedVerses.size > 0
 
-  const renderNoteCard = (note: Note): React.ReactElement => {
-    const isHighlighted = highlightedNoteIds.has(note.id)
-    const isEditing = editingNoteId === note.id
+  const renderNoteActions = (note: Note): React.ReactElement => (
+    <div className="se-note-actions">
+      <button className="se-icon-btn" title="Edit" onClick={e => { e.stopPropagation(); handleStartEdit(note) }}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
+      <button className="se-icon-btn se-icon-danger" title="Delete" onClick={e => { e.stopPropagation(); setConfirmDelete(note) }}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
+        </svg>
+      </button>
+    </div>
+  )
+
+  const renderNoteGroup = (group: NoteGroup): React.ReactElement => {
+    const { main, subnotes } = group
+    const isHighlighted = highlightedNoteIds.has(main.id)
+    const isEditing = editingNoteId === main.id
     return (
       <div
-        key={note.id}
-        className={`reading-note-card cat-${note.category || 'none'}${isHighlighted ? ' highlighted' : ''}`}
+        key={main.id}
+        className={`reading-note-card cat-${main.category || 'none'}${isHighlighted ? ' highlighted' : ''}`}
       >
-        {note.category && (
-          <div className={`reading-note-meta cat-${note.category}`}>
-            {CATEGORY_LABELS[note.category]}
+        {main.category && (
+          <div className={`reading-note-meta cat-${main.category}`}>
+            {CATEGORY_LABELS[main.category]}
           </div>
         )}
         {isEditing ? (
-          <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start', marginTop: 2 }}>
-            <InlineTagInput
-              value={editText}
-              onChange={setEditText}
-              onEnter={handleSaveEdit}
-              onEscape={() => setEditingNoteId(null)}
-              className="se-edit-input"
-              autoFocus
-            />
-            <button className="se-save-btn" onClick={handleSaveEdit} title="Save">✓</button>
-            <button className="se-cancel-btn" onClick={() => setEditingNoteId(null)} title="Cancel">✕</button>
+          <div style={{ marginTop: 2 }}>
+            <RichEditInput className="note-edit-textarea" initialValue={editText} onChange={setEditText} onSave={() => void handleSaveEdit()} onCancel={() => setEditingNoteId(null)} />
+            <div className="note-edit-actions">
+              <button className="note-edit-cancel" onClick={() => setEditingNoteId(null)}>Cancel</button>
+              <button className="note-edit-save" onClick={() => void handleSaveEdit()}>Save</button>
+            </div>
           </div>
         ) : (
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-            <div style={{ flex: 1 }} onClick={() => handleNoteClick(note)}>
-              <RenderedNoteContent content={note.content} />
+            <div style={{ flex: 1 }} onClick={() => handleNoteClick(main)}>
+              <RenderedNoteContent content={main.content} />
             </div>
-            <div className="se-note-actions">
-              <button
-                className="se-icon-btn"
-                title="Edit"
-                onClick={e => { e.stopPropagation(); handleStartEdit(note) }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-              </button>
-              <button
-                className="se-icon-btn se-icon-danger"
-                title="Delete"
-                onClick={e => { e.stopPropagation(); setConfirmDelete(note) }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
-                </svg>
-              </button>
-            </div>
+            {renderNoteActions(main)}
+          </div>
+        )}
+
+        {subnotes.length > 0 && (
+          <div className="reading-subnotes">
+            {subnotes.map(sub => {
+              const isSubEditing = editingNoteId === sub.id
+              return (
+                <div key={sub.id} className={`reading-subnote${highlightedNoteIds.has(sub.id) ? ' highlighted' : ''}`}>
+                  <span className="reading-subnote-bullet">◦</span>
+                  {isSubEditing ? (
+                    <div style={{ flex: 1 }}>
+                      <RichEditInput className="note-edit-textarea" initialValue={editText} onChange={setEditText} onSave={() => void handleSaveEdit()} onCancel={() => setEditingNoteId(null)} />
+                      <div className="note-edit-actions">
+                        <button className="note-edit-cancel" onClick={() => setEditingNoteId(null)}>Cancel</button>
+                        <button className="note-edit-save" onClick={() => void handleSaveEdit()}>Save</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ flex: 1 }} onClick={() => handleNoteClick(sub)}>
+                        <RenderedNoteContent content={sub.content} />
+                      </div>
+                      {renderNoteActions(sub)}
+                    </>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
@@ -255,7 +295,7 @@ export default function ReadingMode({ passage, onCapture, onRefresh, onPassageDe
               style={{ color: '#7F77DD', cursor: 'pointer', marginLeft: 'auto' }}
               onClick={() => onCapture(passage.id)}
             >
-              + add notes
+              Edit notes
             </span>
           </div>
         </div>
@@ -265,7 +305,7 @@ export default function ReadingMode({ passage, onCapture, onRefresh, onPassageDe
             {biblePassage.verses.map(v => {
               const isHighlighted = highlightedVerses.has(v.verse)
               const isDimmed = hasAnyHighlightedVerse && !isHighlighted
-              const verseNotes = byVerse.get(v.verse) || []
+              const verseNotes = byVerse.get(v.verse) || [] as NoteGroup[]
               const showInline = inlineVerse === v.verse
 
               return (
@@ -304,7 +344,7 @@ export default function ReadingMode({ passage, onCapture, onRefresh, onPassageDe
 
                   {verseNotes.length > 0 && (
                     <div className="reading-notes-group">
-                      {verseNotes.map(note => renderNoteCard(note))}
+                      {verseNotes.map(group => renderNoteGroup(group))}
                     </div>
                   )}
                 </div>
@@ -315,7 +355,7 @@ export default function ReadingMode({ passage, onCapture, onRefresh, onPassageDe
               <div style={{ marginTop: 24 }}>
                 <div className="passage-pane-reference" style={{ marginBottom: 8 }}>General Notes</div>
                 <div className="reading-notes-group">
-                  {(byVerse.get(null) || []).map(note => renderNoteCard(note))}
+                  {(byVerse.get(null) || []).map(group => renderNoteGroup(group))}
                 </div>
               </div>
             )}

@@ -151,14 +151,15 @@ export function registerHandlers(db: Database.Database): void {
     anchor_book_override: string | null
     anchor_chapter_override: number | null
     category: string | null
+    indent_level: number
   }) => {
     const result = db.prepare(`
       INSERT INTO Notes
         (session_id, content, anchor_start_verse, anchor_end_verse,
-         anchor_book_override, anchor_chapter_override, category)
+         anchor_book_override, anchor_chapter_override, category, indent_level)
       VALUES
         (@session_id, @content, @anchor_start_verse, @anchor_end_verse,
-         @anchor_book_override, @anchor_chapter_override, @category)
+         @anchor_book_override, @anchor_chapter_override, @category, @indent_level)
     `).run(data)
     const note = db.prepare('SELECT * FROM Notes WHERE id = ?').get(result.lastInsertRowid) as { session_id: number } | undefined
 
@@ -176,6 +177,7 @@ export function registerHandlers(db: Database.Database): void {
     anchor_start_verse?: number | null
     anchor_end_verse?: number | null
     category?: string | null
+    indent_level?: number
   }) => {
     const fields = Object.keys(data).map(k => `${k} = @${k}`).join(', ')
     db.prepare(`UPDATE Notes SET ${fields} WHERE id = @id`).run({ ...data, id })

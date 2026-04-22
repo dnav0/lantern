@@ -23,6 +23,7 @@ interface AppState {
   selectedBookName: string | null
   sessionEditorPassageId: number | null
   captureReference: string
+  capturePassageId: number | null
   viewMode: ViewMode
 }
 
@@ -49,6 +50,7 @@ export default function App(): React.ReactElement {
     selectedBookName: null,
     sessionEditorPassageId: null,
     captureReference: '',
+    capturePassageId: null,
     viewMode: 'capture'
   })
   const [pendingModeChange, setPendingModeChange] = useState(false)
@@ -138,7 +140,7 @@ export default function App(): React.ReactElement {
 
   const handleSaveRead = async (passageId: number): Promise<void> => {
     await refresh()
-    setState(prev => ({ ...prev, selectedPassageId: passageId, selectedBookName: null, sessionEditorPassageId: null, viewMode: 'reading' }))
+    setState(prev => ({ ...prev, selectedPassageId: passageId, selectedBookName: null, sessionEditorPassageId: null, capturePassageId: null, viewMode: 'reading' }))
   }
 
   const handleSaveNext = async (nextRef?: string): Promise<void> => {
@@ -148,6 +150,7 @@ export default function App(): React.ReactElement {
       selectedPassageId: null,
       selectedBookName: null,
       sessionEditorPassageId: null,
+      capturePassageId: null,
       captureReference: nextRef || '',
       viewMode: 'capture'
     }))
@@ -169,11 +172,11 @@ export default function App(): React.ReactElement {
     doModeChange(mode)
   }
 
-  const handleCaptureFromReading = (reference: string): void => {
-    setState(prev => ({ ...prev, viewMode: 'capture', captureReference: reference, selectedBookName: null, sessionEditorPassageId: null }))
+  const handleCaptureFromReading = (reference: string, passageId?: number): void => {
+    setState(prev => ({ ...prev, viewMode: 'capture', captureReference: reference, capturePassageId: passageId ?? null, selectedBookName: null, sessionEditorPassageId: null }))
   }
 
-  const { books, passages, selectedPassageId, selectedBookName, sessionEditorPassageId, captureReference, viewMode } = state
+  const { books, passages, selectedPassageId, selectedBookName, sessionEditorPassageId, captureReference, capturePassageId, viewMode } = state
 
   const selectedPassage = passages.find(p => p.id === selectedPassageId) || null
   const selectedBibleBook = selectedBookName
@@ -222,7 +225,7 @@ export default function App(): React.ReactElement {
           passage={selectedPassage}
           onCapture={passageId => {
             const p = passages.find(p => p.id === passageId)
-            handleCaptureFromReading(p?.reference_label || '')
+            handleCaptureFromReading(p?.reference_label || '', passageId)
           }}
           onRefresh={refresh}
           onPassageDeleted={async () => {
@@ -246,8 +249,9 @@ export default function App(): React.ReactElement {
     return (
       <CaptureMode
         ref={captureModeRef}
-        key={captureReference}
+        key={capturePassageId ?? captureReference}
         initialReference={captureReference}
+        initialPassageId={capturePassageId}
         onSaveRead={handleSaveRead}
         onSaveNext={handleSaveNext}
       />

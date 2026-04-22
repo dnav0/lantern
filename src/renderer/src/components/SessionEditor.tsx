@@ -81,7 +81,7 @@ function NoteText({ content }: { content: string }): React.ReactElement {
     <>
       {segments.map((s, i) => {
         if (s.type === 'verse-anchor') return <span key={i} className="pill-verse">{s.display}</span>
-        if (s.type === 'tag') return <span key={i} className={`pill-tag-${s.data?.category || 'observation'}`}>{s.display}</span>
+        if (s.type === 'tag') return null
         if (s.type === 'cross-ref') return <span key={i} className="pill-crossref">{s.display}</span>
         return <span key={i}>{s.raw}</span>
       })}
@@ -156,7 +156,8 @@ export default function SessionEditor({ passage, onBack, onRefresh, onPassageDel
       anchor_end_verse: parsed.anchorEnd,
       anchor_book_override: null,
       anchor_chapter_override: null,
-      category: parsed.category
+      category: parsed.category,
+      indent_level: 0
     })
     setNotes(prev => [...prev, note])
     setAddText('')

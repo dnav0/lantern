@@ -1,12 +1,14 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react'
 import { NoteCategory } from '../types'
 import { parseNoteLine } from '../utils/noteParser'
+import { getRawText, getRawCursorPos, setRawCursorPos, renderRich } from '../utils/richText'
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
 export interface NoteLineData {
   id: string
   text: string
+  indent: number
 }
 
 interface TagOption {
@@ -37,138 +39,25 @@ function filterTags(q: string): TagOption[] {
   return TAG_OPTIONS.filter(t => t.name.startsWith(q.toLowerCase()))
 }
 
-// ─── contenteditable DOM helpers ─────────────────────────────────────────────
-
-/** Extract the raw text from a rich contenteditable div. */
-function getRawText(el: HTMLElement): string {
-  let s = ''
-  for (const n of el.childNodes) {
-    if (n.nodeType === Node.TEXT_NODE) {
-      s += n.textContent ?? ''
-    } else if ((n as HTMLElement).tagName === 'BR') {
-      // ignore browser-inserted <br> in empty divs
-    } else {
-      s += (n as HTMLElement).dataset.raw ?? n.textContent ?? ''
-    }
-  }
-  return s
-}
-
-/** Get cursor position as a raw-text offset. */
-function getRawCursorPos(el: HTMLElement): number {
-  const sel = window.getSelection()
-  if (!sel?.rangeCount) return 0
-  const range = sel.getRangeAt(0)
-  let pos = 0
-
-  for (const child of Array.from(el.childNodes)) {
-    if (child === range.startContainer || child.contains(range.startContainer)) {
-      pos += child.nodeType === Node.TEXT_NODE ? range.startOffset : 0
-      return pos
-    }
-    if (child.nodeType === Node.TEXT_NODE) {
-      pos += child.textContent?.length ?? 0
-    } else if ((child as HTMLElement).tagName !== 'BR') {
-      pos += (child as HTMLElement).dataset.raw?.length ?? child.textContent?.length ?? 0
-    }
-  }
-
-  if (range.startContainer === el) {
-    let count = 0
-    for (let i = 0; i < range.startOffset; i++) {
-      const c = el.childNodes[i]
-      if (!c) break
-      if (c.nodeType === Node.TEXT_NODE) {
-        count += c.textContent?.length ?? 0
-      } else if ((c as HTMLElement).tagName !== 'BR') {
-        count += (c as HTMLElement).dataset.raw?.length ?? c.textContent?.length ?? 0
-      }
-    }
-    return count
-  }
-
-  return pos
-}
-
-/** Place a collapsed cursor at a raw-text offset. */
-function setRawCursorPos(el: HTMLElement, target: number): void {
-  const sel = window.getSelection()
-  if (!sel) return
-  let rem = target
-  const range = document.createRange()
-
-  for (const child of Array.from(el.childNodes)) {
-    if ((child as HTMLElement).tagName === 'BR') continue
-    const len = child.nodeType === Node.TEXT_NODE
-      ? (child.textContent?.length ?? 0)
-      : ((child as HTMLElement).dataset.raw?.length ?? child.textContent?.length ?? 0)
-
-    if (rem <= len) {
-      if (child.nodeType === Node.TEXT_NODE) {
-        range.setStart(child, Math.min(rem, child.textContent?.length ?? 0))
-      } else {
-        rem <= 0 ? range.setStartBefore(child) : range.setStartAfter(child)
-      }
-      range.collapse(true)
-      sel.removeAllRanges()
-      sel.addRange(range)
-      return
-    }
-    rem -= len
-  }
-
-  range.setStart(el, el.childNodes.length)
-  range.collapse(true)
-  sel.removeAllRanges()
-  sel.addRange(range)
-}
-
 /**
- * Re-render a contenteditable div with inline pill spans.
- * Skips the DOM write when serialised content is identical.
- * Returns true if the DOM was actually modified.
- *
- * cursorPos: when provided, any token whose end offset equals the cursor is
- * rendered as plain text instead of a pill — the user may still be typing it.
+ * Smooth-scroll the notes list so the focused line is comfortably visible.
+ * Triggers when the line is in the bottom third of the scrollable container,
+ * or when it's above the top edge. Scrolls just enough to place it at ~60%
+ * from the top — feels natural without aggressively centering every line.
  */
-function renderRich(el: HTMLElement, text: string, cursorPos?: number): boolean {
-  const { segments } = parseNoteLine(text)
+function scrollLineIntoView(lineEl: HTMLElement): void {
+  const container = lineEl.closest('.notes-list') as HTMLElement | null
+  if (!container) return
+  const lineRect = lineEl.getBoundingClientRect()
+  const cRect = container.getBoundingClientRect()
+  const cHeight = cRect.height
 
-  const frag = document.createDocumentFragment()
-  let charPos = 0
-  for (const seg of segments) {
-    if (seg.type === 'text') {
-      if (seg.raw) frag.appendChild(document.createTextNode(seg.raw))
-    } else {
-      const tokenEnd = charPos + seg.raw.length
-      // Cursor is right at the end of this token → user may still be typing,
-      // so render it as plain text rather than a pill.
-      if (cursorPos !== undefined && cursorPos === tokenEnd) {
-        frag.appendChild(document.createTextNode(seg.raw))
-      } else {
-        const span = document.createElement('span')
-        span.contentEditable = 'false'
-        span.dataset.raw = seg.raw
-        if (seg.type === 'verse-anchor') span.className = 'pill-verse'
-        else if (seg.type === 'tag') span.className = `pill-tag-${seg.data?.category ?? 'observation'}`
-        else if (seg.type === 'cross-ref') span.className = 'pill-crossref'
-        span.textContent = seg.display
-        frag.appendChild(span)
-      }
-    }
-    charPos += seg.raw.length
+  if (lineRect.bottom > cRect.top + cHeight * 0.4) {
+    const delta = lineRect.bottom - cRect.top - cHeight * 0.3
+    container.scrollBy({ top: delta, behavior: 'smooth' })
+  } else if (lineRect.top < cRect.top) {
+    container.scrollBy({ top: lineRect.top - cRect.top - 8, behavior: 'smooth' })
   }
-
-  const serialise = (node: HTMLElement | DocumentFragment): string =>
-    Array.from(node.childNodes)
-      .map(n => n.nodeType === Node.TEXT_NODE ? n.textContent : (n as HTMLElement).outerHTML)
-      .join('')
-
-  if (serialise(el) === serialise(frag as unknown as HTMLElement)) return false
-
-  while (el.firstChild) el.removeChild(el.firstChild)
-  el.appendChild(frag)
-  return true
 }
 
 // ─── RenderedLine (unfocused view with cross-ref hover) ───────────────────────
@@ -323,10 +212,23 @@ export default function NoteEditor({
       }
     }
 
+    if (e.key === 'Tab') {
+      e.preventDefault()
+      const line = lines[idx]
+      const newIndent = e.shiftKey
+        ? Math.max(0, line.indent - 1)
+        : Math.min(1, line.indent + 1)
+      if (newIndent !== line.indent) {
+        onChange(lines.map((l, i) => i === idx ? { ...l, indent: newIndent } : l))
+      }
+      return
+    }
+
     if (e.key === 'Enter') {
       e.preventDefault()
       const newId = makeLineId()
-      onChange([...lines.slice(0, idx + 1), { id: newId, text: '' }, ...lines.slice(idx + 1)])
+      const currentIndent = lines[idx].indent
+      onChange([...lines.slice(0, idx + 1), { id: newId, text: '', indent: currentIndent }, ...lines.slice(idx + 1)])
       onFocusChange(newId)
       return
     }
@@ -350,6 +252,8 @@ export default function NoteEditor({
             if (prevEl) {
               prevEl.focus()
               setRawCursorPos(prevEl, getRawText(prevEl).length)
+              const noteLine = prevEl.closest('.note-line') as HTMLElement | null
+              if (noteLine) scrollLineIntoView(noteLine)
             }
           }, 0)
         }
@@ -366,6 +270,8 @@ export default function NoteEditor({
           if (prevEl) {
             prevEl.focus()
             setRawCursorPos(prevEl, getRawText(prevEl).length)
+            const noteLine = prevEl.closest('.note-line') as HTMLElement | null
+            if (noteLine) scrollLineIntoView(noteLine)
           }
         }, 0)
         return
@@ -378,14 +284,28 @@ export default function NoteEditor({
       e.preventDefault()
       const prevId = lines[idx - 1].id
       onFocusChange(prevId)
-      setTimeout(() => elRefs.current.get(prevId)?.focus(), 0)
+      setTimeout(() => {
+        const prevEl = elRefs.current.get(prevId)
+        if (prevEl) {
+          prevEl.focus()
+          const noteLine = prevEl.closest('.note-line') as HTMLElement | null
+          if (noteLine) scrollLineIntoView(noteLine)
+        }
+      }, 0)
       return
     }
     if (e.key === 'ArrowDown' && idx < lines.length - 1 && !e.shiftKey && !e.metaKey && !e.altKey) {
       e.preventDefault()
       const nextId = lines[idx + 1].id
       onFocusChange(nextId)
-      setTimeout(() => elRefs.current.get(nextId)?.focus(), 0)
+      setTimeout(() => {
+        const nextEl = elRefs.current.get(nextId)
+        if (nextEl) {
+          nextEl.focus()
+          const noteLine = nextEl.closest('.note-line') as HTMLElement | null
+          if (noteLine) scrollLineIntoView(noteLine)
+        }
+      }, 0)
     }
   }, [lines, hasDropdown, filteredTags, tagDropdown, selectTag, onChange, onFocusChange])
 
@@ -429,8 +349,8 @@ export default function NoteEditor({
         const showDropdown = hasDropdown && tagDropdown?.lineId === line.id
 
         return (
-          <div key={line.id} className="note-line" style={{ position: 'relative' }}>
-            <span className="note-bullet">•</span>
+          <div key={line.id} className={`note-line${line.indent > 0 ? ' note-line--indent-1' : ''}`} style={{ position: 'relative' }}>
+            <span className="note-bullet">{line.indent > 0 ? '◦' : '•'}</span>
 
             {isFocused ? (
               <div
@@ -446,6 +366,8 @@ export default function NoteEditor({
                           el.focus()
                           setRawCursorPos(el, getRawText(el).length)
                         }
+                        const noteLine = el.closest('.note-line') as HTMLElement | null
+                        if (noteLine) scrollLineIntoView(noteLine)
                       })
                     }
                   } else {

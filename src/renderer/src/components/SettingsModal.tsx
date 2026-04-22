@@ -77,6 +77,7 @@ export default function SettingsModal({
           </button>
         </div>
 
+        <div className="smodal-body">
         {/* Translation */}
         <div className="smodal-section">
           <div className="smodal-section-label">Translation</div>
@@ -145,6 +146,7 @@ export default function SettingsModal({
         </div>
 
         <div className="smodal-divider" />
+        </div>
 
         {/* Footer */}
         <div className="smodal-footer">

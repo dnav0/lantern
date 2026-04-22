@@ -33,6 +33,7 @@ export interface Note {
   anchor_book_override: string | null
   anchor_chapter_override: number | null
   category: NoteCategory | null
+  indent_level: number
   created_at: string
 }
 
@@ -96,6 +97,7 @@ export interface CreateNoteInput {
   anchor_book_override: string | null
   anchor_chapter_override: number | null
   category: NoteCategory | null
+  indent_level: number
 }
 
 export interface PassageWithNotes {

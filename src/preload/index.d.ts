@@ -33,12 +33,14 @@ declare global {
         anchor_book_override: string | null
         anchor_chapter_override: number | null
         category: string | null
+        indent_level: number
       }) => Promise<Note>
       updateNote: (id: number, data: {
         content?: string
         anchor_start_verse?: number | null
         anchor_end_verse?: number | null
         category?: string | null
+        indent_level?: number
       }) => Promise<Note>
       deleteNote: (id: number) => Promise<void>
       deleteNoteAndCascade: (id: number) => Promise<{ deletedNoteId?: number; deletedSessionId?: number; deletedPassageId?: number; deletedBookId?: number }>

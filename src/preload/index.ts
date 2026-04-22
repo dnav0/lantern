@@ -35,12 +35,14 @@ const api = {
     anchor_book_override: string | null
     anchor_chapter_override: number | null
     category: string | null
+    indent_level: number
   }) => ipcRenderer.invoke('notes:create', data),
   updateNote: (id: number, data: {
     content?: string
     anchor_start_verse?: number | null
     anchor_end_verse?: number | null
     category?: string | null
+    indent_level?: number
   }) => ipcRenderer.invoke('notes:update', id, data),
   deleteNote: (id: number) => ipcRenderer.invoke('notes:delete', id),
   deleteNoteAndCascade: (id: number) => ipcRenderer.invoke('notes:deleteAndCascade', id),

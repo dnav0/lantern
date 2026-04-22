@@ -1,6 +1,7 @@
 /**
- * A single-line input that shows the @tag picker dropdown.
+ * A single-line input (or multiline textarea) that shows the @tag picker dropdown.
  * Drop-in replacement for <input> in inline note contexts.
+ * Pass multiline={true} for a textarea that auto-resizes and saves on Cmd/Ctrl+Enter.
  */
 import React, { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
 
@@ -32,11 +33,13 @@ interface InlineTagInputProps {
   className?: string
   placeholder?: string
   autoFocus?: boolean
+  multiline?: boolean
 }
 
 const InlineTagInput = forwardRef<InlineTagInputHandle, InlineTagInputProps>(
-  function InlineTagInput({ value, onChange, onEnter, onEscape, className, placeholder, autoFocus }, ref) {
+  function InlineTagInput({ value, onChange, onEnter, onEscape, className, placeholder, autoFocus, multiline }, ref) {
     const inputRef = useRef<HTMLInputElement>(null)
+    const textareaRef = useRef<HTMLTextAreaElement>(null)
     const [dropdown, setDropdown] = useState<{
       query: string
       anchorIndex: number
@@ -47,7 +50,24 @@ const InlineTagInput = forwardRef<InlineTagInputHandle, InlineTagInputProps>(
     const filteredTags = dropdown ? filterTags(dropdown.query) : []
     const isOpen = filteredTags.length > 0
 
-    useImperativeHandle(ref, () => ({ focus: () => inputRef.current?.focus() }))
+    useImperativeHandle(ref, () => ({
+      focus: () => multiline ? textareaRef.current?.focus() : inputRef.current?.focus()
+    }))
+
+    // Auto-resize textarea when value changes
+    useEffect(() => {
+      if (!multiline) return
+      const el = textareaRef.current
+      if (!el) return
+      el.style.height = 'auto'
+      el.style.height = el.scrollHeight + 'px'
+    }, [value, multiline])
+
+    const getActiveEl = useCallback(
+      (): HTMLInputElement | HTMLTextAreaElement | null =>
+        multiline ? textareaRef.current : inputRef.current,
+      [multiline]
+    )
 
     const selectTag = useCallback((tag: TagOption): void => {
       if (!dropdown) return
@@ -57,16 +77,16 @@ const InlineTagInput = forwardRef<InlineTagInputHandle, InlineTagInputProps>(
       onChange(before + insertion + after)
       setDropdown(null)
       setTimeout(() => {
-        const el = inputRef.current
+        const el = getActiveEl()
         if (el) {
           const pos = before.length + insertion.length
           el.focus()
           el.setSelectionRange(pos, pos)
         }
       }, 0)
-    }, [dropdown, value, onChange])
+    }, [dropdown, value, onChange, getActiveEl])
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
       const text = e.target.value
       const cursor = e.target.selectionStart ?? text.length
       onChange(text)
@@ -79,7 +99,7 @@ const InlineTagInput = forwardRef<InlineTagInputHandle, InlineTagInputProps>(
       }
     }
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
       if (isOpen && dropdown) {
         if (e.key === 'ArrowDown') {
           e.preventDefault()
@@ -104,47 +124,68 @@ const InlineTagInput = forwardRef<InlineTagInputHandle, InlineTagInputProps>(
         }
       }
 
-      if (e.key === 'Enter') { e.preventDefault(); onEnter?.() }
-      if (e.key === 'Escape') { e.preventDefault(); setDropdown(null); onEscape?.() }
+      if (multiline) {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); onEnter?.() }
+        if (e.key === 'Escape') { e.preventDefault(); setDropdown(null); onEscape?.() }
+      } else {
+        if (e.key === 'Enter') { e.preventDefault(); onEnter?.() }
+        if (e.key === 'Escape') { e.preventDefault(); setDropdown(null); onEscape?.() }
+      }
     }
 
-    // Close on outside click
     useEffect(() => {
       const h = (e: MouseEvent): void => {
-        if (!inputRef.current?.contains(e.target as Node)) setDropdown(null)
+        const el = getActiveEl()
+        if (!el?.parentElement?.contains(e.target as Node)) setDropdown(null)
       }
       document.addEventListener('mousedown', h)
       return () => document.removeEventListener('mousedown', h)
-    }, [])
+    }, [getActiveEl])
+
+    const dropdownEl = isOpen && (
+      <div className="tag-dropdown" style={{ left: 0 }}>
+        {filteredTags.map((tag, i) => (
+          <div
+            key={tag.name}
+            className={`tag-dropdown-item${i === dropdown?.activeIdx ? ' active' : ''}`}
+            onMouseDown={e => { e.preventDefault(); selectTag(tag) }}
+            onMouseEnter={() => setDropdown(d => d ? { ...d, activeIdx: i } : d)}
+          >
+            <span className={`tag-dropdown-swatch swatch-${tag.colorClass}`} />
+            <span className="tag-dropdown-label">@{tag.name}</span>
+          </div>
+        ))}
+      </div>
+    )
 
     return (
       <div style={{ position: 'relative', flex: 1 }}>
-        <input
-          ref={inputRef}
-          className={className}
-          value={value}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          autoFocus={autoFocus}
-          autoComplete="off"
-          spellCheck={false}
-        />
-        {isOpen && (
-          <div className="tag-dropdown" style={{ left: 0 }}>
-            {filteredTags.map((tag, i) => (
-              <div
-                key={tag.name}
-                className={`tag-dropdown-item${i === dropdown?.activeIdx ? ' active' : ''}`}
-                onMouseDown={e => { e.preventDefault(); selectTag(tag) }}
-                onMouseEnter={() => setDropdown(d => d ? { ...d, activeIdx: i } : d)}
-              >
-                <span className={`tag-dropdown-swatch swatch-${tag.colorClass}`} />
-                <span className="tag-dropdown-label">@{tag.name}</span>
-              </div>
-            ))}
-          </div>
+        {multiline ? (
+          <textarea
+            ref={textareaRef}
+            className={className}
+            value={value}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            autoFocus={autoFocus}
+            autoComplete="off"
+            spellCheck={false}
+          />
+        ) : (
+          <input
+            ref={inputRef}
+            className={className}
+            value={value}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            autoFocus={autoFocus}
+            autoComplete="off"
+            spellCheck={false}
+          />
         )}
+        {dropdownEl}
       </div>
     )
   }

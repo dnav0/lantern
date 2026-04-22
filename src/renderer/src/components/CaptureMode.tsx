@@ -9,6 +9,7 @@ import { findBookByAlias } from '../utils/bibleBooks'
 interface LineData {
   id: string
   text: string
+  indent: number
 }
 
 export interface CaptureModeHandle {
@@ -43,17 +44,34 @@ const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function Cap
   const [reference, setReference] = useState(initialReference)
   const [passage, setPassage] = useState<BiblePassage | null>(null)
   const [loadingPassage, setLoadingPassage] = useState(false)
-  const [lines, setLines] = useState<LineData[]>([{ id: makeLineId(), text: '' }])
+  const [lines, setLines] = useState<LineData[]>([{ id: makeLineId(), text: '', indent: 0 }])
   const [focusedLineId, setFocusedLineId] = useState<string | null>(lines[0].id)
   const [highlightedVerses, setHighlightedVerses] = useState<Set<number>>(new Set())
   const [hasHighlight, setHasHighlight] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [editSessionId, setEditSessionId] = useState<number | null>(null)
 
   useEffect(() => {
     if (initialReference) {
       loadPassageByReference(initialReference)
     }
   }, [])
+
+  useEffect(() => {
+    if (!initialPassageId) return
+    async function loadExistingNotes(): Promise<void> {
+      const sessions = await window.api.getSessionsByPassage(initialPassageId!)
+      if (sessions.length === 0) return
+      const session = sessions[0]
+      setEditSessionId(session.id)
+      const existingNotes = await window.api.getNotesBySession(session.id)
+      if (existingNotes.length > 0) {
+        setLines(existingNotes.map(n => ({ id: makeLineId(), text: n.content, indent: n.indent_level ?? 0 })))
+        setFocusedLineId(null)
+      }
+    }
+    void loadExistingNotes()
+  }, [initialPassageId])
 
   async function loadPassageByReference(ref: string): Promise<void> {
     if (!ref.trim()) return
@@ -98,12 +116,32 @@ const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function Cap
         anchor_end_verse: parsed.anchorEnd,
         anchor_book_override: null,
         anchor_chapter_override: null,
-        category: parsed.category
+        category: parsed.category,
+        indent_level: line.indent
       })
     }
   }
 
   async function ensurePassageAndSession(): Promise<{ passageId: number; sessionId: number } | null> {
+    if (initialPassageId) {
+      let sessionId: number
+      if (editSessionId) {
+        sessionId = editSessionId
+      } else {
+        const sessions = await window.api.getSessionsByPassage(initialPassageId)
+        if (sessions.length > 0) {
+          sessionId = sessions[0].id
+        } else {
+          const session = await window.api.createSession(initialPassageId)
+          sessionId = session.id
+        }
+      }
+      const existingNotes = await window.api.getNotesBySession(sessionId)
+      for (const note of existingNotes) {
+        await window.api.deleteNote(note.id)
+      }
+      return { passageId: initialPassageId, sessionId }
+    }
     if (!reference.trim()) return null
     const parsed = parseReferenceLabel(reference)
     if (!parsed) return null

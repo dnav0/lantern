@@ -36,6 +36,7 @@ export function initSchema(db: Database.Database): void {
       anchor_book_override  TEXT,
       anchor_chapter_override INTEGER,
       category              TEXT CHECK(category IN ('observation','historical','application','personal')),
+      indent_level          INTEGER NOT NULL DEFAULT 0,
       created_at            TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -50,6 +51,13 @@ export function initSchema(db: Database.Database): void {
   `)
 
   migrateBibleVerseCacheIfNeeded(db)
+  migrateNotesIndentIfNeeded(db)
+}
+
+function migrateNotesIndentIfNeeded(db: Database.Database): void {
+  const cols = db.prepare('PRAGMA table_info(Notes)').all() as Array<{ name: string }>
+  if (cols.some(c => c.name === 'indent_level')) return
+  db.exec(`ALTER TABLE Notes ADD COLUMN indent_level INTEGER NOT NULL DEFAULT 0`)
 }
 
 /**
