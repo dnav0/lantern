@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.1",
+    "date": "2026-04-23",
+    "title": "Bug fixes",
+    "notes": [
+      "Fixed chapter navigation button behavior",
+      "Corrected sub-note ordering display",
+      "Fixed highlight inheritance issues",
+      "Improved sub-note category label rendering"
+    ]
+  },
+  {
     "version": "1.2.0",
     "date": "2026-04-22",
     "title": "Note editor improvements",
