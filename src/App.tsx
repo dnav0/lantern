@@ -6,7 +6,6 @@ import BibleLibrary from './components/BibleLibrary'
 import BookDetailPage from './components/BookDetailPage'
 import SessionEditor from './components/SessionEditor'
 import ConfirmDialog from './components/ConfirmDialog'
-import WelcomeScreen from './components/WelcomeScreen'
 import SettingsModal from './components/SettingsModal'
 import { Passage } from './types'
 import { BIBLE_BOOKS } from './utils/bibleBooks'
@@ -15,9 +14,12 @@ import { useDarkMode } from './utils/useDarkMode'
 
 type ViewMode = 'capture' | 'reading'
 
-// First-run flag lives in localStorage for now. Phase 1 replaces this gate with
-// auth (email OTP) + onboarding; WelcomeScreen becomes the onboarding entry.
-const READY_KEY = 'berean.ready'
+interface AppProps {
+  // Signed-in display name for the "Welcome back" touch. null on the memory stub.
+  displayName: string | null
+  // Sign-out handler, or null when there is no auth (memory stub / dev).
+  onSignOut: (() => Promise<void>) | null
+}
 
 interface AppState {
   passages: Passage[]
@@ -29,10 +31,9 @@ interface AppState {
   viewMode: ViewMode
 }
 
-export default function App(): React.ReactElement {
+export default function App({ displayName, onSignOut }: AppProps): React.ReactElement {
   const api = useApi()
   const [isDark, toggleDark] = useDarkMode()
-  const [ready, setReady] = useState<boolean>(() => localStorage.getItem(READY_KEY) === '1')
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const [state, setState] = useState<AppState>({
@@ -53,8 +54,8 @@ export default function App(): React.ReactElement {
   }, [api])
 
   useEffect(() => {
-    if (ready) refresh()
-  }, [ready, refresh])
+    refresh()
+  }, [refresh])
 
   const handleNewPassage = (bookName?: string): void => {
     setState(prev => ({
@@ -196,6 +197,7 @@ export default function App(): React.ReactElement {
         <BibleLibrary
           passages={passages}
           onSelectBook={handleSelectBook}
+          displayName={displayName}
         />
       )
     }
@@ -208,17 +210,6 @@ export default function App(): React.ReactElement {
         initialPassageId={capturePassageId}
         onSaveRead={handleSaveRead}
         onSaveNext={handleSaveNext}
-      />
-    )
-  }
-
-  if (!ready) {
-    return (
-      <WelcomeScreen
-        onReady={() => {
-          localStorage.setItem(READY_KEY, '1')
-          setReady(true)
-        }}
       />
     )
   }
@@ -246,6 +237,7 @@ export default function App(): React.ReactElement {
         onClose={() => setSettingsOpen(false)}
         isDark={isDark}
         onToggleDark={toggleDark}
+        onSignOut={onSignOut}
       />
 
       {/* Navigation guard: unsaved notes in capture mode */}

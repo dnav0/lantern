@@ -1,8 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App'
-import { ApiProvider } from './api/context'
-import { createMemoryApi, seedMemoryApi } from './api/memory'
+import Root from './Root'
 import './assets/main.css'
 import './assets/dark.css'
 
@@ -12,14 +10,10 @@ if (navigator.platform.toLowerCase().includes('mac')) {
   document.body.classList.add('platform-mac')
 }
 
-// Phase 0: in-memory stub. Phase 1 swaps this for SupabaseBereanApi.
-const api = createMemoryApi()
-seedMemoryApi(api)
-
+// Root chooses the backend: Supabase (auth-gated) when configured, otherwise the
+// in-memory stub for local dev.
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <ApiProvider api={api}>
-      <App />
-    </ApiProvider>
+    <Root />
   </React.StrictMode>
 )

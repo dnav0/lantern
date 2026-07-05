@@ -5,6 +5,8 @@ import { BIBLE_BOOKS, BibleBook } from '../utils/bibleBooks'
 interface BibleLibraryProps {
   passages: Passage[]
   onSelectBook: (bookName: string) => void
+  // Optional signed-in name for a quiet "Welcome back" line.
+  displayName?: string | null
 }
 
 const OT = BIBLE_BOOKS.filter(b => b.testament === 'OT')
@@ -47,7 +49,7 @@ function TestamentSection({
   )
 }
 
-export default function BibleLibrary({ passages, onSelectBook }: BibleLibraryProps): React.ReactElement {
+export default function BibleLibrary({ passages, onSelectBook, displayName }: BibleLibraryProps): React.ReactElement {
   const countByBook = new Map<number, number>()
   for (const p of passages) {
     countByBook.set(p.book_number, (countByBook.get(p.book_number) ?? 0) + 1)
@@ -59,6 +61,7 @@ export default function BibleLibrary({ passages, onSelectBook }: BibleLibraryPro
   return (
     <div className="bible-library">
       <div className="bible-library-header">
+        {displayName && <p className="bible-library-greeting">Welcome back, {displayName}.</p>}
         <h2 className="bible-library-title">Bible Library</h2>
         <p className="bible-library-sub">
           {passageCount > 0

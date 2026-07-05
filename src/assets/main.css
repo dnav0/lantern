@@ -144,6 +144,72 @@ body.dark .welcome-body { color: #AAA; }
 body.dark .welcome-path-box { background: #1E1E22; border-color: #333; color: #AAA; }
 body.dark .welcome-btn-secondary { border-color: #444; color: #AAA; }
 
+/* ─── Auth / onboarding ───────────────────────────────────────────────────── */
+.app-boot { height: 100vh; background: #F7F6F3; }
+body.dark .app-boot { background: #1A1A1E; }
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.auth-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 14px;
+  font-size: 16px; /* >=16px keeps iOS from zooming on focus */
+  color: #1A1A1A;
+  background: #FFFFFF;
+  border: 1px solid #DDD;
+  border-radius: 9px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.auth-input:focus { border-color: #7F77DD; }
+
+.auth-input--code {
+  text-align: center;
+  letter-spacing: 0.4em;
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  padding: 12px 14px;
+}
+
+.auth-error {
+  font-size: 12.5px;
+  color: #B4453C;
+  margin: 0;
+  text-align: left;
+  line-height: 1.5;
+}
+
+.onboarding-skip {
+  margin-top: 18px;
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.onboarding-skip:hover { color: #666; }
+.onboarding-skip:disabled { opacity: 0.5; cursor: default; }
+
+.bible-library-greeting {
+  font-size: 13px;
+  color: #7F77DD;
+  margin: 0 0 6px;
+  font-weight: 500;
+}
+
+body.dark .auth-input { background: #1E1E22; border-color: #333; color: #F0EDE8; }
+body.dark .auth-input:focus { border-color: #7F77DD; }
+body.dark .auth-error { color: #E08A82; }
+body.dark .onboarding-skip { color: #888; }
+body.dark .onboarding-skip:hover { color: #AAA; }
+body.dark .bible-library-greeting { color: #9D95E5; }
+
 /* ─── Sidebar ───────────────────────────────────────────────────────────────── */
 .sidebar {
   width: 220px;

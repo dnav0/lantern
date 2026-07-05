@@ -5,6 +5,8 @@ interface SettingsModalProps {
   onClose: () => void
   isDark: boolean
   onToggleDark: () => void
+  // Sign-out handler, or null when there is no auth (memory stub / dev).
+  onSignOut: (() => Promise<void>) | null
 }
 
 // Translation and vault settings were removed with the Electron layer.
@@ -14,7 +16,8 @@ export default function SettingsModal({
   isOpen,
   onClose,
   isDark,
-  onToggleDark
+  onToggleDark,
+  onSignOut
 }: SettingsModalProps): React.ReactElement | null {
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -66,6 +69,18 @@ export default function SettingsModal({
           </div>
 
           <div className="smodal-divider" />
+
+          {/* Account */}
+          {onSignOut && (
+            <div className="smodal-section">
+              <div className="smodal-section-label">Account</div>
+              <div className="smodal-vault-actions">
+                <button className="smodal-vault-btn" onClick={() => void onSignOut()}>
+                  Sign out
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
