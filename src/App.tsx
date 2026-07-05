@@ -7,6 +7,7 @@ import BookDetailPage from './components/BookDetailPage'
 import SessionEditor from './components/SessionEditor'
 import ConfirmDialog from './components/ConfirmDialog'
 import SettingsModal from './components/SettingsModal'
+import OfflineIndicator from './components/OfflineIndicator'
 import { Passage } from './types'
 import { BIBLE_BOOKS } from './utils/bibleBooks'
 import { useApi } from './api/context'
@@ -320,6 +321,7 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
           }
         ]}
       />
+      <OfflineIndicator />
     </div>
   )
 }

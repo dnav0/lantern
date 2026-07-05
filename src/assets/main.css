@@ -2434,4 +2434,51 @@ body.dark .upd-popover-btn-ghost:hover { background: rgba(255,255,255,0.13); }
 body.dark .mobile-topbar { background: #202024; border-bottom-color: #333; }
 body.dark .mobile-topbar-title { color: #F0EDE8; }
 body.dark .mobile-menu-btn { color: #CCC; }
+
+/* ── Offline indicator (Phase 4) ── */
+.offline-pill {
+  position: fixed;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 300;
+  font-size: 11px;
+  font-weight: 500;
+  color: #7A6A2E;
+  background: #F6EFD8;
+  border: 1px solid #E4D8A8;
+  border-radius: 999px;
+  padding: 5px 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  pointer-events: none;
+}
+body.dark .offline-pill {
+  color: #E4D8A8;
+  background: #2A2612;
+  border-color: #4A421E;
+}
+
+.offline-toast {
+  position: fixed;
+  bottom: calc(48px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 301;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  background: #2A2A2E;
+  border-radius: 8px;
+  padding: 10px 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  max-width: min(320px, 90vw);
+  text-align: center;
+  animation: toastIn 0.15s ease;
+}
+body.dark .offline-toast { background: #1A1A1E; border: 1px solid #333; }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
 body.dark .mobile-menu-btn:active { background: rgba(255,255,255,0.06); }
