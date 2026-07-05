@@ -1,6 +1,49 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  plugins: [react()]
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      // App-shell precache; scripture/notes caching is handled by our own
+      // IndexedDB layers (src/bible/cache.ts, src/offline/mirror.ts), not the
+      // service worker's runtime cache.
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        navigateFallback: '/index.html',
+        runtimeCaching: [
+          {
+            // Never cache Supabase API traffic — reads/writes must always hit
+            // the network or fail explicitly so the offline mirror/toast logic
+            // (src/offline/) can do its job instead of the SW masking staleness.
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/,
+            handler: 'NetworkOnly'
+          }
+        ]
+      },
+      manifest: {
+        name: 'Berean',
+        short_name: 'Berean',
+        description:
+          'A quiet place to study Scripture: read a passage, capture what you see in it, and read your notes back later anchored to the verses.',
+        display: 'standalone',
+        start_url: '/',
+        scope: '/',
+        theme_color: '#F5F4F1',
+        background_color: '#F5F4F1',
+        icons: [
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+          {
+            src: '/icon-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          }
+        ]
+      }
+    })
+  ]
 })
