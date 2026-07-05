@@ -2211,3 +2211,227 @@ body.dark .upd-popover-btn-ghost:hover { background: rgba(255,255,255,0.13); }
 .wn-dot-update {
   background: #E07B20;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Mobile-first responsive layer
+   ───────────────────────────────────────────────────────────────────────────
+   Everything above is the desktop layout, untouched. The rules below only take
+   effect below the 768px breakpoint (the shell: drawer + top bar + single
+   column), plus a couple of pointer-based rules that make hover-only affordances
+   reachable by touch on any width. Safe-area insets keep content clear of the
+   notch / home indicator on phones.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Mobile shell chrome — created in the DOM always, shown only on mobile. */
+.mobile-topbar { display: none; }
+.drawer-backdrop { display: none; }
+
+/* ── Touch: reveal hover-only action affordances everywhere (any width) ────── */
+@media (hover: none) {
+  /* Note edit/delete icons normally appear on card hover — keep them visible. */
+  .se-note-actions { opacity: 1; }
+  /* The "+" add-note button on a verse row is hover-revealed on desktop. */
+  .reading-verse-row .verse-add-btn { opacity: 1; }
+  /* Sidebar passage edit pencil is hover-revealed on desktop. */
+  .sidebar-passage-item .sidebar-passage-edit-btn { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  /* Allow the page to own vertical scrolling; unlock the fixed desktop heights. */
+  html, body, #root { overflow: visible; height: 100%; }
+
+  .app-layout {
+    height: 100dvh;
+    flex-direction: column;
+    /* Room for the fixed top bar. */
+    padding-top: calc(52px + env(safe-area-inset-top));
+  }
+
+  /* ── Top bar ─────────────────────────────────────────────────────────────── */
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: calc(52px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 12px 0;
+    background: #F5F4F1;
+    border-bottom: 0.5px solid #E0DDD8;
+    z-index: 300;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    color: #444;
+    border-radius: 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mobile-menu-btn:active { background: rgba(0,0,0,0.06); }
+
+  .mobile-topbar-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1A1A1A;
+    letter-spacing: -0.2px;
+  }
+
+  /* ── Drawer ──────────────────────────────────────────────────────────────── */
+  .sidebar-host {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 400;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    box-shadow: 2px 0 24px rgba(0,0,0,0.12);
+  }
+  .app-layout.drawer-open .sidebar-host { transform: translateX(0); }
+
+  .sidebar {
+    width: 82vw;
+    max-width: 320px;
+    min-width: 0;
+    height: 100dvh;
+    /* clear the notch / home indicator */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.32);
+    z-index: 350;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+  }
+  .app-layout.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
+
+  /* Larger touch targets inside the drawer. */
+  .sidebar-item { padding: 10px 8px; font-size: 14px; }
+  .sidebar-passage-item { padding: 9px 8px; }
+  .mode-toggle-btn { padding: 10px 0; font-size: 13px; }
+  .btn-new-passage { padding: 12px; font-size: 14px; }
+  .sidebar-settings-btn { padding: 9px 10px; font-size: 13px; }
+  .sidebar-passage-edit-btn { width: 32px; height: 32px; }
+
+  /* ── Main area: single column, full width ──────────────────────────────────── */
+  .main-area { flex: 1; min-height: 0; overflow: hidden; }
+
+  /* Capture: stack the note editor over the passage pane instead of side-by-side. */
+  .capture-layout { flex-direction: column; overflow-y: auto; }
+  .capture-left {
+    flex: 0 0 auto;
+    border-right: none;
+    border-bottom: 0.5px solid #E8E6E1;
+  }
+  .capture-right { flex: 0 0 auto; min-height: 40vh; }
+
+  .passage-heading-wrap { padding: 18px 18px 12px; }
+  .passage-heading-input { font-size: 20px; }
+  .notes-list { padding: 14px 18px 180px; }
+  .capture-actions {
+    padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
+  }
+  .btn-action { flex: 1; justify-content: center; padding: 12px 14px; }
+  .passage-pane { padding: 20px 18px calc(20px + env(safe-area-inset-bottom)); }
+
+  /* Reading mode + book detail + session editor: comfortable single-column pad. */
+  .reading-layout { padding: 20px 0 calc(24px + env(safe-area-inset-bottom)); }
+  .reading-content { padding: 0 18px; }
+  .reading-heading h1 { font-size: 21px; }
+
+  .book-detail-header { padding: 16px 18px 12px; }
+  .book-detail-title { font-size: 20px; }
+  .book-detail-content { padding: 18px 18px calc(32px + env(safe-area-inset-bottom)); }
+  .book-chapter-content { max-width: none; }
+  .chapter-selector-wrap { padding: 8px 12px; }
+  .chapter-pill { min-width: 38px; height: 36px; }
+  .chapter-nav-btn { width: 36px; height: 36px; }
+
+  .session-editor-header { padding: 16px 18px 12px; }
+  .session-editor-title { font-size: 19px; }
+  .session-editor-body { padding: 14px 18px calc(32px + env(safe-area-inset-bottom)); }
+
+  .bible-library { padding: 20px 18px calc(40px + env(safe-area-inset-bottom)); }
+  .bible-library-title { font-size: 20px; }
+  /* Two columns instead of three so book names don't truncate on narrow screens. */
+  .bible-books-grid { grid-template-columns: repeat(2, 1fr); }
+  .bible-book-row { padding: 9px 8px; }
+  .bible-passage-item { padding: 8px; }
+
+  /* The verse "+" button sits off the right edge on desktop; pull it inside so it
+     doesn't cause horizontal overflow and stays tappable. */
+  .verse-add-btn { right: 0; width: 28px; height: 28px; }
+  .reading-verse-row { padding-right: 30px; }
+
+  /* Note action icons: bigger touch targets. */
+  .se-icon-btn { width: 34px; height: 34px; }
+
+  /* ── Inputs: >=16px prevents iOS zoom-on-focus ─────────────────────────────── */
+  .note-input,
+  .note-richtext,
+  .note-rendered,
+  .note-edit-textarea,
+  .inline-note-input,
+  .se-add-input,
+  .se-edit-input,
+  .smodal-esv-input { font-size: 16px; }
+
+  /* ── Modals become bottom sheets ───────────────────────────────────────────── */
+  .smodal-backdrop { align-items: flex-end; }
+  .smodal-panel {
+    width: 100%;
+    max-width: none;
+    max-height: 88dvh;
+    border-radius: 16px 16px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    animation: sheetUp 0.2s ease;
+  }
+  .smodal-vault-btn { padding: 10px 14px; font-size: 13px; }
+  .smodal-btn-save { padding: 11px 24px; }
+
+  .dialog-backdrop { align-items: flex-end; padding: 0; }
+  .dialog-card {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    border-radius: 16px 16px 0 0;
+    padding: 22px 20px calc(22px + env(safe-area-inset-bottom));
+    animation: sheetUp 0.2s ease;
+  }
+  .dialog-actions { flex-direction: column-reverse; }
+  .dialog-btn { padding: 12px 16px; font-size: 14px; width: 100%; }
+
+  /* Cross-ref preview card: keep it inside the viewport on narrow screens. */
+  .crossref-hover-card { max-width: min(280px, 80vw); }
+
+  /* Sign-in / onboarding card: fit small screens, respect safe areas. */
+  .welcome-screen { padding: 24px 18px; }
+  .welcome-card { padding: 36px 24px 32px; border-radius: 16px; }
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* Dark mode for the mobile chrome. */
+body.dark .mobile-topbar { background: #202024; border-bottom-color: #333; }
+body.dark .mobile-topbar-title { color: #F0EDE8; }
+body.dark .mobile-menu-btn { color: #CCC; }
+body.dark .mobile-menu-btn:active { background: rgba(255,255,255,0.06); }

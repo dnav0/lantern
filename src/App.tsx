@@ -35,6 +35,10 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
   const api = useApi()
   const [isDark, toggleDark] = useDarkMode()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  // Mobile navigation drawer (has no effect at desktop widths — the sidebar is
+  // always visible there; the CSS media query drives the visual behavior).
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const closeDrawer = useCallback(() => setDrawerOpen(false), [])
 
   const [state, setState] = useState<AppState>({
     passages: [],
@@ -214,20 +218,48 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
     )
   }
 
+  // On mobile, any navigation choice should also dismiss the drawer.
+  const withCloseDrawer = <A extends unknown[]>(fn: (...args: A) => void) => (...args: A): void => {
+    fn(...args)
+    closeDrawer()
+  }
+
   return (
-    <div className="app-layout">
-      <Sidebar
-        mode={viewMode}
-        onModeChange={handleModeChange}
-        passages={passages}
-        selectedPassageId={selectedPassageId}
-        onSelectPassage={handleSelectPassage}
-        onNewPassage={() => handleNewPassage()}
-        onEditPassage={handleEditPassage}
-        isDark={isDark}
-        onToggleDark={toggleDark}
-        onOpenSettings={() => setSettingsOpen(true)}
-      />
+    <div className={`app-layout${drawerOpen ? ' drawer-open' : ''}`}>
+      {/* Mobile-only top bar with the drawer toggle. Hidden at desktop widths. */}
+      <div className="mobile-topbar">
+        <button
+          className="mobile-menu-btn"
+          onClick={() => setDrawerOpen(o => !o)}
+          aria-label="Open navigation menu"
+          aria-expanded={drawerOpen}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <div className="mobile-topbar-title">Berean</div>
+      </div>
+
+      {/* Backdrop behind the drawer (mobile only). */}
+      <div className="drawer-backdrop" onClick={closeDrawer} />
+
+      <div className="sidebar-host">
+        <Sidebar
+          mode={viewMode}
+          onModeChange={withCloseDrawer(handleModeChange)}
+          passages={passages}
+          selectedPassageId={selectedPassageId}
+          onSelectPassage={withCloseDrawer(handleSelectPassage)}
+          onNewPassage={withCloseDrawer(() => handleNewPassage())}
+          onEditPassage={withCloseDrawer(handleEditPassage)}
+          isDark={isDark}
+          onToggleDark={toggleDark}
+          onOpenSettings={() => { setSettingsOpen(true); closeDrawer() }}
+        />
+      </div>
       <div className="main-area">
         {renderMain()}
       </div>

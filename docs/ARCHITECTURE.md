@@ -217,6 +217,41 @@ npx tsx scripts/migrate-sqlite.ts \
   re-downloadable; notes live in Supabase), so Safari storage eviction is an
   inconvenience, never data loss.
 
+## Responsive & touch (Phase 3)
+
+The app is mobile-first responsive from a single `max-width: 768px` breakpoint in
+`src/assets/main.css`. Above it, the original desktop layout is untouched; below
+it the shell reflows for a phone (primary target: Android Chrome, ~360–430px).
+
+- **Shell.** The persistent 220px sidebar becomes a **slide-in left drawer** on
+  mobile, opened by a hamburger in a fixed top bar (`.mobile-topbar`,
+  `.sidebar-host`, `.drawer-backdrop`, all rendered always but shown only under
+  the breakpoint). A drawer — not a bottom bar — because the sidebar carries more
+  than mode switching: the mode toggle, a scrollable book/passage tree, New
+  Passage, and Settings. That doesn't compress into a bar, and a drawer lets the
+  exact desktop sidebar content carry over unchanged. Drawer state lives in
+  `App.tsx`; any navigation choice closes it (`withCloseDrawer`).
+- **Single column.** Capture mode stacks the note editor over the passage pane
+  (desktop is a 60/40 split); reading, book detail, session editor, and library
+  go full-width with comfortable padding. The library grid drops from 3 to 2
+  columns so book names don't truncate.
+- **Modals as sheets.** SettingsModal and ConfirmDialog become full-width bottom
+  sheets (rounded top, slide-up) on mobile.
+- **Functional hovers → tap.** The only functional hover interactions are the
+  cross-reference verse previews. `CrossRefPill` (`src/components/CrossRefPill.tsx`)
+  centralizes them: on `(hover: hover)` devices it previews on hover exactly as
+  before; on touch it's a tap-to-toggle popover that dismisses on outside-tap or
+  Escape. Capability is detected with `matchMedia('(hover: hover)')`, not a UA
+  sniff, so a hybrid device still gets both. Cosmetic `:hover` styles are left
+  as-is (harmless on touch). Hover-revealed action buttons (note edit/delete, the
+  verse "+" add button, the sidebar passage-edit pencil) are forced always-visible
+  under `@media (hover: none)`.
+- **Ergonomics.** All text inputs are ≥16px on mobile (prevents iOS focus zoom);
+  touch targets are ≥44px (menu button) or enlarged (icon buttons to 34px, list
+  rows padded). `viewport-fit=cover` in `index.html` plus `env(safe-area-inset-*)`
+  padding keep content clear of the notch and home indicator. No horizontal
+  overflow at 360px (the verse "+" button was pulled inside the row for this).
+
 ## Decision log
 
 | Decision | Rationale |
