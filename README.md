@@ -41,6 +41,18 @@ npm run lint
 npm run format
 ```
 
+## Deploy
+
+Hosted on Cloudflare Pages, auto-deploying from `main`:
+
+- **Build command:** `npm run build`
+- **Build output directory:** `dist`
+- **Environment variables:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+
+`public/_redirects` sends all paths to `index.html` (SPA fallback). The app is
+a PWA (`vite-plugin-pwa`, autoUpdate service worker) — installable on Android
+Chrome and other browsers that support the install prompt.
+
 ## Where things are
 
 - `src/App.tsx` — top-level view state and mode switching

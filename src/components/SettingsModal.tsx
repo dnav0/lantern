@@ -1,4 +1,6 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
+import { useApi } from '../api/context'
+import { exportAllNotesAsZip } from '../platform/export'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -10,8 +12,6 @@ interface SettingsModalProps {
 }
 
 // Translation and vault settings were removed with the Electron layer.
-// Placeholders below mark where dark-mode lives now and where "Export all notes"
-// (Phase 4, via platform/export.ts) will go.
 export default function SettingsModal({
   isOpen,
   onClose,
@@ -19,12 +19,26 @@ export default function SettingsModal({
   onToggleDark,
   onSignOut
 }: SettingsModalProps): React.ReactElement | null {
+  const api = useApi()
+  const [exportState, setExportState] = useState<'idle' | 'exporting' | 'error'>('idle')
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     },
     [onClose]
   )
+
+  const handleExport = useCallback(async () => {
+    setExportState('exporting')
+    try {
+      await exportAllNotesAsZip(api)
+      setExportState('idle')
+    } catch (err) {
+      console.error('[export] failed:', err)
+      setExportState('error')
+    }
+  }, [api])
 
   if (!isOpen) return null
 
@@ -55,17 +69,26 @@ export default function SettingsModal({
 
           <div className="smodal-divider" />
 
-          {/* Export (placeholder) */}
+          {/* Export */}
           <div className="smodal-section">
             <div className="smodal-section-label">Export</div>
             <p className="smodal-vault-desc">
-              Export all notes as Markdown. Coming in a later release.
+              Download all your notes as a zip of Markdown files, one per passage.
             </p>
             <div className="smodal-vault-actions">
-              <button className="smodal-vault-btn" disabled>
-                Export all notes
+              <button
+                className="smodal-vault-btn"
+                onClick={() => void handleExport()}
+                disabled={exportState === 'exporting'}
+              >
+                {exportState === 'exporting' ? 'Exporting…' : 'Export all notes'}
               </button>
             </div>
+            {exportState === 'error' && (
+              <p className="smodal-vault-desc" style={{ color: '#C0392B' }}>
+                Export failed. Check your connection and try again.
+              </p>
+            )}
           </div>
 
           <div className="smodal-divider" />
