@@ -11,6 +11,7 @@ import type {
   UpdateNoteInput,
   DeleteNoteResult
 } from '../types'
+import { getBibleVerse } from '../bible/service'
 
 // SupabaseBereanApi: the single mutation choke point against Postgres. Every id
 // is client-generated (crypto.randomUUID) and every timestamp is client-set — the
@@ -250,9 +251,10 @@ export class SupabaseBereanApi implements BereanApi {
     return result
   }
 
-  async getBibleVerse(_reference: string): Promise<BiblePassage | null> {
-    // Scripture arrives in Phase 2 via the BibleProvider seam (helloao + cache).
-    // Until then there is no server-side verse source.
-    return null
+  async getBibleVerse(reference: string): Promise<BiblePassage | null> {
+    // Scripture is not Supabase data — it's fetched client-side from BSB via
+    // helloao (cached forever in IndexedDB). Delegate to the shared lookup so
+    // both this and the memory stub share one implementation.
+    return getBibleVerse(reference)
   }
 }

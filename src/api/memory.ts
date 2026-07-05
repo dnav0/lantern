@@ -4,7 +4,6 @@ import type {
   Session,
   Note,
   NoteWithPassageInfo,
-  BiblePassage,
   CreatePassageInput,
   CreateNoteInput,
   UpdateNoteInput,
@@ -12,10 +11,15 @@ import type {
 } from '../types'
 import { bookByNumber } from '../utils/bibleBooks'
 import { parseReferenceLabel } from '../utils/noteParser'
+import { getBibleVerse } from '../bible/service'
 
 // In-memory BereanApi for Phase 0: the app runs end-to-end on fake data with no
 // backend. State lives in module-scoped maps and resets on reload. Phase 1
 // replaces this with SupabaseBereanApi behind the same interface.
+//
+// Scripture is real as of Phase 2: getBibleVerse delegates to
+// src/bible/service.ts (BSB via helloao, cached in IndexedDB) — there is no
+// backend dependency for reading scripture, so the memory stub gets it free.
 
 const WORKSPACE_ID = 'personal-stub'
 
@@ -25,23 +29,6 @@ const now = (): string => new Date().toISOString()
 const passages = new Map<string, Passage>()
 const sessions = new Map<string, Session>()
 const notes = new Map<string, Note>()
-
-// Deterministic placeholder scripture so reading/capture views have text to show.
-function fakePassage(reference: string): BiblePassage {
-  const parsed = parseReferenceLabel(reference)
-  const start = parsed?.verse_start ?? 1
-  const end = parsed && parsed.chapter_end === parsed.chapter_start ? parsed.verse_end : start + 9
-  const count = Math.max(1, Math.min(end - start + 1, 40))
-  const verses = Array.from({ length: count }, (_, i) => ({
-    verse: start + i,
-    text: `Placeholder verse text for ${reference}, verse ${start + i}. (Scripture provider arrives in Phase 2.)`
-  }))
-  return {
-    reference,
-    text: verses.map(v => v.text).join(' '),
-    verses
-  }
-}
 
 function passageInfo(p: Passage): Omit<NoteWithPassageInfo, keyof Note> {
   return {
@@ -172,8 +159,7 @@ export function createMemoryApi(): BereanApi {
     },
 
     async getBibleVerse(reference) {
-      if (!reference.trim()) return null
-      return fakePassage(reference)
+      return getBibleVerse(reference)
     }
   }
 }
