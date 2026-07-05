@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { Book, BiblePassage, NoteWithPassageInfo, NoteCategory } from '../types'
-import { BibleBook } from '../utils/bibleBooks'
+import { BiblePassage, NoteWithPassageInfo, NoteCategory } from '../types'
+import { BibleBook, findBookByAlias } from '../utils/bibleBooks'
 import { parseNoteLine } from '../utils/noteParser'
+import { useApi } from '../api/context'
 import InlineTagInput from './InlineTagInput'
 import RichEditInput from './RichEditInput'
 import ConfirmDialog from './ConfirmDialog'
@@ -47,15 +48,16 @@ interface ChapterViewProps {
 }
 
 function ChapterView({ bookName, chapter, notes, onCaptureChapter, onNotesChanged }: ChapterViewProps): React.ReactElement {
+  const api = useApi()
   const [bibleData, setBibleData] = useState<BiblePassage | null>(null)
   const [loading, setLoading] = useState(true)
-  const [highlightedNoteIds, setHighlightedNoteIds] = useState<Set<number>>(new Set())
+  const [highlightedNoteIds, setHighlightedNoteIds] = useState<Set<string>>(new Set())
   const [highlightedVerses, setHighlightedVerses] = useState<Set<number>>(new Set())
   const [inlineVerse, setInlineVerse] = useState<number | null>(null)
   const [inlineText, setInlineText] = useState('')
   const [savingInline, setSavingInline] = useState(false)
   const [localNotes, setLocalNotes] = useState<NoteWithPassageInfo[]>(notes)
-  const [editingNoteId, setEditingNoteId] = useState<number | null>(null)
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<NoteWithPassageInfo | null>(null)
 
@@ -64,7 +66,7 @@ function ChapterView({ bookName, chapter, notes, onCaptureChapter, onNotesChange
   )
 
   const byVerse = new Map<number | null, NoteGroup[]>()
-  const sortedChapterNotes = [...chapterNotes].sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id - b.id)
+  const sortedChapterNotes = [...chapterNotes].sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id))
   let currentGroup: NoteGroup | null = null
   for (const n of sortedChapterNotes) {
     if (n.indent_level === 0) {
@@ -85,7 +87,7 @@ function ChapterView({ bookName, chapter, notes, onCaptureChapter, onNotesChange
   useEffect(() => {
     setLoading(true)
     setBibleData(null)
-    window.api.getBibleVerse(`${bookName} ${chapter}`).then(data => {
+    api.getBibleVerse(`${bookName} ${chapter}`).then(data => {
       setBibleData(data)
     }).finally(() => setLoading(false))
   }, [bookName, chapter])
@@ -122,35 +124,34 @@ function ChapterView({ bookName, chapter, notes, onCaptureChapter, onNotesChange
     setSavingInline(true)
     try {
       const parsed = parseNoteLine(inlineText)
-      const passages = await window.api.getPassages()
-      let sessionId: number
+      const passages = await api.getPassages()
+      let sessionId: string
       const chapterPassages = passages.filter(p =>
         p.reference_label.toLowerCase().startsWith(bookName.toLowerCase())
       )
 
       if (chapterPassages.length > 0) {
-        const sessions = await window.api.getSessionsByPassage(chapterPassages[0].id)
+        const sessions = await api.getSessionsByPassage(chapterPassages[0].id)
         if (sessions.length > 0) {
           sessionId = sessions[0].id
         } else {
-          const s = await window.api.createSession(chapterPassages[0].id)
+          const s = await api.createSession(chapterPassages[0].id)
           sessionId = s.id
         }
       } else {
-        const bookResult = await window.api.upsertBook(bookName, bookName.slice(0, 3))
-        const newPassage = await window.api.createPassage({
-          book_id: bookResult.id,
+        const newPassage = await api.createPassage({
+          book_number: findBookByAlias(bookName)?.number ?? 1,
           chapter_start: chapter,
           verse_start: 1,
           chapter_end: chapter,
           verse_end: 99,
           reference_label: `${bookName} ${chapter}`
         })
-        const s = await window.api.createSession(newPassage.id)
+        const s = await api.createSession(newPassage.id)
         sessionId = s.id
       }
 
-      const saved = await window.api.createNote({
+      const saved = await api.createNote({
         session_id: sessionId,
         content: inlineText,
         anchor_start_verse: parsed.anchorStart,
@@ -187,7 +188,7 @@ function ChapterView({ bookName, chapter, notes, onCaptureChapter, onNotesChange
   const handleSaveEdit = async (): Promise<void> => {
     if (editingNoteId === null || !editText.trim()) return
     const parsed = parseNoteLine(editText)
-    const updated = await window.api.updateNote(editingNoteId, {
+    const updated = await api.updateNote(editingNoteId, {
       content: editText,
       anchor_start_verse: parsed.anchorStart,
       anchor_end_verse: parsed.anchorEnd,
@@ -199,7 +200,7 @@ function ChapterView({ bookName, chapter, notes, onCaptureChapter, onNotesChange
   }
 
   const handleDeleteNote = async (note: NoteWithPassageInfo): Promise<void> => {
-    await window.api.deleteNoteAndCascade(note.id)
+    await api.deleteNoteAndCascade(note.id)
     setLocalNotes(prev => prev.filter(n => n.id !== note.id))
     setConfirmDelete(null)
     onNotesChanged()
@@ -394,7 +395,6 @@ function ChapterView({ bookName, chapter, notes, onCaptureChapter, onNotesChange
 
 interface BookDetailPageProps {
   bibleBook: BibleBook
-  dbBook: Book | null
   onBack: () => void
   onCapture: (reference: string) => void
   onRefresh?: () => void
@@ -402,31 +402,25 @@ interface BookDetailPageProps {
 
 export default function BookDetailPage({
   bibleBook,
-  dbBook,
   onBack,
   onCapture,
   onRefresh
 }: BookDetailPageProps): React.ReactElement {
+  const api = useApi()
   const [selectedChapter, setSelectedChapter] = useState(1)
   const [allNotes, setAllNotes] = useState<NoteWithPassageInfo[]>([])
   const chapterSelectorRef = useRef<HTMLDivElement>(null)
 
   const reloadNotes = useCallback(async (): Promise<void> => {
-    if (dbBook) {
-      const notes = await window.api.getNotesByBook(dbBook.id)
-      setAllNotes(notes)
-    }
-    // Always refresh app-level state so sidebar and dbBook stay in sync
+    const notes = await api.getNotesByBook(bibleBook.number)
+    setAllNotes(notes)
+    // Always refresh app-level state so the sidebar stays in sync
     onRefresh?.()
-  }, [dbBook?.id, onRefresh])
+  }, [api, bibleBook.number, onRefresh])
 
   useEffect(() => {
-    if (dbBook) {
-      window.api.getNotesByBook(dbBook.id).then(setAllNotes)
-    } else {
-      setAllNotes([])
-    }
-  }, [dbBook?.id])
+    api.getNotesByBook(bibleBook.number).then(setAllNotes)
+  }, [api, bibleBook.number])
 
   const chaptersWithNotes = new Set(allNotes.map(n => n.chapter_start))
 

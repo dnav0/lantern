@@ -1,6 +1,8 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
+import { ApiProvider } from './api/context'
+import { createMemoryApi, seedMemoryApi } from './api/memory'
 import './assets/main.css'
 import './assets/dark.css'
 
@@ -10,8 +12,14 @@ if (navigator.platform.toLowerCase().includes('mac')) {
   document.body.classList.add('platform-mac')
 }
 
+// Phase 0: in-memory stub. Phase 1 swaps this for SupabaseBereanApi.
+const api = createMemoryApi()
+seedMemoryApi(api)
+
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <App />
+    <ApiProvider api={api}>
+      <App />
+    </ApiProvider>
   </React.StrictMode>
 )

@@ -1,32 +1,32 @@
 export type NoteCategory = 'observation' | 'historical' | 'application' | 'personal'
 
-export interface Book {
-  id: number
-  name: string
-  abbreviation: string
-}
+// All ids are client-generated UUIDs (crypto.randomUUID()).
+// Book identity lives in src/utils/bibleBooks.ts as a USFM book_number (1–66);
+// there is no Books table.
 
 export interface Passage {
-  id: number
-  book_id: number
+  id: string
+  workspace_id: string
+  book_number: number
   chapter_start: number
   verse_start: number
   chapter_end: number
   verse_end: number
   reference_label: string
+  created_at: string
   session_count?: number
   last_studied?: string
 }
 
 export interface Session {
-  id: number
-  passage_id: number
+  id: string
+  passage_id: string
   created_at: string
 }
 
 export interface Note {
-  id: number
-  session_id: number
+  id: string
+  session_id: string
   content: string
   anchor_start_verse: number | null
   anchor_end_verse: number | null
@@ -35,6 +35,7 @@ export interface Note {
   category: NoteCategory | null
   indent_level: number
   created_at: string
+  updated_at: string
 }
 
 export interface BibleVerse {
@@ -70,7 +71,7 @@ export interface ParsedNote {
   crossRefs: string[]
 }
 
-// Note enriched with its passage's chapter/verse span (returned by notes:getByBook)
+// Note enriched with its passage's chapter/verse span (returned by getNotesByBook)
 export interface NoteWithPassageInfo extends Note {
   chapter_start: number
   chapter_end: number
@@ -79,9 +80,8 @@ export interface NoteWithPassageInfo extends Note {
   reference_label: string
 }
 
-// IPC input shapes
 export interface CreatePassageInput {
-  book_id: number
+  book_number: number
   chapter_start: number
   verse_start: number
   chapter_end: number
@@ -90,7 +90,7 @@ export interface CreatePassageInput {
 }
 
 export interface CreateNoteInput {
-  session_id: number
+  session_id: string
   content: string
   anchor_start_verse: number | null
   anchor_end_verse: number | null
@@ -98,6 +98,21 @@ export interface CreateNoteInput {
   anchor_chapter_override: number | null
   category: NoteCategory | null
   indent_level: number
+}
+
+export interface UpdateNoteInput {
+  content?: string
+  anchor_start_verse?: number | null
+  anchor_end_verse?: number | null
+  category?: NoteCategory | null
+  indent_level?: number
+}
+
+// Result of a cascading note delete: reports which parents were emptied and removed.
+export interface DeleteNoteResult {
+  deletedNoteId: string
+  deletedSessionId?: string
+  deletedPassageId?: string
 }
 
 export interface PassageWithNotes {

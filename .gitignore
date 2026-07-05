@@ -12,11 +12,9 @@ node_modules/
 .pnp
 .pnp.js
 
-# Build output (electron-vite → out/, electron-builder → dist/)
-out/
+# Build output
 dist/
 dist-ssr/
-# Note: build/ is intentionally NOT excluded — it contains icon assets for electron-builder
 
 # Editor directories and files
 .vscode/*
@@ -47,10 +45,7 @@ Thumbs.db
 # Optional eslint cache
 .eslintcache
 
-# Electron build output
-release/
-
-# Database files (user data - should not be committed)
+# Database files (legacy local user data - should not be committed)
 *.db
 *.db-shm
 *.db-wal
@@ -72,12 +67,5 @@ coverage/
 *.temp
 .cache/
 
-# Claude Code — exclude all configuration and local files
-.claude/
+# Claude Code — local settings only
 .claude/settings.local.json
-
-# Project documentation for Claude Code (internal use only)
-CLAUDE.md
-
-# Local production/release notes (not for the repo)
-PRODUCTION.md

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { Note, NoteCategory, Passage } from '../types'
 import { parseNoteLine } from '../utils/noteParser'
+import { useApi } from '../api/context'
 import InlineTagInput from './InlineTagInput'
 import ConfirmDialog from './ConfirmDialog'
 
 interface NoteCardEditProps {
   note: Note
-  onSave: (id: number, content: string) => Promise<void>
+  onSave: (id: string, content: string) => Promise<void>
   onDelete: (note: Note) => void
   onHighlight: (note: Note | null) => void
   isHighlighted: boolean
@@ -97,20 +98,21 @@ interface SessionEditorProps {
 }
 
 export default function SessionEditor({ passage, onBack, onRefresh, onPassageDeleted }: SessionEditorProps): React.ReactElement {
+  const api = useApi()
   const [notes, setNotes] = useState<Note[]>([])
   const [loading, setLoading] = useState(true)
-  const [highlightedId, setHighlightedId] = useState<number | null>(null)
+  const [highlightedId, setHighlightedId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Note | null>(null)
   const [confirmDeletePassage, setConfirmDeletePassage] = useState(false)
   const [addText, setAddText] = useState('')
 
   useEffect(() => {
-    window.api.getNotesByPassage(passage.id).then(ns => { setNotes(ns); setLoading(false) })
+    api.getNotesByPassage(passage.id).then(ns => { setNotes(ns); setLoading(false) })
   }, [passage.id])
 
-  const handleSaveEdit = async (id: number, content: string): Promise<void> => {
+  const handleSaveEdit = async (id: string, content: string): Promise<void> => {
     const parsed = parseNoteLine(content)
-    const updated = await window.api.updateNote(id, {
+    const updated = await api.updateNote(id, {
       content,
       anchor_start_verse: parsed.anchorStart,
       anchor_end_verse: parsed.anchorEnd,
@@ -121,7 +123,7 @@ export default function SessionEditor({ passage, onBack, onRefresh, onPassageDel
   }
 
   const handleDeleteNote = async (note: Note): Promise<void> => {
-    const result = await window.api.deleteNoteAndCascade(note.id)
+    const result = await api.deleteNoteAndCascade(note.id)
     const remaining = notes.filter(n => n.id !== note.id)
     setNotes(remaining)
     setConfirmDelete(null)
@@ -132,7 +134,7 @@ export default function SessionEditor({ passage, onBack, onRefresh, onPassageDel
   }
 
   const handleDeletePassage = async (): Promise<void> => {
-    await window.api.deletePassageAll(passage.id)
+    await api.deletePassageAll(passage.id)
     setConfirmDeletePassage(false)
     onRefresh()
     onPassageDeleted()
@@ -141,15 +143,15 @@ export default function SessionEditor({ passage, onBack, onRefresh, onPassageDel
   const handleAddNote = async (): Promise<void> => {
     if (!addText.trim()) return
     const parsed = parseNoteLine(addText)
-    const sessions = await window.api.getSessionsByPassage(passage.id)
-    let sessionId: number
+    const sessions = await api.getSessionsByPassage(passage.id)
+    let sessionId: string
     if (sessions.length > 0) {
       sessionId = sessions[0].id
     } else {
-      const s = await window.api.createSession(passage.id)
+      const s = await api.createSession(passage.id)
       sessionId = s.id
     }
-    const note = await window.api.createNote({
+    const note = await api.createNote({
       session_id: sessionId,
       content: addText,
       anchor_start_verse: parsed.anchorStart,

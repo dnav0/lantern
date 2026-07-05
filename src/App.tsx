@@ -8,44 +8,35 @@ import SessionEditor from './components/SessionEditor'
 import ConfirmDialog from './components/ConfirmDialog'
 import WelcomeScreen from './components/WelcomeScreen'
 import SettingsModal from './components/SettingsModal'
-import { WhatsNew, hasUnseen, markSeen } from './components/WhatsNew'
-import { Book, Passage } from './types'
+import { Passage } from './types'
 import { BIBLE_BOOKS } from './utils/bibleBooks'
+import { useApi } from './api/context'
 import { useDarkMode } from './utils/useDarkMode'
 
 type ViewMode = 'capture' | 'reading'
-type UpdateStatus = 'idle' | 'checking' | 'downloading' | 'ready' | 'up-to-date' | 'error'
+
+// First-run flag lives in localStorage for now. Phase 1 replaces this gate with
+// auth (email OTP) + onboarding; WelcomeScreen becomes the onboarding entry.
+const READY_KEY = 'berean.ready'
 
 interface AppState {
-  books: Book[]
   passages: Passage[]
-  selectedPassageId: number | null
+  selectedPassageId: string | null
   selectedBookName: string | null
-  sessionEditorPassageId: number | null
+  sessionEditorPassageId: string | null
   captureReference: string
-  capturePassageId: number | null
+  capturePassageId: string | null
   viewMode: ViewMode
 }
 
 export default function App(): React.ReactElement {
+  const api = useApi()
   const [isDark, toggleDark] = useDarkMode()
-  const [vaultReady, setVaultReady] = useState<boolean | null>(null) // null = checking
-  const [whatsNewOpen, setWhatsNewOpen] = useState(false)
-  const [hasNew, setHasNew] = useState(hasUnseen)
-  const [translation, setTranslation] = useState('web')
-  const [verseVersion, setVerseVersion] = useState(0)
+  const [ready, setReady] = useState<boolean>(() => localStorage.getItem(READY_KEY) === '1')
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle')
-  const [updateVersion, setUpdateVersion] = useState<string | undefined>(undefined)
-
-  const openWhatsNew = (): void => {
-    setWhatsNewOpen(true)
-    markSeen()
-    setHasNew(false)
-  }
 
   const [state, setState] = useState<AppState>({
-    books: [], passages: [],
+    passages: [],
     selectedPassageId: null,
     selectedBookName: null,
     sessionEditorPassageId: null,
@@ -57,45 +48,13 @@ export default function App(): React.ReactElement {
   const captureModeRef = useRef<CaptureModeHandle>(null)
 
   const refresh = useCallback(async () => {
-    const [books, passages] = await Promise.all([
-      window.api.getBooks(),
-      window.api.getPassages()
-    ])
-    setState(prev => ({ ...prev, books, passages }))
-  }, [])
+    const passages = await api.getPassages()
+    setState(prev => ({ ...prev, passages }))
+  }, [api])
 
   useEffect(() => {
-    window.api.isVaultConfigured().then(configured => {
-      setVaultReady(configured)
-      if (configured) refresh()
-    })
-  }, [])
-
-  useEffect(() => {
-    window.api.getTranslation().then(({ translation }) => setTranslation(translation))
-  }, [])
-
-  useEffect(() => {
-    window.api.onUpdateStatus(({ status, version, error }) => {
-      setUpdateStatus(status as UpdateStatus)
-      if (version) setUpdateVersion(version)
-      if (error) console.error('[updater]', error)
-    })
-  }, [])
-
-  useEffect(() => {
-    if (updateStatus === 'up-to-date') {
-      const t = setTimeout(() => setUpdateStatus('idle'), 3000)
-      return () => clearTimeout(t)
-    }
-    return undefined
-  }, [updateStatus])
-
-  const handleTranslationChange = async (newTranslation: string, esvApiKey?: string): Promise<void> => {
-    await window.api.setTranslation(newTranslation, esvApiKey)
-    setTranslation(newTranslation)
-    setVerseVersion(v => v + 1)
-  }
+    if (ready) refresh()
+  }, [ready, refresh])
 
   const handleNewPassage = (bookName?: string): void => {
     setState(prev => ({
@@ -108,7 +67,7 @@ export default function App(): React.ReactElement {
     }))
   }
 
-  const handleSelectPassage = (passageId: number): void => {
+  const handleSelectPassage = (passageId: string): void => {
     setState(prev => ({
       ...prev,
       selectedPassageId: passageId,
@@ -128,7 +87,7 @@ export default function App(): React.ReactElement {
     }))
   }
 
-  const handleEditPassage = (passageId: number): void => {
+  const handleEditPassage = (passageId: string): void => {
     setState(prev => ({
       ...prev,
       sessionEditorPassageId: passageId,
@@ -138,7 +97,7 @@ export default function App(): React.ReactElement {
     }))
   }
 
-  const handleSaveRead = async (passageId: number): Promise<void> => {
+  const handleSaveRead = async (passageId: string): Promise<void> => {
     await refresh()
     setState(prev => ({ ...prev, selectedPassageId: passageId, selectedBookName: null, sessionEditorPassageId: null, capturePassageId: null, viewMode: 'reading' }))
   }
@@ -172,18 +131,15 @@ export default function App(): React.ReactElement {
     doModeChange(mode)
   }
 
-  const handleCaptureFromReading = (reference: string, passageId?: number): void => {
+  const handleCaptureFromReading = (reference: string, passageId?: string): void => {
     setState(prev => ({ ...prev, viewMode: 'capture', captureReference: reference, capturePassageId: passageId ?? null, selectedBookName: null, sessionEditorPassageId: null }))
   }
 
-  const { books, passages, selectedPassageId, selectedBookName, sessionEditorPassageId, captureReference, capturePassageId, viewMode } = state
+  const { passages, selectedPassageId, selectedBookName, sessionEditorPassageId, captureReference, capturePassageId, viewMode } = state
 
   const selectedPassage = passages.find(p => p.id === selectedPassageId) || null
   const selectedBibleBook = selectedBookName
     ? BIBLE_BOOKS.find(b => b.name === selectedBookName) || null
-    : null
-  const selectedDbBook = selectedBookName
-    ? books.find(b => b.name.toLowerCase() === selectedBookName.toLowerCase()) || null
     : null
   const sessionEditorPassage = sessionEditorPassageId
     ? passages.find(p => p.id === sessionEditorPassageId) || null
@@ -208,9 +164,8 @@ export default function App(): React.ReactElement {
     if (viewMode === 'reading' && selectedBibleBook) {
       return (
         <BookDetailPage
-          key={`${selectedBibleBook.id}-${verseVersion}`}
+          key={selectedBibleBook.id}
           bibleBook={selectedBibleBook}
-          dbBook={selectedDbBook}
           onBack={() => setState(prev => ({ ...prev, selectedBookName: null }))}
           onCapture={ref => { handleCaptureFromReading(ref); refresh() }}
           onRefresh={refresh}
@@ -221,7 +176,7 @@ export default function App(): React.ReactElement {
     if (viewMode === 'reading' && selectedPassage) {
       return (
         <ReadingMode
-          key={`${selectedPassage.id}-${verseVersion}`}
+          key={selectedPassage.id}
           passage={selectedPassage}
           onCapture={passageId => {
             const p = passages.find(p => p.id === passageId)
@@ -239,7 +194,6 @@ export default function App(): React.ReactElement {
     if (viewMode === 'reading') {
       return (
         <BibleLibrary
-          books={books}
           passages={passages}
           onSelectBook={handleSelectBook}
         />
@@ -258,14 +212,12 @@ export default function App(): React.ReactElement {
     )
   }
 
-  if (vaultReady === null) return <div className="app-layout" />
-
-  if (!vaultReady) {
+  if (!ready) {
     return (
       <WelcomeScreen
         onReady={() => {
-          setVaultReady(true)
-          refresh()
+          localStorage.setItem(READY_KEY, '1')
+          setReady(true)
         }}
       />
     )
@@ -276,7 +228,6 @@ export default function App(): React.ReactElement {
       <Sidebar
         mode={viewMode}
         onModeChange={handleModeChange}
-        books={books}
         passages={passages}
         selectedPassageId={selectedPassageId}
         onSelectPassage={handleSelectPassage}
@@ -284,25 +235,17 @@ export default function App(): React.ReactElement {
         onEditPassage={handleEditPassage}
         isDark={isDark}
         onToggleDark={toggleDark}
-        hasNew={hasNew}
-        onOpenWhatsNew={openWhatsNew}
         onOpenSettings={() => setSettingsOpen(true)}
-        updateStatus={updateStatus}
-        updateVersion={updateVersion}
-        onCheckForUpdates={() => window.api.checkForUpdates()}
-        onQuitAndInstall={() => window.api.quitAndInstall()}
       />
       <div className="main-area">
         {renderMain()}
       </div>
 
-      <WhatsNew isOpen={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} />
-
       <SettingsModal
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
-        translation={translation}
-        onTranslationChange={handleTranslationChange}
+        isDark={isDark}
+        onToggleDark={toggleDark}
       />
 
       {/* Navigation guard: unsaved notes in capture mode */}

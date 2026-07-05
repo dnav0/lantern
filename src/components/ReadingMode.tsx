@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Passage, Note, BiblePassage, NoteCategory } from '../types'
 import { parseNoteLine } from '../utils/noteParser'
+import { useApi } from '../api/context'
 import InlineTagInput from './InlineTagInput'
 import RichEditInput from './RichEditInput'
 import ConfirmDialog from './ConfirmDialog'
 
 interface ReadingModeProps {
   passage: Passage
-  onCapture: (passageId: number) => void
+  onCapture: (passageId: string) => void
   onRefresh?: () => void
   onPassageDeleted?: () => void
 }
@@ -45,15 +46,16 @@ function RenderedNoteContent({ content }: { content: string }): React.ReactEleme
 }
 
 export default function ReadingMode({ passage, onCapture, onRefresh, onPassageDeleted }: ReadingModeProps): React.ReactElement {
+  const api = useApi()
   const [biblePassage, setBiblePassage] = useState<BiblePassage | null>(null)
   const [notes, setNotes] = useState<Note[]>([])
   const [loading, setLoading] = useState(true)
-  const [highlightedNoteIds, setHighlightedNoteIds] = useState<Set<number>>(new Set())
+  const [highlightedNoteIds, setHighlightedNoteIds] = useState<Set<string>>(new Set())
   const [highlightedVerses, setHighlightedVerses] = useState<Set<number>>(new Set())
   const [inlineVerse, setInlineVerse] = useState<number | null>(null)
   const [inlineText, setInlineText] = useState('')
   const [savingInline, setSavingInline] = useState(false)
-  const [editingNoteId, setEditingNoteId] = useState<number | null>(null)
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<Note | null>(null)
 
@@ -66,8 +68,8 @@ export default function ReadingMode({ passage, onCapture, onRefresh, onPassageDe
     setEditingNoteId(null)
 
     Promise.all([
-      window.api.getBibleVerse(passage.reference_label),
-      window.api.getNotesByPassage(passage.id)
+      api.getBibleVerse(passage.reference_label),
+      api.getNotesByPassage(passage.id)
     ]).then(([bp, ns]) => {
       if (bp) setBiblePassage(bp)
       setNotes(ns)
@@ -76,7 +78,7 @@ export default function ReadingMode({ passage, onCapture, onRefresh, onPassageDe
 
   const notesByVerse = useCallback((): Map<number | null, NoteGroup[]> => {
     const map = new Map<number | null, NoteGroup[]>()
-    const sorted = [...notes].sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id - b.id)
+    const sorted = [...notes].sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id))
     let currentGroup: NoteGroup | null = null
     for (const note of sorted) {
       if (note.indent_level === 0) {
@@ -131,15 +133,15 @@ export default function ReadingMode({ passage, onCapture, onRefresh, onPassageDe
     setSavingInline(true)
     try {
       const parsed = parseNoteLine(inlineText)
-      const sessions = await window.api.getSessionsByPassage(passage.id)
-      let sessionId: number
+      const sessions = await api.getSessionsByPassage(passage.id)
+      let sessionId: string
       if (sessions.length > 0) {
         sessionId = sessions[0].id
       } else {
-        const session = await window.api.createSession(passage.id)
+        const session = await api.createSession(passage.id)
         sessionId = session.id
       }
-      const note = await window.api.createNote({
+      const note = await api.createNote({
         session_id: sessionId,
         content: inlineText,
         anchor_start_verse: parsed.anchorStart,
@@ -167,7 +169,7 @@ export default function ReadingMode({ passage, onCapture, onRefresh, onPassageDe
   const handleSaveEdit = async (): Promise<void> => {
     if (editingNoteId === null || !editText.trim()) return
     const parsed = parseNoteLine(editText)
-    const updated = await window.api.updateNote(editingNoteId, {
+    const updated = await api.updateNote(editingNoteId, {
       content: editText,
       anchor_start_verse: parsed.anchorStart,
       anchor_end_verse: parsed.anchorEnd,
@@ -179,7 +181,7 @@ export default function ReadingMode({ passage, onCapture, onRefresh, onPassageDe
   }
 
   const handleDeleteNote = async (note: Note): Promise<void> => {
-    const result = await window.api.deleteNoteAndCascade(note.id)
+    const result = await api.deleteNoteAndCascade(note.id)
     setNotes(prev => prev.filter(n => n.id !== note.id))
     setConfirmDelete(null)
     onRefresh?.()

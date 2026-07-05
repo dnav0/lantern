@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
+import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
 import NoteEditor, { makeLineId } from './NoteEditor'
 import PassagePane from './PassagePane'
 import ReferenceInput from './ReferenceInput'
 import { BiblePassage } from '../types'
 import { parseNoteLine, parseReferenceLabel } from '../utils/noteParser'
 import { findBookByAlias } from '../utils/bibleBooks'
+import { useApi } from '../api/context'
 
 interface LineData {
   id: string
@@ -14,13 +15,13 @@ interface LineData {
 
 export interface CaptureModeHandle {
   isDirty: () => boolean
-  save: () => Promise<number | null>
+  save: () => Promise<string | null>
 }
 
 interface CaptureModeProps {
   initialReference?: string
-  initialPassageId?: number | null
-  onSaveRead: (passageId: number) => void
+  initialPassageId?: string | null
+  onSaveRead: (passageId: string) => void
   onSaveNext: (nextReference?: string) => void
 }
 
@@ -41,6 +42,7 @@ const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function Cap
   onSaveRead,
   onSaveNext
 }, ref) {
+  const api = useApi()
   const [reference, setReference] = useState(initialReference)
   const [passage, setPassage] = useState<BiblePassage | null>(null)
   const [loadingPassage, setLoadingPassage] = useState(false)
@@ -49,7 +51,7 @@ const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function Cap
   const [highlightedVerses, setHighlightedVerses] = useState<Set<number>>(new Set())
   const [hasHighlight, setHasHighlight] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [editSessionId, setEditSessionId] = useState<number | null>(null)
+  const [editSessionId, setEditSessionId] = useState<string | null>(null)
 
   useEffect(() => {
     if (initialReference) {
@@ -60,11 +62,11 @@ const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function Cap
   useEffect(() => {
     if (!initialPassageId) return
     async function loadExistingNotes(): Promise<void> {
-      const sessions = await window.api.getSessionsByPassage(initialPassageId!)
+      const sessions = await api.getSessionsByPassage(initialPassageId!)
       if (sessions.length === 0) return
       const session = sessions[0]
       setEditSessionId(session.id)
-      const existingNotes = await window.api.getNotesBySession(session.id)
+      const existingNotes = await api.getNotesBySession(session.id)
       if (existingNotes.length > 0) {
         setLines(existingNotes.map(n => ({ id: makeLineId(), text: n.content, indent: n.indent_level ?? 0 })))
         setFocusedLineId(null)
@@ -77,7 +79,7 @@ const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function Cap
     if (!ref.trim()) return
     setLoadingPassage(true)
     try {
-      const result = await window.api.getBibleVerse(ref.trim())
+      const result = await api.getBibleVerse(ref.trim())
       if (result) setPassage(result)
     } catch (e) {
       console.error(e)
@@ -105,11 +107,11 @@ const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function Cap
     }
   }, [passage])
 
-  async function saveNotes(passageId: number, sessionId: number): Promise<void> {
+  async function saveNotes(sessionId: string): Promise<void> {
     const nonEmpty = lines.filter(l => l.text.trim())
     for (const line of nonEmpty) {
       const parsed = parseNoteLine(line.text)
-      await window.api.createNote({
+      await api.createNote({
         session_id: sessionId,
         content: line.text,
         anchor_start_verse: parsed.anchorStart,
@@ -122,23 +124,23 @@ const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function Cap
     }
   }
 
-  async function ensurePassageAndSession(): Promise<{ passageId: number; sessionId: number } | null> {
+  async function ensurePassageAndSession(): Promise<{ passageId: string; sessionId: string } | null> {
     if (initialPassageId) {
-      let sessionId: number
+      let sessionId: string
       if (editSessionId) {
         sessionId = editSessionId
       } else {
-        const sessions = await window.api.getSessionsByPassage(initialPassageId)
+        const sessions = await api.getSessionsByPassage(initialPassageId)
         if (sessions.length > 0) {
           sessionId = sessions[0].id
         } else {
-          const session = await window.api.createSession(initialPassageId)
+          const session = await api.createSession(initialPassageId)
           sessionId = session.id
         }
       }
-      const existingNotes = await window.api.getNotesBySession(sessionId)
+      const existingNotes = await api.getNotesBySession(sessionId)
       for (const note of existingNotes) {
-        await window.api.deleteNote(note.id)
+        await api.deleteNote(note.id)
       }
       return { passageId: initialPassageId, sessionId }
     }
@@ -148,19 +150,15 @@ const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function Cap
     const bookNameMatch = reference.trim().match(/^([\d\s]?[a-zA-Z\s]+?)(?=\s+\d)/)
     const bookName = bookNameMatch ? bookNameMatch[1].trim() : ''
     const bookInfo = findBookByAlias(bookName)
-    const book = await window.api.upsertBook(
-      bookInfo?.name || bookName,
-      bookInfo?.abbreviation || bookName.slice(0, 3)
-    )
-    const newPassage = await window.api.createPassage({
-      book_id: book.id,
+    const newPassage = await api.createPassage({
+      book_number: bookInfo?.number ?? 1,
       chapter_start: parsed.chapter_start,
       verse_start: parsed.verse_start,
       chapter_end: parsed.chapter_end,
       verse_end: parsed.verse_end,
       reference_label: reference.trim()
     })
-    const session = await window.api.createSession(newPassage.id)
+    const session = await api.createSession(newPassage.id)
     return { passageId: newPassage.id, sessionId: session.id }
   }
 
@@ -169,7 +167,7 @@ const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function Cap
     save: async () => {
       const ids = await ensurePassageAndSession()
       if (!ids) return null
-      await saveNotes(ids.passageId, ids.sessionId)
+      await saveNotes(ids.sessionId)
       return ids.passageId
     }
   }), [lines, reference])
@@ -180,7 +178,7 @@ const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function Cap
     try {
       const ids = await ensurePassageAndSession()
       if (!ids) return
-      await saveNotes(ids.passageId, ids.sessionId)
+      await saveNotes(ids.sessionId)
       onSaveRead(ids.passageId)
     } finally {
       setSaving(false)
@@ -193,7 +191,7 @@ const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function Cap
     try {
       const ids = await ensurePassageAndSession()
       if (!ids) return
-      await saveNotes(ids.passageId, ids.sessionId)
+      await saveNotes(ids.sessionId)
       const nextRef = guessNextReference(reference)
       onSaveNext(nextRef)
     } finally {
@@ -221,7 +219,6 @@ const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function Cap
           onChange={setLines}
           onFocusChange={setFocusedLineId}
           onCursorLine={handleCursorLine}
-          onVerseHover={() => {}}
         />
 
         <div className="capture-actions">

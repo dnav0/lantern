@@ -1,5 +1,8 @@
 export interface BibleBook {
   id: string
+  // USFM book number, 1 (Genesis) – 66 (Revelation). Canonical id used in the DB
+  // (passages.book_number) and by the scripture provider.
+  number: number
   name: string
   abbreviation: string
   aliases: string[]
@@ -7,7 +10,8 @@ export interface BibleBook {
   chapters: number
 }
 
-export const BIBLE_BOOKS: BibleBook[] = [
+// Source rows omit `number`; it is assigned from canonical order (index + 1) below.
+const BIBLE_BOOKS_SOURCE: Omit<BibleBook, 'number'>[] = [
   { id: 'gen', name: 'Genesis',          abbreviation: 'Gen', aliases: ['genesis','gen','ge'],                                         testament: 'OT', chapters: 50 },
   { id: 'exo', name: 'Exodus',           abbreviation: 'Exo', aliases: ['exodus','exo','ex','exod'],                                   testament: 'OT', chapters: 40 },
   { id: 'lev', name: 'Leviticus',        abbreviation: 'Lev', aliases: ['leviticus','lev','le'],                                       testament: 'OT', chapters: 27 },
@@ -76,6 +80,15 @@ export const BIBLE_BOOKS: BibleBook[] = [
   { id: 'jud', name: 'Jude',             abbreviation: 'Jud', aliases: ['jude','jud'],                                                 testament: 'NT', chapters: 1  },
   { id: 'rev', name: 'Revelation',       abbreviation: 'Rev', aliases: ['revelation','rev','re','apoc'],                               testament: 'NT', chapters: 22 },
 ]
+
+export const BIBLE_BOOKS: BibleBook[] = BIBLE_BOOKS_SOURCE.map((b, i) => ({ ...b, number: i + 1 }))
+
+const byNumber = new Map<number, BibleBook>()
+for (const book of BIBLE_BOOKS) byNumber.set(book.number, book)
+
+export function bookByNumber(n: number): BibleBook | undefined {
+  return byNumber.get(n)
+}
 
 // Alias lookup map
 const aliasMap = new Map<string, BibleBook>()

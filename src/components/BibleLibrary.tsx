@@ -1,9 +1,8 @@
 import React from 'react'
-import { Book, Passage } from '../types'
+import { Passage } from '../types'
 import { BIBLE_BOOKS, BibleBook } from '../utils/bibleBooks'
 
 interface BibleLibraryProps {
-  books: Book[]
   passages: Passage[]
   onSelectBook: (bookName: string) => void
 }
@@ -14,14 +13,12 @@ const NT = BIBLE_BOOKS.filter(b => b.testament === 'NT')
 function TestamentSection({
   label,
   bibleBooks,
-  dbBooks,
-  passages,
+  countByBook,
   onSelectBook
 }: {
   label: string
   bibleBooks: BibleBook[]
-  dbBooks: Book[]
-  passages: Passage[]
+  countByBook: Map<number, number>
   onSelectBook: (name: string) => void
 }): React.ReactElement {
   return (
@@ -29,9 +26,7 @@ function TestamentSection({
       <div className="bible-testament-label">{label}</div>
       <div className="bible-books-grid">
         {bibleBooks.map(book => {
-          const dbBook = dbBooks.find(b => b.name.toLowerCase() === book.name.toLowerCase())
-          const bookPassages = dbBook ? passages.filter(p => p.book_id === dbBook.id) : []
-          const passageCount = bookPassages.length
+          const passageCount = countByBook.get(book.number) ?? 0
           const studied = passageCount > 0
 
           return (
@@ -42,9 +37,7 @@ function TestamentSection({
               >
                 <span className={`bible-book-dot${studied ? ' visible' : ''}`} />
                 <span className="bible-book-name">{book.name}</span>
-                {studied && (
-                  <span className="bible-book-count">{passageCount}</span>
-                )}
+                {studied && <span className="bible-book-count">{passageCount}</span>}
               </div>
             </div>
           )
@@ -54,9 +47,14 @@ function TestamentSection({
   )
 }
 
-export default function BibleLibrary({ books, passages, onSelectBook }: BibleLibraryProps): React.ReactElement {
+export default function BibleLibrary({ passages, onSelectBook }: BibleLibraryProps): React.ReactElement {
+  const countByBook = new Map<number, number>()
+  for (const p of passages) {
+    countByBook.set(p.book_number, (countByBook.get(p.book_number) ?? 0) + 1)
+  }
+
   const passageCount = passages.length
-  const studiedBookCount = books.length
+  const studiedBookCount = countByBook.size
 
   return (
     <div className="bible-library">
@@ -69,8 +67,8 @@ export default function BibleLibrary({ books, passages, onSelectBook }: BibleLib
         </p>
       </div>
 
-      <TestamentSection label="Old Testament" bibleBooks={OT} dbBooks={books} passages={passages} onSelectBook={onSelectBook} />
-      <TestamentSection label="New Testament" bibleBooks={NT} dbBooks={books} passages={passages} onSelectBook={onSelectBook} />
+      <TestamentSection label="Old Testament" bibleBooks={OT} countByBook={countByBook} onSelectBook={onSelectBook} />
+      <TestamentSection label="New Testament" bibleBooks={NT} countByBook={countByBook} onSelectBook={onSelectBook} />
     </div>
   )
 }

@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useCallback, useState } from 'react'
 import { NoteCategory } from '../types'
 import { parseNoteLine } from '../utils/noteParser'
 import { getRawText, getRawCursorPos, setRawCursorPos, renderRich } from '../utils/richText'
+import { useApi } from '../api/context'
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
@@ -63,6 +64,7 @@ function scrollLineIntoView(lineEl: HTMLElement): void {
 // ─── RenderedLine (unfocused view with cross-ref hover) ───────────────────────
 
 function RenderedLine({ text }: { text: string }): React.ReactElement {
+  const api = useApi()
   const [hoverRef, setHoverRef] = useState<string | null>(null)
   const [hoverText, setHoverText] = useState<string | null>(null)
 
@@ -87,7 +89,7 @@ function RenderedLine({ text }: { text: string }): React.ReactElement {
               style={{ position: 'relative' }}
               onMouseEnter={async () => {
                 setHoverRef(ref)
-                const result = await window.api.getBibleVerse(ref)
+                const result = await api.getBibleVerse(ref)
                 if (result) setHoverText(result.text)
               }}
               onMouseLeave={() => { setHoverRef(null); setHoverText(null) }}
@@ -116,7 +118,6 @@ interface NoteEditorProps {
   onChange: (lines: NoteLineData[]) => void
   onFocusChange: (id: string | null) => void
   onCursorLine: (parsed: ReturnType<typeof parseNoteLine> | null) => void
-  onVerseHover: (reference: string | null) => void
 }
 
 export default function NoteEditor({
@@ -124,8 +125,7 @@ export default function NoteEditor({
   focusedLineId,
   onChange,
   onFocusChange,
-  onCursorLine,
-  onVerseHover
+  onCursorLine
 }: NoteEditorProps): React.ReactElement {
   const elRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const [tagDropdown, setTagDropdown] = useState<TagDropdown | null>(null)
