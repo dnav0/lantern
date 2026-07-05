@@ -116,6 +116,60 @@ notes (id uuid PK, session_id uuid refs sessions on delete cascade,
   `BibleVerseCache` / `Books` tables (replaced by the cache and the client
   `book_number` constant).
 
+## Auth & bootstrap (Phase 1)
+
+Sign-in is **email OTP**: the user enters an email, Supabase sends a 6-digit code,
+and the code is verified (`signInWithOtp({ shouldCreateUser: true })` →
+`verifyOtp({ type: 'email' })`, `src/api/auth.ts`). First sign-in doubles as
+sign-up, which fires the Postgres signup trigger that creates the user's profile,
+a personal workspace, and the owner membership. Sessions persist
+(`persistSession`, `autoRefreshToken`); sign-out lives in the settings modal.
+
+`src/Root.tsx` is the bootstrap that picks the backend and gates the app:
+
+- **Supabase configured** (`VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` present)
+  → auth-gated. Phases: `loading → signedOut (SignIn) → onboarding (Onboarding) →
+  ready (App)`. On a signed-in session it constructs `SupabaseBereanApi.create()`,
+  which resolves and caches the user's personal workspace id once, then provides
+  it via `ApiProvider`. Onboarding (optional name → capture intro → reading intro,
+  skippable) runs on first sign-in and sets `profiles.onboarding_done`
+  (localStorage `berean.onboarded` as a fallback).
+- **Not configured** → the in-memory stub (`memory.ts`), with a console warning.
+  `npm run dev` works with no backend for pure UI work.
+
+`SupabaseBereanApi` (`src/api/berean-api.ts`) is the one mutation choke point:
+client-generated `crypto.randomUUID()` ids, client-set ISO timestamps, downward
+deletes via `ON DELETE CASCADE`, and the upward empty-session / empty-passage
+cleanup done explicitly (mirroring the memory stub and the legacy desktop
+`deleteNoteAndCascade`).
+
+### Environment variables
+
+| Var | Where | Purpose |
+|---|---|---|
+| `VITE_SUPABASE_URL` | `.env` (browser) | Supabase project URL. Absent → memory stub. |
+| `VITE_SUPABASE_ANON_KEY` | `.env` (browser) | Supabase anon/public key. Absent → memory stub. |
+| service-role key | CLI arg only | Used by the migration script to bypass RLS. Never in the browser or committed. |
+
+See `.env.example`. `.env` is gitignored.
+
+### SQLite → Supabase migration
+
+`scripts/migrate-sqlite.ts` (run via `npx tsx`; Node APIs allowed here only — the
+rest of `src/` stays pure web) does a one-time import of the legacy Electron
+`berean.db` into a user's personal workspace. It remaps integer ids → UUIDs
+(preserving `created_at`), maps legacy book names → `book_number` via the same
+table as `src/utils/bibleBooks.ts`, inserts passages/sessions/notes with the
+service-role key, and prints a before/after count summary plus a few sample notes.
+
+```
+npx tsx scripts/migrate-sqlite.ts \
+  --db ./berean.db \
+  --url https://<ref>.supabase.co \
+  --service-key <service-role-key> \
+  --user-email you@example.com
+```
+
 ## Offline & PWA (Phase 4)
 
 - Reads work offline: an IndexedDB mirror of the user's notes plus the cached
