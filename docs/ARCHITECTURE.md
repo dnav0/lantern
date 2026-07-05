@@ -40,12 +40,45 @@ decision:
 
 ### The `BibleProvider` seam
 
-Scripture access is a second interface (`src/bible/`, Phase 2):
-`getChapter(bookNumber, chapter)` → `{ verse, text }[]`. BSB via
-`bible.helloao.org` is the first implementation; KJV, or ESV-with-user-key, are
-additional providers behind the same interface. A cache layer wraps any provider
-and stores chapters in IndexedDB forever (chapters are immutable). Phase 0 fakes
-scripture inside `memory.ts`.
+Scripture access is a second interface, `src/bible/provider.ts`:
+`getChapter(bookNumber, chapter)` → `{ verse, text }[]`. Implemented (Phase 2):
+
+- `src/bible/helloao.ts` — `HelloaoBibleProvider`, BSB via the free, keyless
+  `bible.helloao.org` API: `GET /api/BSB/{USFM}/{chapter}.json`. Book numbers
+  (1–66) map to helloao's 3-letter USFM codes via an explicit table
+  (`USFM_BY_BOOK_NUMBER`) rather than reusing `bibleBooks.ts`'s `id` field,
+  because a handful of codes differ (e.g. Ezekiel is `EZK` not `eze`, Joel is
+  `JOL`, Nahum is `NAM`, Song of Solomon is `SNG`). The response's
+  `chapter.content` is a flat array of typed nodes (`heading`, `line_break`,
+  `hebrew_subtitle`, `verse`); a verse's own `content` array mixes plain
+  strings with inline objects (`{ noteId }` footnote markers, `{ lineBreak:
+  true }`, `{ text, poem }` poetry lines). `flattenVerseContent` reduces all of
+  that to one plain-text string per verse — footnote markers and poem-line
+  structure aren't surfaced to components today.
+- `src/bible/cache.ts` — `CachedBibleProvider` wraps any `BibleProvider` with an
+  IndexedDB store (`berean-bible-cache`, key `translation/book/chapter`) and
+  caches forever: chapters are immutable, so once fetched, helloao downtime
+  never affects a chapter that's already been read.
+- `src/bible/service.ts` — the reference-based lookup (`getBibleVerse(reference)
+  -> BiblePassage | null`) that components actually call through `BereanApi`.
+  It parses a label like `"John 1:1-5"` or `"Genesis 3"` (book prefix via
+  `findBookByAlias`, chapter/verse via a regex tailored to the two shapes call
+  sites produce), fetches the chapter through the cached provider, and slices
+  the requested verse range (or returns the whole chapter when no verse
+  component is present). **Design choice:** `getBibleVerse` stayed on
+  `BereanApi` (both `memory.ts` and `berean-api.ts` delegate to
+  `bible/service.ts`) rather than being removed from the interface and having
+  components call the bible module directly — this keeps `BereanApi` as the
+  single thing components import for data, avoids call-site churn across
+  `CaptureMode`/`NoteEditor`/`ReadingMode`/`BookDetailPage`, and scripture
+  lookup is still trivially separable later if it ever needs to move.
+- KJV, or ESV-with-user-key, are future providers behind the same
+  `BibleProvider` interface — nothing about the seam is BSB-specific except
+  `helloao.ts`'s own USFM table.
+
+There is no translation selection anywhere: BSB is the only translation, so no
+translation state/props/settings UI exist. The provider interface is the sole
+extensibility point for adding one later.
 
 ### `platform/`
 
