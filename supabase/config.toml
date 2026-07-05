@@ -1,0 +1,37 @@
+# Supabase local/project config. Referenced by `npx supabase db push` / `supabase start`.
+# project_id is the linked project ref (set by `supabase link`); the placeholder
+# below is safe to commit and is overwritten on link.
+project_id = "berean"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+# Set to your deployed origin in production (Cloudflare Pages URL).
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+# Email OTP (6-digit code) sign-in. Disable magic-link confirmation email so the
+# code flow (signInWithOtp + verifyOtp) is the path used.
+double_confirm_changes = true
+enable_confirmations = false
+# OTP length/expiry — 6 digits, valid for 1 hour.
+otp_length = 6
+otp_expiry = 3600
