@@ -205,17 +205,88 @@ npx tsx scripts/migrate-sqlite.ts \
 
 ## Offline & PWA (Phase 4)
 
-- Reads work offline: an IndexedDB mirror of the user's notes plus the cached
-  scripture chapters means the app opens and reads fully with no network.
-- Writes fail gracefully: a failed mutation (detected by fetch failure, not just
-  `navigator.onLine`) surfaces a non-blocking "you're offline, changes can't be
-  saved yet" message; the UI stays usable read-only. A real write outbox is
-  backlog, but the catch point is already the single `BereanApi` choke.
-- Markdown export reuses the old vault serialization format, emitted as a zip via
-  `platform/export.ts`.
+### Installability and the service worker
+
+`vite-plugin-pwa` (`vite.config.ts`, `generateSW` strategy) emits the web app
+manifest and a Workbox service worker at build time:
+
+- **Manifest** — name/short_name "Berean", `standalone` display, theme and
+  background color `#F5F4F1` (matching the app's light background), three
+  icons (`192`, `512`, and a `512` `maskable` variant with ~10% safe-area
+  padding baked in) generated from `public/icon.svg`.
+- **Precache** — the app shell (JS/CSS/HTML/icons) via Workbox's default glob
+  precache, plus a SPA `navigateFallback` to `index.html`.
+- **Runtime caching** — a `NetworkOnly` rule for `*.supabase.co` traffic. The
+  service worker must never cache API responses: notes and auth always hit the
+  network (or fail loudly), so staleness is handled by the app's own offline
+  mirror below, not silently masked by the SW cache.
+- **Registration** — `registerType: 'autoUpdate'`; `src/main.tsx` calls the
+  `virtual:pwa-register` `registerSW()` so updates apply without a user prompt.
+
+### Offline reads: the notes mirror
+
+`src/offline/mirror.ts` is a small IndexedDB store (`berean-offline-mirror`)
+that mirrors `BereanApi` read-query *results*, keyed by `queryName + JSON(params)`
+(e.g. `getNotesByPassage:"<uuid>"`). It's whole-result, write-through, no
+merging — the opposite of a sync engine:
+
+- On every successful read, `SupabaseBereanApi` (`src/api/berean-api.ts`)
+  writes the full result to the mirror under that key.
+- On a read that fails with what looks like a network error, it falls back to
+  whatever was last mirrored for that exact key and returns it, so the app
+  still renders. Scripture chapters have their own, separate cache-forever
+  IndexedDB store (`src/bible/cache.ts`) and aren't routed through this mirror.
+
+### Offline writes: graceful failure, not silent loss
+
+Detection is by **fetch failure, not `navigator.onLine`** — the browser's
+online flag reflects link-layer state, not actual reachability of Supabase.
+`src/offline/status.ts` exports `isNetworkError()` (classifies `TypeError`s and
+Supabase's connectivity-error messages) and a tiny listener-based emitter
+(`subscribeOffline`, `markOffline`/`markOnline`) so both the plain-TS API layer
+and React components can react to connectivity changes without a shared store.
+
+`SupabaseBereanApi` routes every read through a `read()` helper (mirror
+write-through / fallback, described above) and every mutation through a
+`write()` helper: on a network failure it marks the app offline, fires a
+one-shot toast event, and throws a typed `OfflineError` — the same catch point
+the future write outbox (`docs/BACKLOG.md`) replaces.
+
+The UI surfaces two things, both in `src/components/OfflineIndicator.tsx`,
+mounted once in `App.tsx`'s shell:
+
+- A subtle, persistent **"Offline — viewing only" pill**, shown while
+  `isOffline()` is true (set on any `OfflineError`/mirror-served read; cleared
+  on the browser's `online` event or the next successful request).
+- A **non-blocking toast** ("You're offline — changes can't be saved yet."),
+  fired once per failed mutation attempt, auto-dismissing after a few seconds.
+
+### Markdown export
+
+`src/platform/export.ts` reuses the legacy Electron vault's serialization
+format exactly (frontmatter block — `reference`, `book`, `chapter_start`,
+`verse_start`, `chapter_end`, `verse_end`, `updated` ISO timestamp — then a
+blank line, then one `- {content}` line per note, ordered by
+`anchor_start_verse` ascending with nulls last, then `created_at`). "Export all
+notes" in `SettingsModal` calls `exportAllNotesAsZip(api)`, which walks every
+passage via the active `BereanApi`, builds one `.md` file per passage at
+`notes/{BookName}/{safeFilename(reference_label)}.md` (same `safeFilename`
+rules as the legacy vault: `:` → `.`, strip ``\/?*"|<>``), zips them with
+`fflate`, and triggers a browser download via `Blob` + a synthetic anchor
+click. Works against whichever `BereanApi` is active (Supabase or the memory
+stub), since it only calls interface methods.
+
 - **iOS PWA note:** every cached thing is re-fetchable (scripture is immutable and
-  re-downloadable; notes live in Supabase), so Safari storage eviction is an
-  inconvenience, never data loss.
+  re-downloadable; notes live in Supabase, mirrored locally only as a read
+  fallback), so Safari storage eviction is an inconvenience, never data loss.
+
+## Deploy (Phase 4)
+
+Cloudflare Pages, auto-deploying from `main`. Build command `npm run build`,
+output directory `dist`, environment variables `VITE_SUPABASE_URL` /
+`VITE_SUPABASE_ANON_KEY`. `public/_redirects` (`/* /index.html 200`) makes the
+single-page app's client-side view state survive a hard reload or deep link on
+any path.
 
 ## Responsive & touch (Phase 3)
 
