@@ -16,6 +16,13 @@ prioritized.
   replaces. Needs conflict handling and last-write-wins (or better) reconciliation
   given client-set timestamps.
 
+- **Custom SMTP for OTP code emails.** Supabase's default email template contains
+  only a magic link — the 6-digit code requires adding `{{ .Token }}` to the
+  template, which is gated behind custom SMTP (e.g. Resend free tier + a sender
+  domain). Until then `detectSessionInUrl: true` accepts the link as the sign-in
+  path; the code-entry UI in `SignIn.tsx` already works the moment the template
+  includes a code. Revisit before any native wrapper (links are fragile there).
+
 - **Google OAuth.** Add alongside email OTP. Links automatically to the existing
   account via verified email, so no account-merge flow needed.
 

@@ -73,7 +73,8 @@ export default function SignIn(): React.ReactElement {
         ) : (
           <form className="auth-form" onSubmit={handleVerify}>
             <p className="welcome-body">
-              Enter the 6-digit code sent to {email.trim()}.
+              Check your email at {email.trim()} — open the sign-in link on this device,
+              or enter the 6-digit code if the email includes one.
             </p>
             <input
               className="auth-input auth-input--code"

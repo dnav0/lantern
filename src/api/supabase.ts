@@ -13,7 +13,11 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: false
+        // Accept the magic-link redirect as a sign-in fallback: Supabase's default
+        // email template (uneditable without custom SMTP) contains only a link, no
+        // OTP code. The code-entry UI works once custom SMTP adds {{ .Token }} to
+        // the template — see docs/BACKLOG.md.
+        detectSessionInUrl: true
       }
     })
   : null
