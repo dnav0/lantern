@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useCallback, useState } from 'react'
 import { NoteCategory } from '../types'
 import { parseNoteLine } from '../utils/noteParser'
 import { getRawText, getRawCursorPos, setRawCursorPos, renderRich } from '../utils/richText'
-import { useApi } from '../api/context'
+import CrossRefPill from './CrossRefPill'
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
@@ -64,10 +64,6 @@ function scrollLineIntoView(lineEl: HTMLElement): void {
 // ─── RenderedLine (unfocused view with cross-ref hover) ───────────────────────
 
 function RenderedLine({ text }: { text: string }): React.ReactElement {
-  const api = useApi()
-  const [hoverRef, setHoverRef] = useState<string | null>(null)
-  const [hoverText, setHoverText] = useState<string | null>(null)
-
   if (!text) return <span style={{ color: '#DDD' }}>&nbsp;</span>
 
   const { segments } = parseNoteLine(text)
@@ -82,27 +78,7 @@ function RenderedLine({ text }: { text: string }): React.ReactElement {
         }
         if (seg.type === 'cross-ref') {
           const ref = seg.data?.reference ?? seg.raw
-          return (
-            <span
-              key={i}
-              className="pill-crossref"
-              style={{ position: 'relative' }}
-              onMouseEnter={async () => {
-                setHoverRef(ref)
-                const result = await api.getBibleVerse(ref)
-                if (result) setHoverText(result.text)
-              }}
-              onMouseLeave={() => { setHoverRef(null); setHoverText(null) }}
-            >
-              {seg.display}
-              {hoverRef === ref && (
-                <div className="crossref-hover-card">
-                  <div className="ref-label">{ref}</div>
-                  {hoverText ?? 'Loading…'}
-                </div>
-              )}
-            </span>
-          )
+          return <CrossRefPill key={i} reference={ref} display={seg.display} />
         }
         return <span key={i}>{seg.raw}</span>
       })}

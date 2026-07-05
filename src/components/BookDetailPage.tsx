@@ -6,6 +6,7 @@ import { useApi } from '../api/context'
 import InlineTagInput from './InlineTagInput'
 import RichEditInput from './RichEditInput'
 import ConfirmDialog from './ConfirmDialog'
+import CrossRefPill from './CrossRefPill'
 
 // ─── tiny helpers ────────────────────────────────────────────────────────────
 
@@ -29,7 +30,7 @@ function RenderedNoteContent({ content }: { content: string }): React.ReactEleme
         switch (seg.type) {
           case 'verse-anchor':  return <span key={i} className="pill-verse">{seg.display}</span>
           case 'tag':           return null
-          case 'cross-ref':     return <span key={i} className="pill-crossref">{seg.display}</span>
+          case 'cross-ref':     return <CrossRefPill key={i} reference={seg.data?.reference ?? seg.raw} display={seg.display} />
           default:              return <span key={i}>{seg.raw}</span>
         }
       })}

@@ -5,6 +5,7 @@ import { useApi } from '../api/context'
 import InlineTagInput from './InlineTagInput'
 import RichEditInput from './RichEditInput'
 import ConfirmDialog from './ConfirmDialog'
+import CrossRefPill from './CrossRefPill'
 
 interface ReadingModeProps {
   passage: Passage
@@ -36,7 +37,7 @@ function RenderedNoteContent({ content }: { content: string }): React.ReactEleme
           case 'tag':
             return null
           case 'cross-ref':
-            return <span key={i} className="pill-crossref">{seg.display}</span>
+            return <CrossRefPill key={i} reference={seg.data?.reference ?? seg.raw} display={seg.display} />
           default:
             return <span key={i}>{seg.raw}</span>
         }

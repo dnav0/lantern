@@ -4,6 +4,7 @@ import { parseNoteLine } from '../utils/noteParser'
 import { useApi } from '../api/context'
 import InlineTagInput from './InlineTagInput'
 import ConfirmDialog from './ConfirmDialog'
+import CrossRefPill from './CrossRefPill'
 
 interface NoteCardEditProps {
   note: Note
@@ -83,7 +84,7 @@ function NoteText({ content }: { content: string }): React.ReactElement {
       {segments.map((s, i) => {
         if (s.type === 'verse-anchor') return <span key={i} className="pill-verse">{s.display}</span>
         if (s.type === 'tag') return null
-        if (s.type === 'cross-ref') return <span key={i} className="pill-crossref">{s.display}</span>
+        if (s.type === 'cross-ref') return <CrossRefPill key={i} reference={s.data?.reference ?? s.raw} display={s.display} />
         return <span key={i}>{s.raw}</span>
       })}
     </>
