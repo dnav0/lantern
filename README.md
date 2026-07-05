@@ -1,211 +1,56 @@
 # Berean
 
-Personal Bible study notes — desktop app for macOS and Windows.
+A quiet place to study Scripture: read a passage, capture what you see in it, and
+read your notes back later anchored to the verses.
 
-Capture structured notes anchored to scripture passages, read them back as flowing annotated text alongside verse content, and keep everything as plain Markdown files your text editor or Obsidian can open.
+Berean is a personal Bible-study notes app. You work in two modes:
 
-**[getberean.app](https://getberean.app)**
+- **Capture** — load a passage's verse text and write notes beside it. Notes can
+  anchor to a verse (`v3`), carry a category tag (`@observation`, `@historical`,
+  `@application`, `@personal`), and reference other passages inline
+  (`John 1:1`). Indent a line to make it a sub-note.
+- **Reading** — browse your notes by passage or by book, laid out against the
+  verses they anchor to.
 
----
+## Status
 
-## Download
+This is the web-first rewrite, in progress. It's a Progressive Web App backed by
+Supabase, designed to run on the phone as easily as the desktop. The original
+Electron desktop app is frozen on the `legacy/electron` branch (tag
+`v1.2.1-electron-final`) and is not coming back — future native builds will wrap
+this same web code (Capacitor for mobile, Tauri for desktop).
 
-Grab the latest installer from the [Releases](../../releases/latest) page.
+Right now the app runs entirely on an in-memory stub: the full UI works, data
+lives in memory and resets on reload. The backend, real scripture, mobile layout,
+and offline support land in subsequent phases (see `docs/ARCHITECTURE.md`).
 
-| Platform | File |
-|---|---|
-| macOS (Apple Silicon + Intel) | `berean-x.x.x.dmg` |
-| Windows | `berean-x.x.x-setup.exe` |
+## Run it
 
-> **macOS note:** The app is unsigned for now. On first launch, right-click the app → Open → Open to bypass the Gatekeeper warning.
+Requires Node 18+.
 
-The app checks for updates on startup and every 4 hours. When a new version is ready it asks to restart.
-
----
-
-## Usage
-
-### Capture mode
-
-1. Type a passage reference in the heading bar — e.g. `Romans 8:1-11`
-2. Press **Enter** or **Tab** to load the verse text in the right pane
-3. Write notes as a bullet list on the left
-
-Notes support inline tokens that render as coloured pills:
-
-| Token | Example | What it does |
-|---|---|---|
-| Verse anchor | `v5` or `v4-6` | Highlights that verse in the passage pane |
-| Category tag | `@observation` | Colour-coded label; type `@` for a picker dropdown |
-| Cross-reference | `Matt 5:9` | Shows verse text on hover |
-
-4. **Save & Read** — saves and opens the passage in reading view
-5. **Save & Next** — saves and pre-fills the next verse range for continuous chapter study
-
-### Read mode
-
-- **Bible Library** — all 66 books with indicators for books you have notes in
-- **Book view** — chapter pills at the top; click any chapter to jump to it; verse text with your notes embedded inline
-- **Passage view** — verse-by-verse with notes after their anchored verses; click a note to highlight its verse(s) and vice versa
-- Inline note entry on any verse with the `+` button (hover to reveal)
-- Edit or delete any note inline
-
-### Sidebar
-
-- **Books tree** — expand any book to see its passages; click the pencil icon to open the Session Editor for bulk edits
-- **Themes** — free-form thematic notes not tied to a specific passage
-- **Vault** — shows where your Markdown files live; click **Change** to move the vault anywhere (e.g. your Obsidian vault folder)
-- **Dark mode** toggle in the top-right of the header
-
-### Notes vault
-
-Every note is stored in SQLite (fast, reliable) and simultaneously written as a plain Markdown file to your chosen vault folder. The default is `~/Documents/Berean`.
-
-On first launch you'll be asked to choose a folder. You can point it at an existing Obsidian vault — Berean creates a `notes/` and `themes/` subfolder and won't touch anything else.
-
-Vault structure:
-
-```
-Berean/
-  notes/
-    Romans/
-      Romans 8.1-11.md
-      Romans 12.1-2.md
-    John/
-      John 3.16.md
-  themes/
-    Grace.md
-    Faith and Works.md
-```
-
-Each passage file looks like this:
-
-```markdown
----
-reference: Romans 8:1-11
-book: Romans
-chapter_start: 8
-verse_start: 1
-chapter_end: 8
-verse_end: 11
-updated: 2026-04-16T10:30:00Z
----
-
-- v1-2 @observation Paul opens with a verdict — no condemnation for those in Christ
-- @historical Condemnation is a legal term from Roman courtrooms
-- v4 Matt 5:17 The law's requirement fulfilled *in us*, not *by us*
-```
-
----
-
-## Development setup
-
-### Prerequisites
-
-- Node.js 20+
-- On Windows: no Visual Studio required (uses prebuilt native binaries)
-
-### Install
-
-**Windows:**
-```bash
-npm install --ignore-scripts
-node node_modules/electron/install.js
-npx electron-builder install-app-deps
-```
-
-**macOS / Linux:**
 ```bash
 npm install
+npm run dev      # http://localhost:5173
 ```
 
-The `--ignore-scripts` flag on Windows skips trying to compile `better-sqlite3` from source. `install-app-deps` downloads the correct prebuilt binary for the Electron ABI version.
-
-### Run
+Other scripts:
 
 ```bash
-npm run dev
+npm run build    # type-check + production build to dist/
+npm run lint
+npm run format
 ```
 
-### Build
+## Where things are
 
-```bash
-# macOS DMG (arm64 + x64 universal)
-npm run package:mac
-
-# Windows NSIS installer
-npm run package:win
-
-# Build + publish to GitHub Releases (triggers auto-update in installed copies)
-npm run release
-```
-
----
-
-## Releasing a new version
-
-The recommended way is the `/release` Claude skill — open Claude Code in this project and type `/release`. It will ask for a bump type (patch/minor/major) and release notes, then handle everything.
-
-**Manual steps:**
-
-1. Update `src/renderer/src/assets/changelog.json` — prepend a new entry
-2. Bump the version: `npm version patch` (or `minor` / `major`)
-3. Commit: `git add -A && git commit -m "chore: release vX.X.X"`
-4. Tag and push:
-   ```bash
-   git tag vX.X.X
-   git push origin main
-   git push origin vX.X.X
-   ```
-5. GitHub Actions builds macOS + Windows in parallel and publishes them as a GitHub Release
-6. Installed copies auto-update within 4 hours
-
-**One-time GitHub setup (public repo — no tokens needed):**
-
-1. Push this repo to GitHub
-2. Make the repo public (Settings → Danger Zone → Change visibility)
-3. Update `owner` and `repo` in `electron-builder.yml` if you forked or renamed
-
-That's it. `secrets.GITHUB_TOKEN` is provided automatically by GitHub Actions — no manual secrets required.
-
----
-
-## Tech stack
-
-| Layer | Choice |
-|---|---|
-| Shell | Electron 33 |
-| Build | electron-vite 2 + Vite 5 |
-| UI | React 18 + TypeScript 5 |
-| Database | better-sqlite3 11 (synchronous SQLite) |
-| Styling | Plain CSS — no framework |
-| Auto-update | electron-updater 6 via GitHub Releases |
-| Verse text | [bible-api.com](https://bible-api.com) — WEB translation, no API key, cached in SQLite |
-
-### Why better-sqlite3 on Electron
-
-`better-sqlite3` is a native Node module. The prebuilt binary must match the Electron ABI version (not the system Node ABI). `electron-builder install-app-deps` handles this automatically. The binary is excluded from the asar archive via `asarUnpack` in `electron-builder.yml` so Electron can load it at runtime.
-
-Current pairing: **Electron 33 + better-sqlite3 11.4.0** (ABI v130/v131).
-
----
-
-## Data model
-
-```
-Books
-  └── Passages  (chapter_start, verse_start, chapter_end, verse_end, reference_label)
-        └── Sessions
-              └── Notes  (content, anchor_start_verse, anchor_end_verse, category)
-
-ThematicEntries  (title, content)
-BibleVerseCache  (reference, text, verses_json)
-```
-
-Cascade delete: removing a note removes its session if empty, its passage if empty, its book if empty. The vault file is deleted at the same time.
-
----
+- `src/App.tsx` — top-level view state and mode switching
+- `src/components/` — UI
+- `src/api/` — `BereanApi`, the single data seam (in-memory stub for now)
+- `src/utils/` — book metadata, note parsing, rich-text helpers
+- `docs/ARCHITECTURE.md` — design, target schema, decision log
+- `docs/BACKLOG.md` — deferred features
+- `CLAUDE.md` — conventions and the rules that keep the codebase portable
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+See `LICENSE`.
