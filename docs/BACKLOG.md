@@ -65,4 +65,8 @@ prioritized.
 
 ## Done
 
-_(move items here as they ship, with the phase/commit that landed them)_
+- **Nav restructure (UX overhaul, workstream 1).** Sidebar/drawer removed; top
+  nav (desktop) + bottom tab bar (mobile) with Bible · Journal · + Study ·
+  Profile; workspace-selector stub ("Personal ▾"); avatar/profile menu absorbing
+  the Settings entry point; Bible library is home. Journal is a placeholder
+  until workstream 2.

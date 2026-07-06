@@ -1,7 +1,15 @@
 /* ─── Reset & Base ─────────────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   overflow: hidden;
 }
@@ -10,14 +18,15 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   line-height: 1.6;
-  color: #1A1A1A;
-  background: #FAFAFA;
+  color: #1a1a1a;
+  background: #fafafa;
   -webkit-font-smoothing: antialiased;
 }
 
 /* ─── Layout ────────────────────────────────────────────────────────────────── */
-.app-layout {
+.app-shell {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   overflow: hidden;
 }
@@ -28,7 +37,7 @@ body {
   align-items: center;
   justify-content: center;
   height: 100vh;
-  background: #F7F6F3;
+  background: #f7f6f3;
   -webkit-app-region: drag;
 }
 
@@ -37,20 +46,20 @@ body {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  background: #FFFFFF;
-  border: 1px solid #E8E5E0;
+  background: #ffffff;
+  border: 1px solid #e8e5e0;
   border-radius: 18px;
   padding: 48px 52px 44px;
   max-width: 420px;
   width: 100%;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
   -webkit-app-region: no-drag;
 }
 
 .welcome-title {
   font-size: 22px;
   font-weight: 700;
-  color: #1A1A1A;
+  color: #1a1a1a;
   margin: 20px 0 4px;
   letter-spacing: -0.3px;
 }
@@ -85,8 +94,8 @@ body {
 }
 
 .welcome-path-box {
-  background: #F5F4F1;
-  border: 1px solid #E0DDD8;
+  background: #f5f4f1;
+  border: 1px solid #e0ddd8;
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 12px;
@@ -108,7 +117,7 @@ body {
 .welcome-btn-primary {
   width: 100%;
   padding: 11px 0;
-  background: #1E3358;
+  background: #1e3358;
   color: #fff;
   border: none;
   border-radius: 9px;
@@ -119,34 +128,66 @@ body {
   transition: background 0.15s;
 }
 
-.welcome-btn-primary:hover { background: #253F6B; }
+.welcome-btn-primary:hover {
+  background: #253f6b;
+}
 
 .welcome-btn-secondary {
   width: 100%;
   padding: 10px 0;
   background: transparent;
   color: #666;
-  border: 1px solid #DDD;
+  border: 1px solid #ddd;
   border-radius: 9px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
 
-.welcome-btn-secondary:hover:not(:disabled) { border-color: #7F77DD; color: #7F77DD; }
-.welcome-btn-secondary:disabled { opacity: 0.5; cursor: default; }
+.welcome-btn-secondary:hover:not(:disabled) {
+  border-color: #7f77dd;
+  color: #7f77dd;
+}
+.welcome-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
 
-body.dark .welcome-screen { background: #1A1A1E; }
-body.dark .welcome-card { background: #242428; border-color: #333; box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
-body.dark .welcome-title { color: #F0EDE8; }
-body.dark .welcome-body { color: #AAA; }
-body.dark .welcome-path-box { background: #1E1E22; border-color: #333; color: #AAA; }
-body.dark .welcome-btn-secondary { border-color: #444; color: #AAA; }
+body.dark .welcome-screen {
+  background: #1a1a1e;
+}
+body.dark .welcome-card {
+  background: #242428;
+  border-color: #333;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+body.dark .welcome-title {
+  color: #f0ede8;
+}
+body.dark .welcome-body {
+  color: #aaa;
+}
+body.dark .welcome-path-box {
+  background: #1e1e22;
+  border-color: #333;
+  color: #aaa;
+}
+body.dark .welcome-btn-secondary {
+  border-color: #444;
+  color: #aaa;
+}
 
 /* ─── Auth / onboarding ───────────────────────────────────────────────────── */
-.app-boot { height: 100vh; background: #F7F6F3; }
-body.dark .app-boot { background: #1A1A1E; }
+.app-boot {
+  height: 100vh;
+  background: #f7f6f3;
+}
+body.dark .app-boot {
+  background: #1a1a1e;
+}
 
 .auth-form {
   display: flex;
@@ -160,14 +201,16 @@ body.dark .app-boot { background: #1A1A1E; }
   box-sizing: border-box;
   padding: 11px 14px;
   font-size: 16px; /* >=16px keeps iOS from zooming on focus */
-  color: #1A1A1A;
-  background: #FFFFFF;
-  border: 1px solid #DDD;
+  color: #1a1a1a;
+  background: #ffffff;
+  border: 1px solid #ddd;
   border-radius: 9px;
   outline: none;
   transition: border-color 0.15s;
 }
-.auth-input:focus { border-color: #7F77DD; }
+.auth-input:focus {
+  border-color: #7f77dd;
+}
 
 .auth-input--code {
   text-align: center;
@@ -179,7 +222,7 @@ body.dark .app-boot { background: #1A1A1E; }
 
 .auth-error {
   font-size: 12.5px;
-  color: #B4453C;
+  color: #b4453c;
   margin: 0;
   text-align: left;
   line-height: 1.5;
@@ -193,165 +236,349 @@ body.dark .app-boot { background: #1A1A1E; }
   font-size: 12.5px;
   cursor: pointer;
 }
-.onboarding-skip:hover { color: #666; }
-.onboarding-skip:disabled { opacity: 0.5; cursor: default; }
+.onboarding-skip:hover {
+  color: #666;
+}
+.onboarding-skip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
 
 .bible-library-greeting {
   font-size: 13px;
-  color: #7F77DD;
+  color: #7f77dd;
   margin: 0 0 6px;
   font-weight: 500;
 }
 
-body.dark .auth-input { background: #1E1E22; border-color: #333; color: #F0EDE8; }
-body.dark .auth-input:focus { border-color: #7F77DD; }
-body.dark .auth-error { color: #E08A82; }
-body.dark .onboarding-skip { color: #888; }
-body.dark .onboarding-skip:hover { color: #AAA; }
-body.dark .bible-library-greeting { color: #9D95E5; }
+body.dark .auth-input {
+  background: #1e1e22;
+  border-color: #333;
+  color: #f0ede8;
+}
+body.dark .auth-input:focus {
+  border-color: #7f77dd;
+}
+body.dark .auth-error {
+  color: #e08a82;
+}
+body.dark .onboarding-skip {
+  color: #888;
+}
+body.dark .onboarding-skip:hover {
+  color: #aaa;
+}
+body.dark .bible-library-greeting {
+  color: #9d95e5;
+}
 
-/* ─── Sidebar ───────────────────────────────────────────────────────────────── */
-.sidebar {
-  width: 220px;
-  min-width: 220px;
-  background: #F5F4F1;
-  border-right: 0.5px solid #E0DDD8;
+/* ─── Navigation bar ────────────────────────────────────────────────────────── */
+/* Top bar: full nav on desktop; on mobile only the leading slot shows and the
+   bottom tab bar takes over the destinations. */
+.topnav {
   display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-  -webkit-app-region: drag;
+  align-items: center;
+  gap: 16px;
+  height: 52px;
+  padding: 0 16px;
+  background: #f5f4f1;
+  border-bottom: 0.5px solid #e0ddd8;
+  flex-shrink: 0;
   user-select: none;
 }
 
-.sidebar-header {
-  padding: 20px 16px 12px;
-}
-
-/* macOS — push content below the inset traffic light buttons */
-.platform-mac .sidebar-header {
-  padding-top: 44px;
-}
-
-.app-title-row {
+.topnav-lead {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 9px;
+  min-width: 0;
 }
 
-.app-title {
+.topnav-appname {
   font-size: 15px;
   font-weight: 600;
-  color: #1A1A1A;
+  color: #1a1a1a;
   letter-spacing: -0.2px;
 }
 
-.app-subtitle {
-  font-size: 11px;
-  color: #999;
-  margin-top: 1px;
-  font-weight: 400;
+/* Workspace selector stub ("Personal ▾") */
+.workspace-selector {
+  position: relative;
 }
 
-/* Mode toggle pill */
-.mode-toggle {
-  display: flex;
-  margin: 12px 16px 0;
-  background: #EAE9E5;
-  border-radius: 8px;
-  padding: 2px;
-  -webkit-app-region: no-drag;
-}
-
-.mode-toggle-btn {
-  flex: 1;
-  padding: 5px 0;
+.workspace-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
   border: none;
   background: transparent;
   border-radius: 6px;
   font-size: 12px;
+  font-family: inherit;
   color: #888;
   cursor: pointer;
-  font-family: inherit;
-  transition: all 0.15s;
+  transition:
+    background 0.12s,
+    color 0.12s;
 }
-
-.mode-toggle-btn.active {
-  background: #fff;
-  color: #1A1A1A;
-  font-weight: 500;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-
-/* Sidebar sections */
-.sidebar-section {
-  padding: 16px 16px 4px;
-  -webkit-app-region: no-drag;
-}
-
-.sidebar-section-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: #BBB;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-.sidebar-item {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 5px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
+.workspace-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
   color: #444;
-  transition: background 0.1s;
-  -webkit-app-region: no-drag;
 }
 
-.sidebar-item:hover { background: rgba(0,0,0,0.04); }
-.sidebar-item.active { background: rgba(127,119,221,0.1); color: #7F77DD; font-weight: 500; }
-
-.sidebar-item-dot {
-  width: 6px;
-  height: 6px;
+.workspace-dot {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: #7F77DD;
-  opacity: 0.6;
+  background: #7f77dd;
   flex-shrink: 0;
 }
 
-.sidebar-scroll {
+/* Center tabs */
+.topnav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   flex: 1;
-  overflow-y: auto;
-  padding-bottom: 8px;
+  justify-content: center;
 }
 
-.sidebar-scroll::-webkit-scrollbar { width: 0; }
-
-.sidebar-footer {
-  padding: 12px 16px;
-  border-top: 0.5px solid #E0DDD8;
-  -webkit-app-region: no-drag;
-}
-
-.btn-new-passage {
-  width: 100%;
-  padding: 8px 12px;
-  background: #7F77DD;
-  color: #fff;
+.topnav-tabs .nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
   border: none;
+  background: transparent;
   border-radius: 7px;
   font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
   font-family: inherit;
-  transition: opacity 0.15s;
+  color: #777;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+/* Desktop tabs are text-first; the icons belong to the bottom bar. */
+.topnav-tabs .nav-tab svg {
+  display: none;
+}
+.topnav-tabs .nav-tab:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #333;
+}
+.topnav-tabs .nav-tab.active {
+  background: rgba(127, 119, 221, 0.1);
+  color: #7f77dd;
+  font-weight: 500;
 }
 
-.btn-new-passage:hover { opacity: 0.88; }
+.topnav-trail {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* Avatar + dropdown menus */
+.profile-menu-host {
+  position: relative;
+}
+
+.avatar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: #7f77dd;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.avatar-btn:hover {
+  opacity: 0.88;
+}
+
+.nav-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  min-width: 180px;
+  background: #ffffff;
+  border: 1px solid #e4e1dc;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+  padding: 5px;
+  z-index: 500;
+}
+.workspace-menu {
+  left: 0;
+}
+.profile-menu {
+  right: 0;
+}
+
+.nav-menu-name {
+  padding: 8px 10px 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #444;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.nav-menu-item:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.05);
+}
+.nav-menu-item:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.nav-menu-item.active {
+  color: #7f77dd;
+  font-weight: 500;
+}
+
+.nav-menu-divider {
+  height: 1px;
+  background: #eeece7;
+  margin: 4px 6px;
+}
+
+.nav-menu-hint {
+  padding: 6px 10px 7px;
+  font-size: 11px;
+  color: #aaa;
+  line-height: 1.5;
+}
+
+/* Bottom tab bar — hidden on desktop, shown under 768px. */
+.bottomnav {
+  display: none;
+}
+
+/* ─── Journal / Profile placeholder pages ───────────────────────────────────── */
+.journal-page,
+.profile-page {
+  flex: 1;
+  overflow-y: auto;
+  padding: 48px 24px calc(48px + env(safe-area-inset-bottom));
+}
+
+.journal-page-empty {
+  max-width: 420px;
+  margin: 48px auto 0;
+  text-align: center;
+}
+
+.journal-page-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: -0.3px;
+  margin-bottom: 8px;
+}
+
+.journal-page-hint {
+  font-size: 13px;
+  color: #999;
+  line-height: 1.65;
+}
+
+.profile-page-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 28px;
+}
+
+.profile-page-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #7f77dd;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.profile-page-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.profile-page-workspace {
+  font-size: 12px;
+  color: #999;
+}
+
+.profile-page-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.profile-page-btn {
+  width: 100%;
+  padding: 11px 14px;
+  background: #ffffff;
+  border: 1px solid #e0ddd8;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  color: #444;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+}
+.profile-page-btn:hover:not(:disabled) {
+  background: #f5f4f1;
+}
+.profile-page-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.profile-page-btn-signout {
+  color: #c0392b;
+}
+
+.profile-page-error {
+  font-size: 12px;
+  color: #c0392b;
+  text-align: center;
+}
 
 /* ─── Main area ─────────────────────────────────────────────────────────────── */
 .main-area {
@@ -373,30 +600,37 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-right: 0.5px solid #E8E6E1;
+  border-right: 0.5px solid #e8e6e1;
 }
 
 .capture-right {
   flex: 1;
   overflow-y: auto;
-  background: #F8F7F4;
+  background: #f8f7f4;
 }
 
-.capture-right::-webkit-scrollbar { width: 4px; }
-.capture-right::-webkit-scrollbar-track { background: transparent; }
-.capture-right::-webkit-scrollbar-thumb { background: #DDD; border-radius: 2px; }
+.capture-right::-webkit-scrollbar {
+  width: 4px;
+}
+.capture-right::-webkit-scrollbar-track {
+  background: transparent;
+}
+.capture-right::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 2px;
+}
 
 /* Passage heading input */
 .passage-heading-wrap {
   padding: 28px 32px 16px;
-  border-bottom: 0.5px solid #EDEBE6;
+  border-bottom: 0.5px solid #edebe6;
 }
 
 .passage-heading-input {
   width: 100%;
   font-size: 20px;
   font-weight: 600;
-  color: #1A1A1A;
+  color: #1a1a1a;
   border: none;
   background: transparent;
   outline: none;
@@ -404,11 +638,13 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   letter-spacing: -0.3px;
 }
 
-.passage-heading-input::placeholder { color: #CCC; }
+.passage-heading-input::placeholder {
+  color: #ccc;
+}
 
 .passage-heading-hint {
   font-size: 11px;
-  color: #BBB;
+  color: #bbb;
   margin-top: 4px;
 }
 
@@ -419,8 +655,13 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   padding: 16px 32px 300px;
 }
 
-.notes-list::-webkit-scrollbar { width: 4px; }
-.notes-list::-webkit-scrollbar-thumb { background: #DDD; border-radius: 2px; }
+.notes-list::-webkit-scrollbar {
+  width: 4px;
+}
+.notes-list::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 2px;
+}
 
 .note-line {
   display: flex;
@@ -431,7 +672,7 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 }
 
 .note-bullet {
-  color: #CCC;
+  color: #ccc;
   font-size: 16px;
   line-height: 28px;
   flex-shrink: 0;
@@ -449,14 +690,16 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   outline: none;
   font-size: 14px;
   font-family: inherit;
-  color: #1A1A1A;
+  color: #1a1a1a;
   line-height: 1.6;
   padding: 4px 0;
   resize: none;
   min-height: 28px;
 }
 
-.note-input::placeholder { color: #CCC; }
+.note-input::placeholder {
+  color: #ccc;
+}
 
 /* Contenteditable note line (focused state) */
 .note-richtext {
@@ -466,7 +709,7 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   outline: none;
   font-size: 14px;
   font-family: inherit;
-  color: #1A1A1A;
+  color: #1a1a1a;
   line-height: 1.6;
   padding: 4px 0;
   min-height: 28px;
@@ -479,11 +722,11 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 
 .note-richtext:empty::before {
   content: attr(data-placeholder);
-  color: #CCC;
+  color: #ccc;
   pointer-events: none;
 }
 
-.note-richtext [contenteditable="false"] {
+.note-richtext [contenteditable='false'] {
   cursor: text;
   user-select: none;
   -webkit-user-select: none;
@@ -503,8 +746,8 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 .pill-verse {
   display: inline-flex;
   align-items: center;
-  background: rgba(127,119,221,0.12);
-  color: #7F77DD;
+  background: rgba(127, 119, 221, 0.12);
+  color: #7f77dd;
   border-radius: 4px;
   padding: 1px 6px;
   font-size: 12px;
@@ -516,8 +759,8 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 .pill-crossref {
   display: inline-flex;
   align-items: center;
-  background: rgba(29,158,117,0.1);
-  color: #1D9E75;
+  background: rgba(29, 158, 117, 0.1);
+  color: #1d9e75;
   border-radius: 4px;
   padding: 1px 6px;
   font-size: 12px;
@@ -528,12 +771,54 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   position: relative;
 }
 
-.pill-crossref:hover { background: rgba(29,158,117,0.18); }
+.pill-crossref:hover {
+  background: rgba(29, 158, 117, 0.18);
+}
 
-.pill-tag-observation { background: rgba(127,119,221,0.12); color: #7F77DD; border-radius: 4px; padding: 1px 6px; font-size: 12px; font-weight: 500; line-height: 18px; display: inline-flex; align-items: center; }
-.pill-tag-historical  { background: rgba(29,158,117,0.1);  color: #1D9E75; border-radius: 4px; padding: 1px 6px; font-size: 12px; font-weight: 500; line-height: 18px; display: inline-flex; align-items: center; }
-.pill-tag-application { background: rgba(186,117,23,0.1);  color: #BA7517; border-radius: 4px; padding: 1px 6px; font-size: 12px; font-weight: 500; line-height: 18px; display: inline-flex; align-items: center; }
-.pill-tag-personal    { background: rgba(212,83,126,0.1);  color: #D4537E; border-radius: 4px; padding: 1px 6px; font-size: 12px; font-weight: 500; line-height: 18px; display: inline-flex; align-items: center; }
+.pill-tag-observation {
+  background: rgba(127, 119, 221, 0.12);
+  color: #7f77dd;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  display: inline-flex;
+  align-items: center;
+}
+.pill-tag-historical {
+  background: rgba(29, 158, 117, 0.1);
+  color: #1d9e75;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  display: inline-flex;
+  align-items: center;
+}
+.pill-tag-application {
+  background: rgba(186, 117, 23, 0.1);
+  color: #ba7517;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  display: inline-flex;
+  align-items: center;
+}
+.pill-tag-personal {
+  background: rgba(212, 83, 126, 0.1);
+  color: #d4537e;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  display: inline-flex;
+  align-items: center;
+}
 
 /* Cross-ref hover card */
 .crossref-hover-card {
@@ -541,7 +826,7 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   bottom: calc(100% + 6px);
   left: 0;
   background: #fff;
-  border: 0.5px solid #E0DDD8;
+  border: 0.5px solid #e0ddd8;
   border-radius: 8px;
   padding: 10px 12px;
   min-width: 220px;
@@ -550,13 +835,13 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   color: #444;
   line-height: 1.5;
   z-index: 100;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   pointer-events: none;
 }
 
 .crossref-hover-card .ref-label {
   font-weight: 600;
-  color: #1A1A1A;
+  color: #1a1a1a;
   margin-bottom: 4px;
   font-size: 11px;
 }
@@ -564,7 +849,7 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 /* Capture actions */
 .capture-actions {
   padding: 14px 32px;
-  border-top: 0.5px solid #EDEBE6;
+  border-top: 0.5px solid #edebe6;
   display: flex;
   gap: 8px;
   flex-shrink: 0;
@@ -590,20 +875,25 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 }
 
 .btn-save-read {
-  background: #7F77DD;
+  background: #7f77dd;
   color: #fff;
   border: none;
 }
 
-.btn-save-read:hover:not(:disabled) { opacity: 0.88; }
+.btn-save-read:hover:not(:disabled) {
+  opacity: 0.88;
+}
 
 .btn-save-next {
   background: transparent;
-  color: #7F77DD;
-  border: 0.5px solid #C4C0F0;
+  color: #7f77dd;
+  border: 0.5px solid #c4c0f0;
 }
 
-.btn-save-next:hover:not(:disabled) { background: rgba(127,119,221,0.07); border-color: #7F77DD; }
+.btn-save-next:hover:not(:disabled) {
+  background: rgba(127, 119, 221, 0.07);
+  border-color: #7f77dd;
+}
 
 /* ─── Passage pane (right) ──────────────────────────────────────────────────── */
 .passage-pane {
@@ -615,7 +905,7 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #CCC;
+  color: #ccc;
   font-size: 13px;
   text-align: center;
   padding: 24px;
@@ -624,7 +914,7 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 .passage-pane-reference {
   font-size: 11px;
   font-weight: 600;
-  color: #BBB;
+  color: #bbb;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   margin-bottom: 16px;
@@ -641,7 +931,7 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 }
 
 .passage-verse.highlighted {
-  background: rgba(127,119,221,0.1);
+  background: rgba(127, 119, 221, 0.1);
 }
 
 .passage-verse.dimmed {
@@ -651,7 +941,7 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 .verse-number {
   font-size: 10px;
   font-weight: 600;
-  color: #BBB;
+  color: #bbb;
   line-height: 1.8;
   min-width: 18px;
   flex-shrink: 0;
@@ -664,7 +954,9 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   flex: 1;
 }
 
-.passage-verse.highlighted .verse-text { color: #1A1A1A; }
+.passage-verse.highlighted .verse-text {
+  color: #1a1a1a;
+}
 
 /* ─── Reading mode ──────────────────────────────────────────────────────────── */
 .reading-layout {
@@ -673,8 +965,13 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   padding: 40px 0;
 }
 
-.reading-layout::-webkit-scrollbar { width: 6px; }
-.reading-layout::-webkit-scrollbar-thumb { background: #DDD; border-radius: 3px; }
+.reading-layout::-webkit-scrollbar {
+  width: 6px;
+}
+.reading-layout::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 3px;
+}
 
 .reading-content {
   max-width: 680px;
@@ -690,13 +987,13 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.5px;
-  color: #1A1A1A;
+  color: #1a1a1a;
   margin-bottom: 8px;
 }
 
 .reading-meta {
   font-size: 12px;
-  color: #AAA;
+  color: #aaa;
   display: flex;
   gap: 16px;
 }
@@ -716,9 +1013,15 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   position: relative;
 }
 
-.reading-verse-row:hover { background: rgba(0,0,0,0.02); }
-.reading-verse-row:hover .verse-add-btn { opacity: 1; }
-.reading-verse-row.highlighted { background: rgba(127,119,221,0.1); }
+.reading-verse-row:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+.reading-verse-row:hover .verse-add-btn {
+  opacity: 1;
+}
+.reading-verse-row.highlighted {
+  background: rgba(127, 119, 221, 0.1);
+}
 
 .verse-add-btn {
   position: absolute;
@@ -728,8 +1031,8 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  border: 0.5px solid #7F77DD;
-  color: #7F77DD;
+  border: 0.5px solid #7f77dd;
+  color: #7f77dd;
   font-size: 13px;
   line-height: 16px;
   text-align: center;
@@ -759,16 +1062,28 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   cursor: pointer;
   transition: background 0.12s;
   border-left: 2.5px solid transparent;
-  background: rgba(0,0,0,0.015);
+  background: rgba(0, 0, 0, 0.015);
 }
 
-.reading-note-card:hover { background: rgba(0,0,0,0.03); }
-.reading-note-card.highlighted { background: rgba(127,119,221,0.06); }
+.reading-note-card:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+.reading-note-card.highlighted {
+  background: rgba(127, 119, 221, 0.06);
+}
 
-.reading-note-card.cat-observation { border-left-color: #7F77DD; }
-.reading-note-card.cat-historical  { border-left-color: #1D9E75; }
-.reading-note-card.cat-application { border-left-color: #BA7517; }
-.reading-note-card.cat-personal    { border-left-color: #D4537E; }
+.reading-note-card.cat-observation {
+  border-left-color: #7f77dd;
+}
+.reading-note-card.cat-historical {
+  border-left-color: #1d9e75;
+}
+.reading-note-card.cat-application {
+  border-left-color: #ba7517;
+}
+.reading-note-card.cat-personal {
+  border-left-color: #d4537e;
+}
 
 .reading-note-meta {
   font-size: 10px;
@@ -778,11 +1093,21 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   margin-bottom: 3px;
 }
 
-.reading-note-meta.cat-observation { color: #7F77DD; }
-.reading-note-meta.cat-historical  { color: #1D9E75; }
-.reading-note-meta.cat-application { color: #BA7517; }
-.reading-note-meta.cat-personal    { color: #D4537E; }
-.reading-note-meta.cat-none        { color: #BBB; }
+.reading-note-meta.cat-observation {
+  color: #7f77dd;
+}
+.reading-note-meta.cat-historical {
+  color: #1d9e75;
+}
+.reading-note-meta.cat-application {
+  color: #ba7517;
+}
+.reading-note-meta.cat-personal {
+  color: #d4537e;
+}
+.reading-note-meta.cat-none {
+  color: #bbb;
+}
 
 .reading-subnote-meta {
   font-size: 9px;
@@ -791,10 +1116,18 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   text-transform: uppercase;
   margin-bottom: 2px;
 }
-.reading-subnote-meta.cat-observation { color: #7F77DD; }
-.reading-subnote-meta.cat-historical  { color: #1D9E75; }
-.reading-subnote-meta.cat-application { color: #BA7517; }
-.reading-subnote-meta.cat-personal    { color: #D4537E; }
+.reading-subnote-meta.cat-observation {
+  color: #7f77dd;
+}
+.reading-subnote-meta.cat-historical {
+  color: #1d9e75;
+}
+.reading-subnote-meta.cat-application {
+  color: #ba7517;
+}
+.reading-subnote-meta.cat-personal {
+  color: #d4537e;
+}
 
 /* Sub-notes nested inside a note card */
 .reading-subnotes {
@@ -811,12 +1144,17 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   color: #666;
 }
 
-.reading-subnote:first-child { margin-top: 2px; }
+.reading-subnote:first-child {
+  margin-top: 2px;
+}
 
-.reading-subnote.highlighted { background: rgba(127,119,221,0.05); border-radius: 4px; }
+.reading-subnote.highlighted {
+  background: rgba(127, 119, 221, 0.05);
+  border-radius: 4px;
+}
 
 .reading-subnote-bullet {
-  color: #BBB;
+  color: #bbb;
   font-size: 10px;
   line-height: 1.7;
   flex-shrink: 0;
@@ -834,18 +1172,18 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 .inline-note-input {
   flex: 1;
   border: none;
-  border-bottom: 0.5px solid #DDD;
+  border-bottom: 0.5px solid #ddd;
   background: transparent;
   font-size: 13px;
   font-family: inherit;
   outline: none;
   padding: 2px 0;
-  color: #1A1A1A;
+  color: #1a1a1a;
 }
 
 .inline-note-hint {
   font-size: 11px;
-  color: #BBB;
+  color: #bbb;
   padding-top: 2px;
 }
 
@@ -856,12 +1194,19 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #CCC;
+  color: #ccc;
   gap: 8px;
 }
 
-.empty-state-title { font-size: 15px; font-weight: 500; color: #BBB; }
-.empty-state-sub   { font-size: 13px; color: #CCC; }
+.empty-state-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: #bbb;
+}
+.empty-state-sub {
+  font-size: 13px;
+  color: #ccc;
+}
 
 /* ─── Loading spinner ───────────────────────────────────────────────────────── */
 .loading-dots {
@@ -870,14 +1215,14 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   align-items: center;
   justify-content: center;
   padding: 16px;
-  color: #CCC;
+  color: #ccc;
   font-size: 12px;
 }
 
 /* ─── Scrollbar globals ─────────────────────────────────────────────────────── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #DDD transparent;
+  scrollbar-color: #ddd transparent;
 }
 
 /* ─── Reference autocomplete ────────────────────────────────────────────────── */
@@ -886,9 +1231,11 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   top: calc(100% + 4px);
   left: 0;
   background: #fff;
-  border: 0.5px solid #E0DDD8;
+  border: 0.5px solid #e0ddd8;
   border-radius: 9px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.09), 0 1px 4px rgba(0,0,0,0.04);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.09),
+    0 1px 4px rgba(0, 0, 0, 0.04);
   min-width: 220px;
   max-width: 320px;
   overflow: hidden;
@@ -907,18 +1254,18 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 
 .ref-autocomplete-item:hover,
 .ref-autocomplete-item.active {
-  background: #F5F3FF;
+  background: #f5f3ff;
 }
 
 .ref-ac-name {
   font-size: 14px;
-  color: #1A1A1A;
+  color: #1a1a1a;
   font-weight: 500;
 }
 
 .ref-ac-abbr {
   font-size: 11px;
-  color: #BBB;
+  color: #bbb;
   font-weight: 400;
 }
 
@@ -929,8 +1276,13 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   padding: 36px 40px 48px;
 }
 
-.bible-library::-webkit-scrollbar { width: 6px; }
-.bible-library::-webkit-scrollbar-thumb { background: #DDD; border-radius: 3px; }
+.bible-library::-webkit-scrollbar {
+  width: 6px;
+}
+.bible-library::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 3px;
+}
 
 .bible-library-header {
   margin-bottom: 32px;
@@ -939,14 +1291,14 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 .bible-library-title {
   font-size: 22px;
   font-weight: 700;
-  color: #1A1A1A;
+  color: #1a1a1a;
   letter-spacing: -0.4px;
   margin-bottom: 4px;
 }
 
 .bible-library-sub {
   font-size: 13px;
-  color: #AAA;
+  color: #aaa;
 }
 
 .bible-testament-section {
@@ -958,10 +1310,10 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #BBB;
+  color: #bbb;
   margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 0.5px solid #EDEBE6;
+  border-bottom: 0.5px solid #edebe6;
 }
 
 .bible-books-grid {
@@ -984,24 +1336,30 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   transition: background 0.1s;
 }
 
-.bible-book-row:hover { background: rgba(0,0,0,0.03); }
-.bible-book-row.studied:hover { background: rgba(127,119,221,0.06); }
+.bible-book-row:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+.bible-book-row.studied:hover {
+  background: rgba(127, 119, 221, 0.06);
+}
 
 .bible-book-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #7F77DD;
+  background: #7f77dd;
   flex-shrink: 0;
   opacity: 0;
   transition: opacity 0.15s;
 }
 
-.bible-book-dot.visible { opacity: 1; }
+.bible-book-dot.visible {
+  opacity: 1;
+}
 
 .bible-book-name {
   font-size: 13px;
-  color: #AAA;
+  color: #aaa;
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
@@ -1009,12 +1367,15 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   transition: color 0.1s;
 }
 
-.bible-book-row.studied .bible-book-name { color: #1A1A1A; font-weight: 500; }
+.bible-book-row.studied .bible-book-name {
+  color: #1a1a1a;
+  font-weight: 500;
+}
 
 .bible-book-count {
   font-size: 11px;
-  color: #7F77DD;
-  background: rgba(127,119,221,0.1);
+  color: #7f77dd;
+  background: rgba(127, 119, 221, 0.1);
   border-radius: 10px;
   padding: 1px 6px;
   font-weight: 600;
@@ -1038,11 +1399,14 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   transition: background 0.1s;
 }
 
-.bible-passage-item:hover { background: rgba(127,119,221,0.07); color: #7F77DD; }
+.bible-passage-item:hover {
+  background: rgba(127, 119, 221, 0.07);
+  color: #7f77dd;
+}
 
 .bible-passage-sessions {
   font-size: 10px;
-  color: #BBB;
+  color: #bbb;
   white-space: nowrap;
 }
 
@@ -1052,9 +1416,11 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   top: calc(100% + 2px);
   left: 18px;
   background: #fff;
-  border: 0.5px solid #E0DDD8;
+  border: 0.5px solid #e0ddd8;
   border-radius: 9px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1), 0 1px 4px rgba(0,0,0,0.04);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.1),
+    0 1px 4px rgba(0, 0, 0, 0.04);
   min-width: 186px;
   overflow: hidden;
   z-index: 200;
@@ -1074,7 +1440,7 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 
 .tag-dropdown-item:hover,
 .tag-dropdown-item.active {
-  background: #F5F3FF;
+  background: #f5f3ff;
 }
 
 .tag-dropdown-swatch {
@@ -1084,10 +1450,18 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   flex-shrink: 0;
 }
 
-.swatch-observation { background: #7F77DD; }
-.swatch-historical  { background: #1D9E75; }
-.swatch-application { background: #BA7517; }
-.swatch-personal    { background: #D4537E; }
+.swatch-observation {
+  background: #7f77dd;
+}
+.swatch-historical {
+  background: #1d9e75;
+}
+.swatch-application {
+  background: #ba7517;
+}
+.swatch-personal {
+  background: #d4537e;
+}
 
 .tag-dropdown-label {
   font-weight: 500;
@@ -1103,7 +1477,7 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 
 .book-detail-header {
   padding: 24px 36px 16px;
-  border-bottom: 0.5px solid #EDEBE6;
+  border-bottom: 0.5px solid #edebe6;
   flex-shrink: 0;
 }
 
@@ -1112,7 +1486,7 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: #AAA;
+  color: #aaa;
   background: none;
   border: none;
   cursor: pointer;
@@ -1122,19 +1496,21 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   transition: color 0.1s;
 }
 
-.book-detail-back:hover { color: #7F77DD; }
+.book-detail-back:hover {
+  color: #7f77dd;
+}
 
 .book-detail-title {
   font-size: 22px;
   font-weight: 700;
-  color: #1A1A1A;
+  color: #1a1a1a;
   letter-spacing: -0.4px;
   margin-bottom: 4px;
 }
 
 .book-detail-meta {
   font-size: 12px;
-  color: #AAA;
+  color: #aaa;
 }
 
 /* Chapter selector */
@@ -1143,7 +1519,7 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  border-bottom: 0.5px solid #EDEBE6;
+  border-bottom: 0.5px solid #edebe6;
   flex-shrink: 0;
 }
 
@@ -1154,14 +1530,19 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: #BBB;
+  color: #bbb;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
 }
-.chapter-nav-btn:hover { background: #F0EEE9; color: #555; }
+.chapter-nav-btn:hover {
+  background: #f0eee9;
+  color: #555;
+}
 
 .chapter-selector {
   display: flex;
@@ -1171,17 +1552,19 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   scrollbar-width: none;
 }
 
-.chapter-selector::-webkit-scrollbar { display: none; }
+.chapter-selector::-webkit-scrollbar {
+  display: none;
+}
 
 .chapter-pill {
   flex-shrink: 0;
   min-width: 32px;
   height: 28px;
   border-radius: 6px;
-  border: 0.5px solid #E0DDD8;
+  border: 0.5px solid #e0ddd8;
   background: transparent;
   font-size: 12px;
-  color: #AAA;
+  color: #aaa;
   cursor: pointer;
   font-family: inherit;
   display: flex;
@@ -1193,18 +1576,21 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   padding: 0 6px;
 }
 
-.chapter-pill:hover { background: #F5F4F1; color: #555; }
+.chapter-pill:hover {
+  background: #f5f4f1;
+  color: #555;
+}
 
 .chapter-pill.active {
-  background: #7F77DD;
-  border-color: #7F77DD;
+  background: #7f77dd;
+  border-color: #7f77dd;
   color: #fff;
   font-weight: 600;
 }
 
 .chapter-pill.has-notes {
-  color: #7F77DD;
-  border-color: #C4C0F0;
+  color: #7f77dd;
+  border-color: #c4c0f0;
 }
 
 .chapter-pill.active.has-notes {
@@ -1215,7 +1601,7 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #7F77DD;
+  background: #7f77dd;
   flex-shrink: 0;
 }
 
@@ -1226,8 +1612,13 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   padding: 24px 36px 48px;
 }
 
-.book-detail-content::-webkit-scrollbar { width: 6px; }
-.book-detail-content::-webkit-scrollbar-thumb { background: #DDD; border-radius: 3px; }
+.book-detail-content::-webkit-scrollbar {
+  width: 6px;
+}
+.book-detail-content::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 3px;
+}
 
 .book-chapter-content {
   max-width: 640px;
@@ -1238,9 +1629,9 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   align-items: center;
   gap: 5px;
   font-size: 12px;
-  color: #7F77DD;
-  background: rgba(127,119,221,0.07);
-  border: 0.5px solid #C4C0F0;
+  color: #7f77dd;
+  background: rgba(127, 119, 221, 0.07);
+  border: 0.5px solid #c4c0f0;
   border-radius: 6px;
   padding: 4px 10px;
   cursor: pointer;
@@ -1249,15 +1640,25 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   transition: all 0.12s;
 }
 
-.btn-capture-chapter:hover { background: rgba(127,119,221,0.13); }
+.btn-capture-chapter:hover {
+  background: rgba(127, 119, 221, 0.13);
+}
 
 /* ─── Animations ────────────────────────────────────────────────────────────── */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.fade-in { animation: fadeIn 0.2s ease; }
+.fade-in {
+  animation: fadeIn 0.2s ease;
+}
 
 /* ─── No passages selected ──────────────────────────────────────────────────── */
 .welcome-screen {
@@ -1273,7 +1674,7 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 .welcome-title {
   font-size: 22px;
   font-weight: 600;
-  color: #1A1A1A;
+  color: #1a1a1a;
   letter-spacing: -0.3px;
 }
 
@@ -1288,7 +1689,7 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 .welcome-cta {
   margin-top: 8px;
   padding: 10px 20px;
-  background: #7F77DD;
+  background: #7f77dd;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -1299,13 +1700,15 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   transition: opacity 0.15s;
 }
 
-.welcome-cta:hover { opacity: 0.88; }
+.welcome-cta:hover {
+  opacity: 0.88;
+}
 
 /* ─── ConfirmDialog ──────────────────────────────────────────────────────────── */
 .dialog-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.32);
+  background: rgba(0, 0, 0, 0.32);
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -1319,14 +1722,16 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   padding: 24px;
   min-width: 300px;
   max-width: 420px;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.16),
+    0 2px 8px rgba(0, 0, 0, 0.08);
   animation: slideUp 0.15s ease;
 }
 
 .dialog-title {
   font-size: 15px;
   font-weight: 600;
-  color: #1A1A1A;
+  color: #1a1a1a;
   margin-bottom: 8px;
 }
 
@@ -1355,18 +1760,40 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   transition: all 0.12s;
 }
 
-.dialog-btn-primary { background: #7F77DD; color: #fff; }
-.dialog-btn-primary:hover { opacity: 0.88; }
+.dialog-btn-primary {
+  background: #7f77dd;
+  color: #fff;
+}
+.dialog-btn-primary:hover {
+  opacity: 0.88;
+}
 
-.dialog-btn-danger { background: #E83D3D; color: #fff; }
-.dialog-btn-danger:hover { opacity: 0.88; }
+.dialog-btn-danger {
+  background: #e83d3d;
+  color: #fff;
+}
+.dialog-btn-danger:hover {
+  opacity: 0.88;
+}
 
-.dialog-btn-ghost { background: transparent; color: #666; border: 0.5px solid #DDD; }
-.dialog-btn-ghost:hover { background: #F5F4F1; }
+.dialog-btn-ghost {
+  background: transparent;
+  color: #666;
+  border: 0.5px solid #ddd;
+}
+.dialog-btn-ghost:hover {
+  background: #f5f4f1;
+}
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ─── Session editor ─────────────────────────────────────────────────────────── */
@@ -1379,14 +1806,14 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 
 .session-editor-header {
   padding: 24px 32px 16px;
-  border-bottom: 0.5px solid #EDEBE6;
+  border-bottom: 0.5px solid #edebe6;
   flex-shrink: 0;
 }
 
 .session-editor-title {
   font-size: 20px;
   font-weight: 700;
-  color: #1A1A1A;
+  color: #1a1a1a;
   letter-spacing: -0.3px;
   margin: 0;
 }
@@ -1397,8 +1824,13 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   padding: 16px 32px 32px;
 }
 
-.session-editor-body::-webkit-scrollbar { width: 4px; }
-.session-editor-body::-webkit-scrollbar-thumb { background: #DDD; border-radius: 2px; }
+.session-editor-body::-webkit-scrollbar {
+  width: 4px;
+}
+.session-editor-body::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 2px;
+}
 
 /* Note cards in session editor */
 .se-note-card {
@@ -1406,19 +1838,33 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   border-radius: 6px;
   margin-bottom: 4px;
   border-left: 2.5px solid transparent;
-  background: rgba(0,0,0,0.015);
+  background: rgba(0, 0, 0, 0.015);
   transition: background 0.1s;
   cursor: pointer;
   position: relative;
 }
 
-.se-note-card:hover { background: rgba(0,0,0,0.03); }
-.se-note-card.highlighted { background: rgba(127,119,221,0.06); }
-.se-note-card.cat-observation { border-left-color: #7F77DD; }
-.se-note-card.cat-historical  { border-left-color: #1D9E75; }
-.se-note-card.cat-application { border-left-color: #BA7517; }
-.se-note-card.cat-personal    { border-left-color: #D4537E; }
-.se-note-card.cat-none        { border-left-color: transparent; }
+.se-note-card:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+.se-note-card.highlighted {
+  background: rgba(127, 119, 221, 0.06);
+}
+.se-note-card.cat-observation {
+  border-left-color: #7f77dd;
+}
+.se-note-card.cat-historical {
+  border-left-color: #1d9e75;
+}
+.se-note-card.cat-application {
+  border-left-color: #ba7517;
+}
+.se-note-card.cat-personal {
+  border-left-color: #d4537e;
+}
+.se-note-card.cat-none {
+  border-left-color: transparent;
+}
 
 /* Note action icons (shared by session editor + reading/book views) */
 .se-note-actions {
@@ -1430,7 +1876,9 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 }
 
 .se-note-card:hover .se-note-actions,
-.reading-note-card:hover .se-note-actions { opacity: 1; }
+.reading-note-card:hover .se-note-actions {
+  opacity: 1;
+}
 
 .se-icon-btn {
   display: inline-flex;
@@ -1441,7 +1889,7 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   border-radius: 4px;
   border: none;
   background: transparent;
-  color: #AAA;
+  color: #aaa;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.1s;
@@ -1449,8 +1897,14 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   flex-shrink: 0;
 }
 
-.se-icon-btn:hover { background: rgba(0,0,0,0.06); color: #555; }
-.se-icon-btn.se-icon-danger:hover { background: rgba(232,61,61,0.08); color: #E83D3D; }
+.se-icon-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #555;
+}
+.se-icon-btn.se-icon-danger:hover {
+  background: rgba(232, 61, 61, 0.08);
+  color: #e83d3d;
+}
 
 .note-edit-textarea {
   display: block;
@@ -1461,7 +1915,7 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   font-family: inherit;
   font-size: 14px;
   line-height: 1.6;
-  color: #1A1A1A;
+  color: #1a1a1a;
   resize: none;
   padding: 0;
   margin: 0;
@@ -1482,12 +1936,14 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   cursor: pointer;
   font-size: 12px;
   font-family: inherit;
-  color: #7F77DD;
+  color: #7f77dd;
   padding: 2px 6px;
   border-radius: 4px;
   transition: background 0.1s;
 }
-.note-edit-save:hover { background: rgba(127,119,221,0.12); }
+.note-edit-save:hover {
+  background: rgba(127, 119, 221, 0.12);
+}
 
 .note-edit-cancel {
   background: none;
@@ -1500,18 +1956,21 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   border-radius: 4px;
   transition: background 0.1s;
 }
-.note-edit-cancel:hover { background: rgba(0,0,0,0.05); color: #555; }
+.note-edit-cancel:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #555;
+}
 
 .se-edit-input {
   flex: 1;
   border: none;
-  border-bottom: 0.5px solid #C4C0F0;
+  border-bottom: 0.5px solid #c4c0f0;
   background: transparent;
   font-size: 13px;
   font-family: inherit;
   outline: none;
   padding: 2px 0;
-  color: #1A1A1A;
+  color: #1a1a1a;
   min-width: 0;
 }
 
@@ -1523,15 +1982,17 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   height: 24px;
   border-radius: 4px;
   border: none;
-  background: rgba(127,119,221,0.12);
-  color: #7F77DD;
+  background: rgba(127, 119, 221, 0.12);
+  color: #7f77dd;
   cursor: pointer;
   font-size: 14px;
   padding: 0;
   flex-shrink: 0;
   transition: background 0.1s;
 }
-.se-save-btn:hover { background: rgba(127,119,221,0.22); }
+.se-save-btn:hover {
+  background: rgba(127, 119, 221, 0.22);
+}
 
 .se-cancel-btn {
   display: inline-flex;
@@ -1542,14 +2003,17 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   border-radius: 4px;
   border: none;
   background: transparent;
-  color: #AAA;
+  color: #aaa;
   cursor: pointer;
   font-size: 14px;
   padding: 0;
   flex-shrink: 0;
   transition: background 0.1s;
 }
-.se-cancel-btn:hover { background: rgba(0,0,0,0.06); color: #555; }
+.se-cancel-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #555;
+}
 
 .se-add-row {
   display: flex;
@@ -1562,59 +2026,40 @@ body.dark .bible-library-greeting { color: #9D95E5; }
 .se-add-input {
   flex: 1;
   border: none;
-  border-bottom: 0.5px solid #DDD;
+  border-bottom: 0.5px solid #ddd;
   background: transparent;
   font-size: 13px;
   font-family: inherit;
   outline: none;
   padding: 2px 0;
-  color: #1A1A1A;
+  color: #1a1a1a;
 }
 
-.se-add-input::placeholder { color: #BBB; }
+.se-add-input::placeholder {
+  color: #bbb;
+}
 
 .se-delete-passage-btn {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   font-size: 12px;
-  color: #AAA;
+  color: #aaa;
   background: transparent;
-  border: 0.5px solid #DDD;
+  border: 0.5px solid #ddd;
   border-radius: 6px;
   padding: 4px 10px;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.12s;
 }
-.se-delete-passage-btn:hover { color: #E83D3D; border-color: #E83D3D; background: rgba(232,61,61,0.04); }
-
-/* ─── Sidebar passage edit button ────────────────────────────────────────────── */
-.sidebar-passage-item {
-  position: relative;
+.se-delete-passage-btn:hover {
+  color: #e83d3d;
+  border-color: #e83d3d;
+  background: rgba(232, 61, 61, 0.04);
 }
 
-.sidebar-passage-edit-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  border: none;
-  background: transparent;
-  color: #CCC;
-  cursor: pointer;
-  padding: 0;
-  opacity: 0;
-  transition: all 0.1s;
-  flex-shrink: 0;
-}
-
-.sidebar-passage-item:hover .sidebar-passage-edit-btn { opacity: 1; }
-.sidebar-passage-edit-btn:hover { background: rgba(0,0,0,0.06); color: #7F77DD; }
-
-/* ─── Version chip (sidebar footer) ─────────────────────────────────────────── */
+/* ─── Version chip ──────────────────────────────────────────────────────────── */
 .wn-version-chip {
   display: inline-flex;
   align-items: center;
@@ -1622,46 +2067,26 @@ body.dark .bible-library-greeting { color: #9D95E5; }
   padding: 3px 8px;
   font-size: 11px;
   font-family: inherit;
-  color: #BBBBBB;
+  color: #bbbbbb;
   background: transparent;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    color 0.12s;
   position: relative;
 }
-.wn-version-chip:hover { background: rgba(0,0,0,0.05); color: #555; }
-
-/* ─── Sidebar footer row (settings + version chip) ──────────────────────────── */
-.sidebar-footer-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 8px;
+.wn-version-chip:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #555;
 }
-
-.sidebar-settings-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 8px 4px 6px;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  font-size: 12px;
-  color: #888;
-  cursor: pointer;
-  transition: background 0.12s, color 0.12s;
-}
-.sidebar-settings-btn:hover { background: rgba(0,0,0,0.05); color: #444; }
-body.dark .sidebar-settings-btn { color: #777; }
-body.dark .sidebar-settings-btn:hover { background: rgba(255,255,255,0.06); color: #CCC; }
 
 /* ─── Settings modal ─────────────────────────────────────────────────────────── */
 .smodal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0, 0, 0, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1670,13 +2095,13 @@ body.dark .sidebar-settings-btn:hover { background: rgba(255,255,255,0.06); colo
 }
 
 .smodal-panel {
-  background: #FFFFFF;
-  border: 1px solid #E0DDD8;
+  background: #ffffff;
+  border: 1px solid #e0ddd8;
   border-radius: 14px;
   width: 420px;
   max-height: 90vh;
   overflow: hidden;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
   display: flex;
   flex-direction: column;
 }
@@ -1691,13 +2116,13 @@ body.dark .sidebar-settings-btn:hover { background: rgba(255,255,255,0.06); colo
   align-items: center;
   justify-content: space-between;
   padding: 18px 20px 14px;
-  border-bottom: 1px solid #F0EDE8;
+  border-bottom: 1px solid #f0ede8;
 }
 
 .smodal-title {
   font-size: 15px;
   font-weight: 600;
-  color: #1A1A1A;
+  color: #1a1a1a;
   letter-spacing: -0.2px;
 }
 
@@ -1710,11 +2135,16 @@ body.dark .sidebar-settings-btn:hover { background: rgba(255,255,255,0.06); colo
   border: none;
   background: transparent;
   border-radius: 6px;
-  color: #AAA;
+  color: #aaa;
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    color 0.12s;
 }
-.smodal-close:hover { background: rgba(0,0,0,0.06); color: #555; }
+.smodal-close:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #555;
+}
 
 .smodal-section {
   padding: 16px 20px;
@@ -1731,7 +2161,7 @@ body.dark .sidebar-settings-btn:hover { background: rgba(255,255,255,0.06); colo
 
 .smodal-divider {
   height: 1px;
-  background: #F0EDE8;
+  background: #f0ede8;
   margin: 0;
 }
 
@@ -1752,20 +2182,24 @@ body.dark .sidebar-settings-btn:hover { background: rgba(255,255,255,0.06); colo
   background: transparent;
   text-align: left;
   cursor: pointer;
-  transition: background 0.1s, border-color 0.1s;
+  transition:
+    background 0.1s,
+    border-color 0.1s;
   width: 100%;
 }
-.smodal-translation-row:hover { background: #F7F6F3; }
+.smodal-translation-row:hover {
+  background: #f7f6f3;
+}
 .smodal-translation-row.active {
-  background: rgba(127,119,221,0.07);
-  border-color: rgba(127,119,221,0.3);
+  background: rgba(127, 119, 221, 0.07);
+  border-color: rgba(127, 119, 221, 0.3);
 }
 
 .smodal-translation-radio {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 1.5px solid #CCC;
+  border: 1.5px solid #ccc;
   flex-shrink: 0;
   margin-top: 1px;
   display: flex;
@@ -1773,13 +2207,15 @@ body.dark .sidebar-settings-btn:hover { background: rgba(255,255,255,0.06); colo
   justify-content: center;
   transition: border-color 0.1s;
 }
-.smodal-translation-row.active .smodal-translation-radio { border-color: #7F77DD; }
+.smodal-translation-row.active .smodal-translation-radio {
+  border-color: #7f77dd;
+}
 
 .smodal-radio-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #7F77DD;
+  background: #7f77dd;
 }
 
 .smodal-translation-info {
@@ -1792,10 +2228,12 @@ body.dark .sidebar-settings-btn:hover { background: rgba(255,255,255,0.06); colo
 .smodal-translation-abbr {
   font-size: 13px;
   font-weight: 600;
-  color: #1A1A1A;
+  color: #1a1a1a;
   line-height: 1.3;
 }
-.smodal-translation-row.active .smodal-translation-abbr { color: #5C54B8; }
+.smodal-translation-row.active .smodal-translation-abbr {
+  color: #5c54b8;
+}
 
 .smodal-translation-name {
   font-size: 12px;
@@ -1805,7 +2243,7 @@ body.dark .sidebar-settings-btn:hover { background: rgba(255,255,255,0.06); colo
 
 .smodal-translation-desc {
   font-size: 11px;
-  color: #AAA;
+  color: #aaa;
   line-height: 1.4;
   margin-top: 2px;
 }
@@ -1814,8 +2252,8 @@ body.dark .sidebar-settings-btn:hover { background: rgba(255,255,255,0.06); colo
 .smodal-esv-key {
   margin-top: 12px;
   padding: 12px 14px;
-  background: #F7F6F3;
-  border: 1px solid #E8E5E0;
+  background: #f7f6f3;
+  border: 1px solid #e8e5e0;
   border-radius: 9px;
 }
 
@@ -1831,25 +2269,32 @@ body.dark .sidebar-settings-btn:hover { background: rgba(255,255,255,0.06); colo
 
 .smodal-esv-link {
   font-size: 11px;
-  color: #7F77DD;
+  color: #7f77dd;
   text-decoration: none;
   font-weight: 400;
 }
-.smodal-esv-link:hover { text-decoration: underline; }
+.smodal-esv-link:hover {
+  text-decoration: underline;
+}
 
 .smodal-esv-input {
   width: 100%;
   box-sizing: border-box;
   font-size: 12px;
   padding: 7px 10px;
-  border: 1px solid #DDD;
+  border: 1px solid #ddd;
   border-radius: 6px;
-  background: #FFF;
+  background: #fff;
   color: #444;
   outline: none;
 }
-.smodal-esv-input:focus { border-color: #7F77DD; box-shadow: 0 0 0 2px rgba(127,119,221,0.15); }
-.smodal-esv-input::placeholder { color: #BBB; }
+.smodal-esv-input:focus {
+  border-color: #7f77dd;
+  box-shadow: 0 0 0 2px rgba(127, 119, 221, 0.15);
+}
+.smodal-esv-input::placeholder {
+  color: #bbb;
+}
 
 /* Vault section */
 .smodal-vault-desc {
@@ -1863,8 +2308,8 @@ body.dark .sidebar-settings-btn:hover { background: rgba(255,255,255,0.06); colo
   font-family: ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, monospace;
   font-size: 11px;
   color: #555;
-  background: #F5F4F1;
-  border: 1px solid #E0DDD8;
+  background: #f5f4f1;
+  border: 1px solid #e0ddd8;
   border-radius: 7px;
   padding: 8px 12px;
   overflow: hidden;
@@ -1882,14 +2327,19 @@ body.dark .sidebar-settings-btn:hover { background: rgba(255,255,255,0.06); colo
   font-size: 12px;
   font-weight: 500;
   padding: 6px 12px;
-  border: 1px solid #DDD;
+  border: 1px solid #ddd;
   border-radius: 7px;
   background: transparent;
   color: #555;
   cursor: pointer;
-  transition: border-color 0.12s, color 0.12s;
+  transition:
+    border-color 0.12s,
+    color 0.12s;
 }
-.smodal-vault-btn:hover { border-color: #7F77DD; color: #7F77DD; }
+.smodal-vault-btn:hover {
+  border-color: #7f77dd;
+  color: #7f77dd;
+}
 
 /* Footer */
 .smodal-footer {
@@ -1900,7 +2350,7 @@ body.dark .sidebar-settings-btn:hover { background: rgba(255,255,255,0.06); colo
 
 .smodal-btn-save {
   padding: 8px 24px;
-  background: #1E3358;
+  background: #1e3358;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -1909,35 +2359,86 @@ body.dark .sidebar-settings-btn:hover { background: rgba(255,255,255,0.06); colo
   cursor: pointer;
   transition: background 0.15s;
 }
-.smodal-btn-save:hover:not(:disabled) { background: #253F6B; }
-.smodal-btn-save:disabled { opacity: 0.5; cursor: default; }
+.smodal-btn-save:hover:not(:disabled) {
+  background: #253f6b;
+}
+.smodal-btn-save:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
 
 /* Dark mode */
-body.dark .smodal-panel { background: #242428; border-color: #333; }
-body.dark .smodal-header { border-color: #333; }
-body.dark .smodal-title { color: #F0EDE8; }
-body.dark .smodal-close:hover { background: rgba(255,255,255,0.08); color: #CCC; }
-body.dark .smodal-divider { background: #333; }
-body.dark .smodal-translation-row:hover { background: rgba(255,255,255,0.04); }
-body.dark .smodal-translation-row.active { background: rgba(127,119,221,0.12); border-color: rgba(127,119,221,0.35); }
-body.dark .smodal-translation-abbr { color: #EEE; }
-body.dark .smodal-translation-row.active .smodal-translation-abbr { color: #9D95E5; }
-body.dark .smodal-translation-name { color: #888; }
-body.dark .smodal-translation-desc { color: #666; }
-body.dark .smodal-esv-key { background: #1E1E22; border-color: #333; }
-body.dark .smodal-esv-label { color: #AAA; }
-body.dark .smodal-esv-input { background: #2A2A2E; border-color: #444; color: #CCC; }
-body.dark .smodal-vault-path { background: #1E1E22; border-color: #333; color: #999; }
-body.dark .smodal-vault-btn { border-color: #444; color: #AAA; }
-body.dark .smodal-vault-btn:hover { border-color: #7F77DD; color: #9D95E5; }
-body.dark .smodal-vault-desc { color: #666; }
+body.dark .smodal-panel {
+  background: #242428;
+  border-color: #333;
+}
+body.dark .smodal-header {
+  border-color: #333;
+}
+body.dark .smodal-title {
+  color: #f0ede8;
+}
+body.dark .smodal-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ccc;
+}
+body.dark .smodal-divider {
+  background: #333;
+}
+body.dark .smodal-translation-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+body.dark .smodal-translation-row.active {
+  background: rgba(127, 119, 221, 0.12);
+  border-color: rgba(127, 119, 221, 0.35);
+}
+body.dark .smodal-translation-abbr {
+  color: #eee;
+}
+body.dark .smodal-translation-row.active .smodal-translation-abbr {
+  color: #9d95e5;
+}
+body.dark .smodal-translation-name {
+  color: #888;
+}
+body.dark .smodal-translation-desc {
+  color: #666;
+}
+body.dark .smodal-esv-key {
+  background: #1e1e22;
+  border-color: #333;
+}
+body.dark .smodal-esv-label {
+  color: #aaa;
+}
+body.dark .smodal-esv-input {
+  background: #2a2a2e;
+  border-color: #444;
+  color: #ccc;
+}
+body.dark .smodal-vault-path {
+  background: #1e1e22;
+  border-color: #333;
+  color: #999;
+}
+body.dark .smodal-vault-btn {
+  border-color: #444;
+  color: #aaa;
+}
+body.dark .smodal-vault-btn:hover {
+  border-color: #7f77dd;
+  color: #9d95e5;
+}
+body.dark .smodal-vault-desc {
+  color: #666;
+}
 
 .wn-dot {
   display: inline-block;
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #7F77DD;
+  background: #7f77dd;
   flex-shrink: 0;
 }
 
@@ -1955,15 +2456,19 @@ body.dark .smodal-vault-desc { color: #666; }
 }
 
 @keyframes wn-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .wn-modal {
-  background: #FFFFFF;
-  border: 0.5px solid rgba(0,0,0,0.1);
+  background: #ffffff;
+  border: 0.5px solid rgba(0, 0, 0, 0.1);
   border-radius: 12px;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.14);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.14);
   width: 420px;
   max-width: 90vw;
   max-height: 70vh;
@@ -1973,8 +2478,14 @@ body.dark .smodal-vault-desc { color: #666; }
 }
 
 @keyframes wn-slide-up {
-  from { transform: translateY(6px); opacity: 0; }
-  to   { transform: translateY(0);   opacity: 1; }
+  from {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .wn-header {
@@ -1982,7 +2493,7 @@ body.dark .smodal-vault-desc { color: #666; }
   align-items: flex-start;
   justify-content: space-between;
   padding: 20px 20px 14px;
-  border-bottom: 0.5px solid rgba(0,0,0,0.07);
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.07);
 }
 
 .wn-title {
@@ -1990,14 +2501,14 @@ body.dark .smodal-vault-desc { color: #666; }
   font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: #7F77DD;
+  color: #7f77dd;
   margin-bottom: 3px;
 }
 
 .wn-subtitle {
   font-size: 16px;
   font-weight: 600;
-  color: #1A1A1A;
+  color: #1a1a1a;
 }
 
 .wn-close {
@@ -2009,12 +2520,17 @@ body.dark .smodal-vault-desc { color: #666; }
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: #AAA;
+  color: #aaa;
   cursor: pointer;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
   flex-shrink: 0;
 }
-.wn-close:hover { background: rgba(0,0,0,0.06); color: #555; }
+.wn-close:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #555;
+}
 
 .wn-body {
   overflow-y: auto;
@@ -2034,15 +2550,15 @@ body.dark .smodal-vault-desc { color: #666; }
 .wn-version {
   font-size: 12px;
   font-weight: 600;
-  color: #1A1A1A;
-  background: rgba(127,119,221,0.1);
+  color: #1a1a1a;
+  background: rgba(127, 119, 221, 0.1);
   padding: 2px 7px;
   border-radius: 4px;
 }
 
 .wn-date {
   font-size: 11px;
-  color: #AAA;
+  color: #aaa;
 }
 
 .wn-notes {
@@ -2066,7 +2582,7 @@ body.dark .smodal-vault-desc { color: #666; }
   content: '·';
   position: absolute;
   left: 3px;
-  color: #7F77DD;
+  color: #7f77dd;
   font-weight: 700;
 }
 
@@ -2077,25 +2593,29 @@ body.dark .smodal-vault-desc { color: #666; }
   gap: 4px;
 }
 
-@keyframes upd-spin { to { transform: rotate(360deg); } }
+@keyframes upd-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .upd-spinner {
   display: inline-block;
   width: 12px;
   height: 12px;
-  border: 1.5px solid rgba(0,0,0,0.12);
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
   border-top-color: #999;
   border-radius: 50%;
   animation: upd-spin 0.7s linear infinite;
 }
 body.dark .upd-spinner {
-  border-color: rgba(255,255,255,0.12);
+  border-color: rgba(255, 255, 255, 0.12);
   border-top-color: #888;
 }
 
 .upd-check {
   display: inline-flex;
   align-items: center;
-  color: #1D9E75;
+  color: #1d9e75;
 }
 
 .upd-btn {
@@ -2114,30 +2634,42 @@ body.dark .upd-spinner {
 }
 .upd-btn-refresh {
   background: transparent;
-  color: #BBB;
+  color: #bbb;
 }
-.upd-btn-refresh:hover { background: rgba(0,0,0,0.06); color: #777; }
-body.dark .upd-btn-refresh { color: #555; }
-body.dark .upd-btn-refresh:hover { background: rgba(255,255,255,0.07); color: #999; }
+.upd-btn-refresh:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #777;
+}
+body.dark .upd-btn-refresh {
+  color: #555;
+}
+body.dark .upd-btn-refresh:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #999;
+}
 
 .upd-btn-ready {
-  background: #E07B20;
+  background: #e07b20;
   color: #fff;
 }
-.upd-btn-ready:hover { background: #C96D18; }
+.upd-btn-ready:hover {
+  background: #c96d18;
+}
 .upd-btn-error {
-  background: #D44;
+  background: #d44;
   color: #fff;
 }
-.upd-btn-error:hover { background: #BB2222; }
+.upd-btn-error:hover {
+  background: #bb2222;
+}
 
 /* Popover — position:fixed applied inline to escape sidebar overflow:hidden */
 .upd-popover {
   width: 210px;
   background: #fff;
-  border: 0.5px solid rgba(0,0,0,0.12);
+  border: 0.5px solid rgba(0, 0, 0, 0.12);
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.16);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.16);
   padding: 12px 14px 10px;
   z-index: 9999;
 }
@@ -2154,12 +2686,12 @@ body.dark .upd-btn-refresh:hover { background: rgba(255,255,255,0.07); color: #9
   border-top: none;
 }
 body.dark .upd-popover {
-  background: #2A2A2A;
-  border-color: rgba(255,255,255,0.1);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  background: #2a2a2a;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 body.dark .upd-popover::after {
-  background: #2A2A2A;
+  background: #2a2a2a;
 }
 
 .upd-popover-title {
@@ -2168,14 +2700,18 @@ body.dark .upd-popover::after {
   color: #222;
   margin-bottom: 3px;
 }
-body.dark .upd-popover-title { color: #EEE; }
+body.dark .upd-popover-title {
+  color: #eee;
+}
 
 .upd-popover-sub {
   font-size: 11px;
   color: #888;
   margin-bottom: 10px;
 }
-body.dark .upd-popover-sub { color: #777; }
+body.dark .upd-popover-sub {
+  color: #777;
+}
 
 .upd-popover-actions {
   display: flex;
@@ -2192,195 +2728,246 @@ body.dark .upd-popover-sub { color: #777; }
   cursor: pointer;
 }
 .upd-popover-btn-primary {
-  background: #E07B20;
+  background: #e07b20;
   color: #fff;
 }
-.upd-popover-btn-primary:hover { background: #C96D18; }
+.upd-popover-btn-primary:hover {
+  background: #c96d18;
+}
 .upd-popover-btn-ghost {
-  background: rgba(0,0,0,0.06);
+  background: rgba(0, 0, 0, 0.06);
   color: #555;
 }
-.upd-popover-btn-ghost:hover { background: rgba(0,0,0,0.10); }
-body.dark .upd-popover-btn-ghost {
-  background: rgba(255,255,255,0.08);
-  color: #AAA;
+.upd-popover-btn-ghost:hover {
+  background: rgba(0, 0, 0, 0.1);
 }
-body.dark .upd-popover-btn-ghost:hover { background: rgba(255,255,255,0.13); }
+body.dark .upd-popover-btn-ghost {
+  background: rgba(255, 255, 255, 0.08);
+  color: #aaa;
+}
+body.dark .upd-popover-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.13);
+}
 
 /* Amber dot on version chip when update is ready */
 .wn-dot-update {
-  background: #E07B20;
+  background: #e07b20;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Mobile-first responsive layer
    ───────────────────────────────────────────────────────────────────────────
    Everything above is the desktop layout, untouched. The rules below only take
-   effect below the 768px breakpoint (the shell: drawer + top bar + single
-   column), plus a couple of pointer-based rules that make hover-only affordances
-   reachable by touch on any width. Safe-area insets keep content clear of the
-   notch / home indicator on phones.
+   effect below the 768px breakpoint (the shell: slim top bar + bottom tab bar +
+   single column), plus a couple of pointer-based rules that make hover-only
+   affordances reachable by touch on any width. Safe-area insets keep content
+   clear of the notch / home indicator on phones.
    ═══════════════════════════════════════════════════════════════════════════ */
-
-/* Mobile shell chrome — created in the DOM always, shown only on mobile. */
-.mobile-topbar { display: none; }
-.drawer-backdrop { display: none; }
 
 /* ── Touch: reveal hover-only action affordances everywhere (any width) ────── */
 @media (hover: none) {
   /* Note edit/delete icons normally appear on card hover — keep them visible. */
-  .se-note-actions { opacity: 1; }
+  .se-note-actions {
+    opacity: 1;
+  }
   /* The "+" add-note button on a verse row is hover-revealed on desktop. */
-  .reading-verse-row .verse-add-btn { opacity: 1; }
-  /* Sidebar passage edit pencil is hover-revealed on desktop. */
-  .sidebar-passage-item .sidebar-passage-edit-btn { opacity: 1; }
+  .reading-verse-row .verse-add-btn {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 768px) {
   /* Allow the page to own vertical scrolling; unlock the fixed desktop heights. */
-  html, body, #root { overflow: visible; height: 100%; }
-
-  .app-layout {
-    height: 100dvh;
-    flex-direction: column;
-    /* Room for the fixed top bar. */
-    padding-top: calc(52px + env(safe-area-inset-top));
+  html,
+  body,
+  #root {
+    overflow: visible;
+    height: 100%;
   }
 
-  /* ── Top bar ─────────────────────────────────────────────────────────────── */
-  .mobile-topbar {
+  .app-shell {
+    height: 100dvh;
+    /* Room for the fixed bottom tab bar. */
+    padding-bottom: calc(56px + env(safe-area-inset-bottom));
+  }
+
+  /* ── Top bar: leading slot only (tabs live in the bottom bar) ─────────────── */
+  .topnav {
+    height: calc(52px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 14px 0;
+  }
+  .topnav-tabs {
+    display: none;
+  }
+  /* Profile lives in the bottom bar on mobile; hide the avatar menu. */
+  .topnav-trail {
+    display: none;
+  }
+
+  /* ── Bottom tab bar ───────────────────────────────────────────────────────── */
+  .bottomnav {
     display: flex;
-    align-items: center;
-    gap: 10px;
     position: fixed;
-    top: 0;
+    bottom: 0;
     left: 0;
     right: 0;
-    height: calc(52px + env(safe-area-inset-top));
-    padding: env(safe-area-inset-top) 12px 0;
-    background: #F5F4F1;
-    border-bottom: 0.5px solid #E0DDD8;
+    height: calc(56px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: #f5f4f1;
+    border-top: 0.5px solid #e0ddd8;
     z-index: 300;
   }
 
-  .mobile-menu-btn {
+  .bottomnav .nav-tab {
+    flex: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
+    gap: 3px;
     border: none;
     background: transparent;
-    color: #444;
-    border-radius: 8px;
+    color: #888;
+    font-family: inherit;
     cursor: pointer;
-    flex-shrink: 0;
     -webkit-tap-highlight-color: transparent;
   }
-  .mobile-menu-btn:active { background: rgba(0,0,0,0.06); }
-
-  .mobile-topbar-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1A1A1A;
-    letter-spacing: -0.2px;
+  .bottomnav .nav-tab.active {
+    color: #7f77dd;
   }
 
-  /* ── Drawer ──────────────────────────────────────────────────────────────── */
-  .sidebar-host {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 400;
-    transform: translateX(-100%);
-    transition: transform 0.22s ease;
-    box-shadow: 2px 0 24px rgba(0,0,0,0.12);
-  }
-  .app-layout.drawer-open .sidebar-host { transform: translateX(0); }
-
-  .sidebar {
-    width: 82vw;
-    max-width: 320px;
-    min-width: 0;
-    height: 100dvh;
-    /* clear the notch / home indicator */
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
+  .bottomnav .nav-tab-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
   }
 
-  .drawer-backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.32);
-    z-index: 350;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.22s ease;
+  /* Keep the offline pill clear of the bottom tab bar. */
+  .offline-pill {
+    bottom: calc(68px + env(safe-area-inset-bottom));
   }
-  .app-layout.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
-
-  /* Larger touch targets inside the drawer. */
-  .sidebar-item { padding: 10px 8px; font-size: 14px; }
-  .sidebar-passage-item { padding: 9px 8px; }
-  .mode-toggle-btn { padding: 10px 0; font-size: 13px; }
-  .btn-new-passage { padding: 12px; font-size: 14px; }
-  .sidebar-settings-btn { padding: 9px 10px; font-size: 13px; }
-  .sidebar-passage-edit-btn { width: 32px; height: 32px; }
 
   /* ── Main area: single column, full width ──────────────────────────────────── */
-  .main-area { flex: 1; min-height: 0; overflow: hidden; }
+  .main-area {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
 
   /* Capture: stack the note editor over the passage pane instead of side-by-side. */
-  .capture-layout { flex-direction: column; overflow-y: auto; }
+  .capture-layout {
+    flex-direction: column;
+    overflow-y: auto;
+  }
   .capture-left {
     flex: 0 0 auto;
     border-right: none;
-    border-bottom: 0.5px solid #E8E6E1;
+    border-bottom: 0.5px solid #e8e6e1;
   }
-  .capture-right { flex: 0 0 auto; min-height: 40vh; }
+  .capture-right {
+    flex: 0 0 auto;
+    min-height: 40vh;
+  }
 
-  .passage-heading-wrap { padding: 18px 18px 12px; }
-  .passage-heading-input { font-size: 20px; }
-  .notes-list { padding: 14px 18px 180px; }
+  .passage-heading-wrap {
+    padding: 18px 18px 12px;
+  }
+  .passage-heading-input {
+    font-size: 20px;
+  }
+  .notes-list {
+    padding: 14px 18px 180px;
+  }
   .capture-actions {
     padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
   }
-  .btn-action { flex: 1; justify-content: center; padding: 12px 14px; }
-  .passage-pane { padding: 20px 18px calc(20px + env(safe-area-inset-bottom)); }
+  .btn-action {
+    flex: 1;
+    justify-content: center;
+    padding: 12px 14px;
+  }
+  .passage-pane {
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+  }
 
   /* Reading mode + book detail + session editor: comfortable single-column pad. */
-  .reading-layout { padding: 20px 0 calc(24px + env(safe-area-inset-bottom)); }
-  .reading-content { padding: 0 18px; }
-  .reading-heading h1 { font-size: 21px; }
+  .reading-layout {
+    padding: 20px 0 calc(24px + env(safe-area-inset-bottom));
+  }
+  .reading-content {
+    padding: 0 18px;
+  }
+  .reading-heading h1 {
+    font-size: 21px;
+  }
 
-  .book-detail-header { padding: 16px 18px 12px; }
-  .book-detail-title { font-size: 20px; }
-  .book-detail-content { padding: 18px 18px calc(32px + env(safe-area-inset-bottom)); }
-  .book-chapter-content { max-width: none; }
-  .chapter-selector-wrap { padding: 8px 12px; }
-  .chapter-pill { min-width: 38px; height: 36px; }
-  .chapter-nav-btn { width: 36px; height: 36px; }
+  .book-detail-header {
+    padding: 16px 18px 12px;
+  }
+  .book-detail-title {
+    font-size: 20px;
+  }
+  .book-detail-content {
+    padding: 18px 18px calc(32px + env(safe-area-inset-bottom));
+  }
+  .book-chapter-content {
+    max-width: none;
+  }
+  .chapter-selector-wrap {
+    padding: 8px 12px;
+  }
+  .chapter-pill {
+    min-width: 38px;
+    height: 36px;
+  }
+  .chapter-nav-btn {
+    width: 36px;
+    height: 36px;
+  }
 
-  .session-editor-header { padding: 16px 18px 12px; }
-  .session-editor-title { font-size: 19px; }
-  .session-editor-body { padding: 14px 18px calc(32px + env(safe-area-inset-bottom)); }
+  .session-editor-header {
+    padding: 16px 18px 12px;
+  }
+  .session-editor-title {
+    font-size: 19px;
+  }
+  .session-editor-body {
+    padding: 14px 18px calc(32px + env(safe-area-inset-bottom));
+  }
 
-  .bible-library { padding: 20px 18px calc(40px + env(safe-area-inset-bottom)); }
-  .bible-library-title { font-size: 20px; }
+  .bible-library {
+    padding: 20px 18px calc(40px + env(safe-area-inset-bottom));
+  }
+  .bible-library-title {
+    font-size: 20px;
+  }
   /* Two columns instead of three so book names don't truncate on narrow screens. */
-  .bible-books-grid { grid-template-columns: repeat(2, 1fr); }
-  .bible-book-row { padding: 9px 8px; }
-  .bible-passage-item { padding: 8px; }
+  .bible-books-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .bible-book-row {
+    padding: 9px 8px;
+  }
+  .bible-passage-item {
+    padding: 8px;
+  }
 
   /* The verse "+" button sits off the right edge on desktop; pull it inside so it
      doesn't cause horizontal overflow and stays tappable. */
-  .verse-add-btn { right: 0; width: 28px; height: 28px; }
-  .reading-verse-row { padding-right: 30px; }
+  .verse-add-btn {
+    right: 0;
+    width: 28px;
+    height: 28px;
+  }
+  .reading-verse-row {
+    padding-right: 30px;
+  }
 
   /* Note action icons: bigger touch targets. */
-  .se-icon-btn { width: 34px; height: 34px; }
+  .se-icon-btn {
+    width: 34px;
+    height: 34px;
+  }
 
   /* ── Inputs: >=16px prevents iOS zoom-on-focus ─────────────────────────────── */
   .note-input,
@@ -2390,10 +2977,14 @@ body.dark .upd-popover-btn-ghost:hover { background: rgba(255,255,255,0.13); }
   .inline-note-input,
   .se-add-input,
   .se-edit-input,
-  .smodal-esv-input { font-size: 16px; }
+  .smodal-esv-input {
+    font-size: 16px;
+  }
 
   /* ── Modals become bottom sheets ───────────────────────────────────────────── */
-  .smodal-backdrop { align-items: flex-end; }
+  .smodal-backdrop {
+    align-items: flex-end;
+  }
   .smodal-panel {
     width: 100%;
     max-width: none;
@@ -2402,10 +2993,18 @@ body.dark .upd-popover-btn-ghost:hover { background: rgba(255,255,255,0.13); }
     padding-bottom: env(safe-area-inset-bottom);
     animation: sheetUp 0.2s ease;
   }
-  .smodal-vault-btn { padding: 10px 14px; font-size: 13px; }
-  .smodal-btn-save { padding: 11px 24px; }
+  .smodal-vault-btn {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+  .smodal-btn-save {
+    padding: 11px 24px;
+  }
 
-  .dialog-backdrop { align-items: flex-end; padding: 0; }
+  .dialog-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
   .dialog-card {
     width: 100%;
     max-width: none;
@@ -2414,26 +3013,127 @@ body.dark .upd-popover-btn-ghost:hover { background: rgba(255,255,255,0.13); }
     padding: 22px 20px calc(22px + env(safe-area-inset-bottom));
     animation: sheetUp 0.2s ease;
   }
-  .dialog-actions { flex-direction: column-reverse; }
-  .dialog-btn { padding: 12px 16px; font-size: 14px; width: 100%; }
+  .dialog-actions {
+    flex-direction: column-reverse;
+  }
+  .dialog-btn {
+    padding: 12px 16px;
+    font-size: 14px;
+    width: 100%;
+  }
 
   /* Cross-ref preview card: keep it inside the viewport on narrow screens. */
-  .crossref-hover-card { max-width: min(280px, 80vw); }
+  .crossref-hover-card {
+    max-width: min(280px, 80vw);
+  }
 
   /* Sign-in / onboarding card: fit small screens, respect safe areas. */
-  .welcome-screen { padding: 24px 18px; }
-  .welcome-card { padding: 36px 24px 32px; border-radius: 16px; }
+  .welcome-screen {
+    padding: 24px 18px;
+  }
+  .welcome-card {
+    padding: 36px 24px 32px;
+    border-radius: 16px;
+  }
 }
 
 @keyframes sheetUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
-/* Dark mode for the mobile chrome. */
-body.dark .mobile-topbar { background: #202024; border-bottom-color: #333; }
-body.dark .mobile-topbar-title { color: #F0EDE8; }
-body.dark .mobile-menu-btn { color: #CCC; }
+/* Dark mode for the nav chrome. */
+body.dark .topnav {
+  background: #100f16;
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+}
+body.dark .topnav-appname {
+  color: #eceae4;
+}
+body.dark .workspace-btn {
+  color: #8a8890;
+}
+body.dark .workspace-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ccc;
+}
+body.dark .topnav-tabs .nav-tab {
+  color: #8a8890;
+}
+body.dark .topnav-tabs .nav-tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ccc;
+}
+body.dark .topnav-tabs .nav-tab.active {
+  background: rgba(127, 119, 221, 0.15);
+  color: #9d97e8;
+}
+body.dark .avatar-btn {
+  background: #6b64c0;
+}
+body.dark .nav-menu {
+  background: #1e1c28;
+  border-color: #333;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+}
+body.dark .nav-menu-name {
+  color: #eceae4;
+}
+body.dark .nav-menu-item {
+  color: #b8b6be;
+}
+body.dark .nav-menu-item:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+body.dark .nav-menu-item.active {
+  color: #9d97e8;
+}
+body.dark .nav-menu-divider {
+  background: rgba(255, 255, 255, 0.08);
+}
+body.dark .nav-menu-hint {
+  color: #55535a;
+}
+body.dark .bottomnav {
+  background: #100f16;
+  border-top-color: rgba(255, 255, 255, 0.07);
+}
+body.dark .bottomnav .nav-tab {
+  color: #55535a;
+}
+body.dark .bottomnav .nav-tab.active {
+  color: #9d97e8;
+}
+body.dark .journal-page-title {
+  color: #eceae4;
+}
+body.dark .journal-page-hint {
+  color: #55535a;
+}
+body.dark .profile-page-avatar {
+  background: #6b64c0;
+}
+body.dark .profile-page-name {
+  color: #eceae4;
+}
+body.dark .profile-page-workspace {
+  color: #55535a;
+}
+body.dark .profile-page-btn {
+  background: #1e1c28;
+  border-color: #333;
+  color: #b8b6be;
+}
+body.dark .profile-page-btn:hover:not(:disabled) {
+  background: #26242f;
+}
+body.dark .profile-page-btn-signout {
+  color: #e08a82;
+}
 
 /* ── Offline indicator (Phase 4) ── */
 .offline-pill {
@@ -2444,18 +3144,18 @@ body.dark .mobile-menu-btn { color: #CCC; }
   z-index: 300;
   font-size: 11px;
   font-weight: 500;
-  color: #7A6A2E;
-  background: #F6EFD8;
-  border: 1px solid #E4D8A8;
+  color: #7a6a2e;
+  background: #f6efd8;
+  border: 1px solid #e4d8a8;
   border-radius: 999px;
   padding: 5px 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   pointer-events: none;
 }
 body.dark .offline-pill {
-  color: #E4D8A8;
-  background: #2A2612;
-  border-color: #4A421E;
+  color: #e4d8a8;
+  background: #2a2612;
+  border-color: #4a421e;
 }
 
 .offline-toast {
@@ -2467,18 +3167,29 @@ body.dark .offline-pill {
   font-size: 13px;
   font-weight: 500;
   color: #fff;
-  background: #2A2A2E;
+  background: #2a2a2e;
   border-radius: 8px;
   padding: 10px 16px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   max-width: min(320px, 90vw);
   text-align: center;
   animation: toastIn 0.15s ease;
 }
-body.dark .offline-toast { background: #1A1A1E; border: 1px solid #333; }
+body.dark .offline-toast {
+  background: #1a1a1e;
+  border: 1px solid #333;
+}
 
 @keyframes toastIn {
-  from { opacity: 0; transform: translate(-50%, 8px); }
-  to   { opacity: 1; transform: translate(-50%, 0); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
-body.dark .mobile-menu-btn:active { background: rgba(255,255,255,0.06); }
+body.dark .mobile-menu-btn:active {
+  background: rgba(255, 255, 255, 0.06);
+}

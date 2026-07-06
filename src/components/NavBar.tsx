@@ -1,0 +1,280 @@
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import AppLogo from './AppLogo'
+import { useApi } from '../api/context'
+import { exportAllNotesAsZip } from '../platform/export'
+
+export type Destination = 'bible' | 'journal' | 'study' | 'profile'
+
+interface NavBarProps {
+  destination: Destination
+  onNavigate: (dest: Destination) => void
+  displayName: string | null
+  onOpenSettings: () => void
+  // Sign-out handler, or null when there is no auth (memory stub / dev).
+  onSignOut: (() => Promise<void>) | null
+}
+
+/** Closes the dropdown when a click lands outside `ref`. */
+function useClickOutside(
+  ref: React.RefObject<HTMLElement>,
+  onOutside: () => void,
+  active: boolean
+): void {
+  useEffect(() => {
+    if (!active) return
+    const handler = (e: MouseEvent): void => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onOutside()
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [ref, onOutside, active])
+}
+
+/**
+ * App navigation: a top bar on desktop, a bottom tab bar on mobile.
+ * Destinations: Bible · Journal · + Study · Profile.
+ *
+ * The "Personal ▾" workspace selector is a deliberate stub — it renders the
+ * personal workspace only, so the future group switcher drops in without
+ * restructuring the bar.
+ */
+export default function NavBar({
+  destination,
+  onNavigate,
+  displayName,
+  onOpenSettings,
+  onSignOut
+}: NavBarProps): React.ReactElement {
+  const api = useApi()
+  const [workspaceOpen, setWorkspaceOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [exportState, setExportState] = useState<'idle' | 'exporting'>('idle')
+  const workspaceRef = useRef<HTMLDivElement>(null)
+  const profileRef = useRef<HTMLDivElement>(null)
+
+  useClickOutside(
+    workspaceRef,
+    useCallback(() => setWorkspaceOpen(false), []),
+    workspaceOpen
+  )
+  useClickOutside(
+    profileRef,
+    useCallback(() => setProfileOpen(false), []),
+    profileOpen
+  )
+
+  const handleExport = useCallback(async () => {
+    setExportState('exporting')
+    try {
+      await exportAllNotesAsZip(api)
+    } catch (err) {
+      console.error('[export] failed:', err)
+    }
+    setExportState('idle')
+  }, [api])
+
+  const initial = (displayName || '?').trim().charAt(0).toUpperCase() || '?'
+
+  const navTab = (
+    dest: Destination,
+    label: string,
+    icon: React.ReactElement
+  ): React.ReactElement => (
+    <button
+      className={`nav-tab${destination === dest ? ' active' : ''}`}
+      onClick={() => onNavigate(dest)}
+      aria-current={destination === dest ? 'page' : undefined}
+    >
+      {icon}
+      <span className="nav-tab-label">{label}</span>
+    </button>
+  )
+
+  const bibleIcon = (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+    </svg>
+  )
+  const journalIcon = (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+      <line x1="9" y1="8" x2="16" y2="8" />
+      <line x1="9" y1="12" x2="14" y2="12" />
+    </svg>
+  )
+  const studyIcon = (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  )
+  const profileIcon = (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  )
+
+  return (
+    <>
+      {/* ── Top bar (desktop full nav; mobile shows only the leading slot) ── */}
+      <header className="topnav">
+        <div className="topnav-lead">
+          <AppLogo size={24} style={{ borderRadius: 6 }} />
+          <span className="topnav-appname">Berean</span>
+          <div className="workspace-selector" ref={workspaceRef}>
+            <button
+              className="workspace-btn"
+              onClick={() => setWorkspaceOpen(o => !o)}
+              aria-haspopup="menu"
+              aria-expanded={workspaceOpen}
+            >
+              Personal
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            {workspaceOpen && (
+              <div className="nav-menu workspace-menu" role="menu">
+                <button
+                  className="nav-menu-item active"
+                  role="menuitem"
+                  onClick={() => setWorkspaceOpen(false)}
+                >
+                  <span className="workspace-dot" />
+                  Personal
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ marginLeft: 'auto' }}
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </button>
+                <div className="nav-menu-divider" />
+                <div className="nav-menu-hint">Shared group spaces — coming later</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <nav className="topnav-tabs" aria-label="Primary">
+          {navTab('bible', 'Bible', bibleIcon)}
+          {navTab('journal', 'Journal', journalIcon)}
+          {navTab('study', '+ Study', studyIcon)}
+        </nav>
+
+        <div className="topnav-trail">
+          <div className="profile-menu-host" ref={profileRef}>
+            <button
+              className="avatar-btn"
+              onClick={() => setProfileOpen(o => !o)}
+              aria-haspopup="menu"
+              aria-expanded={profileOpen}
+              aria-label="Account menu"
+            >
+              {initial}
+            </button>
+            {profileOpen && (
+              <div className="nav-menu profile-menu" role="menu">
+                <div className="nav-menu-name">{displayName || 'Studying locally'}</div>
+                <div className="nav-menu-divider" />
+                <button
+                  className="nav-menu-item"
+                  role="menuitem"
+                  onClick={() => {
+                    setProfileOpen(false)
+                    onOpenSettings()
+                  }}
+                >
+                  Settings
+                </button>
+                <button
+                  className="nav-menu-item"
+                  role="menuitem"
+                  disabled={exportState === 'exporting'}
+                  onClick={() => void handleExport()}
+                >
+                  {exportState === 'exporting' ? 'Exporting…' : 'Export notes'}
+                </button>
+                {onSignOut && (
+                  <>
+                    <div className="nav-menu-divider" />
+                    <button
+                      className="nav-menu-item"
+                      role="menuitem"
+                      onClick={() => void onSignOut()}
+                    >
+                      Sign out
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* ── Bottom tab bar (mobile only) ── */}
+      <nav className="bottomnav" aria-label="Primary">
+        {navTab('bible', 'Bible', bibleIcon)}
+        {navTab('journal', 'Journal', journalIcon)}
+        {navTab('study', '+ Study', studyIcon)}
+        {navTab('profile', 'Profile', profileIcon)}
+      </nav>
+    </>
+  )
+}

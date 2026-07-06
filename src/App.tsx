@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import Sidebar from './components/Sidebar'
+import NavBar, { Destination } from './components/NavBar'
 import CaptureMode, { CaptureModeHandle } from './components/CaptureMode'
 import ReadingMode from './components/ReadingMode'
 import BibleLibrary from './components/BibleLibrary'
 import BookDetailPage from './components/BookDetailPage'
-import SessionEditor from './components/SessionEditor'
+import JournalPage from './components/JournalPage'
+import ProfilePage from './components/ProfilePage'
 import ConfirmDialog from './components/ConfirmDialog'
 import SettingsModal from './components/SettingsModal'
 import OfflineIndicator from './components/OfflineIndicator'
@@ -12,8 +13,6 @@ import { Passage } from './types'
 import { BIBLE_BOOKS } from './utils/bibleBooks'
 import { useApi } from './api/context'
 import { useDarkMode } from './utils/useDarkMode'
-
-type ViewMode = 'capture' | 'reading'
 
 interface AppProps {
   // Signed-in display name for the "Welcome back" touch. null on the memory stub.
@@ -23,34 +22,32 @@ interface AppProps {
 }
 
 interface AppState {
+  destination: Destination
   passages: Passage[]
-  selectedPassageId: string | null
+  // Bible destination drill-down: a book (chapter reading) or a saved passage.
   selectedBookName: string | null
-  sessionEditorPassageId: string | null
+  selectedPassageId: string | null
+  // Study destination prefill (set when jumping in from the Bible view).
   captureReference: string
   capturePassageId: string | null
-  viewMode: ViewMode
 }
 
 export default function App({ displayName, onSignOut }: AppProps): React.ReactElement {
   const api = useApi()
   const [isDark, toggleDark] = useDarkMode()
   const [settingsOpen, setSettingsOpen] = useState(false)
-  // Mobile navigation drawer (has no effect at desktop widths — the sidebar is
-  // always visible there; the CSS media query drives the visual behavior).
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const closeDrawer = useCallback(() => setDrawerOpen(false), [])
 
   const [state, setState] = useState<AppState>({
+    destination: 'bible',
     passages: [],
-    selectedPassageId: null,
     selectedBookName: null,
-    sessionEditorPassageId: null,
+    selectedPassageId: null,
     captureReference: '',
-    capturePassageId: null,
-    viewMode: 'capture'
+    capturePassageId: null
   })
-  const [pendingModeChange, setPendingModeChange] = useState(false)
+  // Navigation guard: destination we're trying to reach while the study
+  // surface has unsaved notes.
+  const [pendingNav, setPendingNav] = useState<Destination | null>(null)
   const captureModeRef = useRef<CaptureModeHandle>(null)
 
   const refresh = useCallback(async () => {
@@ -62,124 +59,126 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
     refresh()
   }, [refresh])
 
-  const handleNewPassage = (bookName?: string): void => {
+  const doNavigate = (dest: Destination): void => {
     setState(prev => ({
       ...prev,
-      selectedPassageId: null,
-      selectedBookName: null,
-      sessionEditorPassageId: null,
-      captureReference: bookName ? `${bookName} ` : '',
-      viewMode: 'capture'
+      destination: dest,
+      // Tapping "Bible" always lands on the library, not a stale drill-down.
+      ...(dest === 'bible' ? { selectedBookName: null, selectedPassageId: null } : {}),
+      // "+ Study" from the nav starts a blank study.
+      ...(dest === 'study' ? { captureReference: '', capturePassageId: null } : {})
     }))
   }
 
-  const handleSelectPassage = (passageId: string): void => {
-    setState(prev => ({
-      ...prev,
-      selectedPassageId: passageId,
-      selectedBookName: null,
-      sessionEditorPassageId: null,
-      viewMode: 'reading'
-    }))
+  const handleNavigate = (dest: Destination): void => {
+    if (dest === state.destination && dest !== 'bible') return
+    if (state.destination === 'study' && dest !== 'study' && captureModeRef.current?.isDirty()) {
+      setPendingNav(dest)
+      return
+    }
+    doNavigate(dest)
   }
 
   const handleSelectBook = (bookName: string): void => {
     setState(prev => ({
       ...prev,
+      destination: 'bible',
       selectedBookName: bookName,
-      selectedPassageId: null,
-      sessionEditorPassageId: null,
-      viewMode: 'reading'
-    }))
-  }
-
-  const handleEditPassage = (passageId: string): void => {
-    setState(prev => ({
-      ...prev,
-      sessionEditorPassageId: passageId,
-      selectedPassageId: null,
-      selectedBookName: null,
-      viewMode: 'reading'
+      selectedPassageId: null
     }))
   }
 
   const handleSaveRead = async (passageId: string): Promise<void> => {
     await refresh()
-    setState(prev => ({ ...prev, selectedPassageId: passageId, selectedBookName: null, sessionEditorPassageId: null, capturePassageId: null, viewMode: 'reading' }))
+    setState(prev => ({
+      ...prev,
+      destination: 'bible',
+      selectedPassageId: passageId,
+      selectedBookName: null,
+      capturePassageId: null
+    }))
   }
 
   const handleSaveNext = async (nextRef?: string): Promise<void> => {
     await refresh()
     setState(prev => ({
       ...prev,
-      selectedPassageId: null,
+      destination: 'study',
       selectedBookName: null,
-      sessionEditorPassageId: null,
+      selectedPassageId: null,
       capturePassageId: null,
-      captureReference: nextRef || '',
-      viewMode: 'capture'
+      captureReference: nextRef || ''
     }))
-  }
-
-  const doModeChange = (mode: ViewMode): void => {
-    setState(prev => ({
-      ...prev,
-      viewMode: mode,
-      ...(mode === 'reading' ? { selectedPassageId: null, selectedBookName: null, sessionEditorPassageId: null } : {})
-    }))
-  }
-
-  const handleModeChange = (mode: ViewMode): void => {
-    if (mode === 'reading' && state.viewMode === 'capture' && captureModeRef.current?.isDirty()) {
-      setPendingModeChange(true)
-      return
-    }
-    doModeChange(mode)
   }
 
   const handleCaptureFromReading = (reference: string, passageId?: string): void => {
-    setState(prev => ({ ...prev, viewMode: 'capture', captureReference: reference, capturePassageId: passageId ?? null, selectedBookName: null, sessionEditorPassageId: null }))
+    setState(prev => ({
+      ...prev,
+      destination: 'study',
+      captureReference: reference,
+      capturePassageId: passageId ?? null
+    }))
   }
 
-  const { passages, selectedPassageId, selectedBookName, sessionEditorPassageId, captureReference, capturePassageId, viewMode } = state
+  const {
+    destination,
+    passages,
+    selectedBookName,
+    selectedPassageId,
+    captureReference,
+    capturePassageId
+  } = state
 
   const selectedPassage = passages.find(p => p.id === selectedPassageId) || null
   const selectedBibleBook = selectedBookName
     ? BIBLE_BOOKS.find(b => b.name === selectedBookName) || null
     : null
-  const sessionEditorPassage = sessionEditorPassageId
-    ? passages.find(p => p.id === sessionEditorPassageId) || null
-    : null
 
   function renderMain(): React.ReactElement {
-    if (sessionEditorPassage) {
+    if (destination === 'study') {
       return (
-        <SessionEditor
-          key={sessionEditorPassage.id}
-          passage={sessionEditorPassage}
-          onBack={() => setState(prev => ({ ...prev, sessionEditorPassageId: null }))}
-          onRefresh={refresh}
-          onPassageDeleted={async () => {
-            await refresh()
-            setState(prev => ({ ...prev, sessionEditorPassageId: null }))
-          }}
+        <CaptureMode
+          ref={captureModeRef}
+          key={capturePassageId ?? captureReference}
+          initialReference={captureReference}
+          initialPassageId={capturePassageId}
+          onSaveRead={handleSaveRead}
+          onSaveNext={handleSaveNext}
         />
       )
     }
 
-    if (viewMode === 'reading' && selectedBibleBook) {
+    if (destination === 'journal') {
+      return <JournalPage />
+    }
+
+    if (destination === 'profile') {
+      return (
+        <ProfilePage
+          displayName={displayName}
+          onOpenSettings={() => setSettingsOpen(true)}
+          onSignOut={onSignOut}
+        />
+      )
+    }
+
+    // Bible destination: library → book (chapters + inline notes) → passage.
+    if (selectedBibleBook) {
       return (
         <BookDetailPage
           key={selectedBibleBook.id}
           bibleBook={selectedBibleBook}
           onBack={() => setState(prev => ({ ...prev, selectedBookName: null }))}
-          onCapture={ref => { handleCaptureFromReading(ref); refresh() }}
+          onCapture={ref => {
+            handleCaptureFromReading(ref)
+            refresh()
+          }}
           onRefresh={refresh}
         />
       )
     }
 
-    if (viewMode === 'reading' && selectedPassage) {
+    if (selectedPassage) {
       return (
         <ReadingMode
           key={selectedPassage.id}
@@ -197,73 +196,22 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
       )
     }
 
-    if (viewMode === 'reading') {
-      return (
-        <BibleLibrary
-          passages={passages}
-          onSelectBook={handleSelectBook}
-          displayName={displayName}
-        />
-      )
-    }
-
     return (
-      <CaptureMode
-        ref={captureModeRef}
-        key={capturePassageId ?? captureReference}
-        initialReference={captureReference}
-        initialPassageId={capturePassageId}
-        onSaveRead={handleSaveRead}
-        onSaveNext={handleSaveNext}
-      />
+      <BibleLibrary passages={passages} onSelectBook={handleSelectBook} displayName={displayName} />
     )
   }
 
-  // On mobile, any navigation choice should also dismiss the drawer.
-  const withCloseDrawer = <A extends unknown[]>(fn: (...args: A) => void) => (...args: A): void => {
-    fn(...args)
-    closeDrawer()
-  }
-
   return (
-    <div className={`app-layout${drawerOpen ? ' drawer-open' : ''}`}>
-      {/* Mobile-only top bar with the drawer toggle. Hidden at desktop widths. */}
-      <div className="mobile-topbar">
-        <button
-          className="mobile-menu-btn"
-          onClick={() => setDrawerOpen(o => !o)}
-          aria-label="Open navigation menu"
-          aria-expanded={drawerOpen}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
-        <div className="mobile-topbar-title">Berean</div>
-      </div>
+    <div className="app-shell">
+      <NavBar
+        destination={destination}
+        onNavigate={handleNavigate}
+        displayName={displayName}
+        onOpenSettings={() => setSettingsOpen(true)}
+        onSignOut={onSignOut}
+      />
 
-      {/* Backdrop behind the drawer (mobile only). */}
-      <div className="drawer-backdrop" onClick={closeDrawer} />
-
-      <div className="sidebar-host">
-        <Sidebar
-          mode={viewMode}
-          onModeChange={withCloseDrawer(handleModeChange)}
-          passages={passages}
-          selectedPassageId={selectedPassageId}
-          onSelectPassage={withCloseDrawer(handleSelectPassage)}
-          onNewPassage={withCloseDrawer(() => handleNewPassage())}
-          onEditPassage={withCloseDrawer(handleEditPassage)}
-          isDark={isDark}
-          onToggleDark={toggleDark}
-          onOpenSettings={() => { setSettingsOpen(true); closeDrawer() }}
-        />
-      </div>
-      <div className="main-area">
-        {renderMain()}
-      </div>
+      <div className="main-area">{renderMain()}</div>
 
       <SettingsModal
         isOpen={settingsOpen}
@@ -273,26 +221,34 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
         onSignOut={onSignOut}
       />
 
-      {/* Navigation guard: unsaved notes in capture mode */}
+      {/* Navigation guard: unsaved notes on the study surface */}
       <ConfirmDialog
-        isOpen={pendingModeChange}
+        isOpen={pendingNav !== null}
         title="Unsaved notes"
-        message="You have unsaved notes. Save them before switching tabs?"
-        onClose={() => setPendingModeChange(false)}
+        message="You have unsaved notes. Save them before leaving?"
+        onClose={() => setPendingNav(null)}
         actions={[
           {
-            label: 'Save & Read',
+            label: 'Save & continue',
             variant: 'primary',
             autoFocus: false,
             onClick: () => {
+              const dest = pendingNav
               void (async () => {
                 const passageId = await captureModeRef.current?.save()
-                setPendingModeChange(false)
+                setPendingNav(null)
                 await refresh()
-                if (passageId) {
-                  setState(prev => ({ ...prev, selectedPassageId: passageId, selectedBookName: null, sessionEditorPassageId: null, viewMode: 'reading' }))
-                } else {
-                  doModeChange('reading')
+                if (dest === 'bible' && passageId) {
+                  setState(prev => ({
+                    ...prev,
+                    destination: 'bible',
+                    selectedPassageId: passageId,
+                    selectedBookName: null,
+                    captureReference: '',
+                    capturePassageId: null
+                  }))
+                } else if (dest) {
+                  doNavigate(dest)
                 }
               })()
             }
@@ -302,22 +258,17 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
             variant: 'danger',
             autoFocus: false,
             onClick: () => {
-              setPendingModeChange(false)
-              setState(prev => ({
-                ...prev,
-                captureReference: '',
-                viewMode: 'reading',
-                selectedPassageId: null,
-                selectedBookName: null,
-                sessionEditorPassageId: null
-              }))
+              const dest = pendingNav
+              setPendingNav(null)
+              setState(prev => ({ ...prev, captureReference: '', capturePassageId: null }))
+              if (dest) doNavigate(dest)
             }
           },
           {
             label: 'Cancel',
             variant: 'ghost',
             autoFocus: true,
-            onClick: () => setPendingModeChange(false)
+            onClick: () => setPendingNav(null)
           }
         ]}
       />
