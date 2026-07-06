@@ -4,6 +4,7 @@ import type {
   Session,
   Note,
   NoteWithPassageInfo,
+  JournalEntry,
   CreatePassageInput,
   CreateNoteInput,
   UpdateNoteInput,
@@ -75,6 +76,27 @@ export function createMemoryApi(): BereanApi {
       }
       passages.delete(passageId)
       return { deletedPassageId: passageId }
+    },
+
+    async getJournalEntries() {
+      const entries: JournalEntry[] = []
+      for (const p of passages.values()) {
+        const sessionIds = new Set(
+          [...sessions.values()].filter(s => s.passage_id === p.id).map(s => s.id)
+        )
+        const passageNotes = [...notes.values()]
+          .filter(n => sessionIds.has(n.session_id))
+          .sort((a, b) => a.created_at.localeCompare(b.created_at))
+        entries.push({
+          passage: p,
+          note_count: passageNotes.length,
+          last_note_at: passageNotes.length
+            ? passageNotes[passageNotes.length - 1].created_at
+            : null,
+          preview: passageNotes.length ? passageNotes[0].content : null
+        })
+      }
+      return entries
     },
 
     async getSessionsByPassage(passageId) {

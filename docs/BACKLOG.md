@@ -63,7 +63,21 @@ prioritized.
   free vs paid, billing, quota enforcement. Design the free single-user
   experience so it never feels crippled.
 
+- **Note→study bridge in the chapter reading view.** Workstream 2 added "Open
+  study" on notes in `ReadingMode` (saved-passage view), where the passage is
+  known. Notes rendered inside `BookDetailPage`'s ChapterView carry no passage
+  id (`NoteWithPassageInfo` has only `reference_label`), so the same bridge
+  there needs a note→passage resolution step first.
+
 ## Done
+
+- **Journal page + note→study bridge (UX overhaul, workstream 2).** Journal is a
+  browseable index of studies grouped by book (newest first within a group;
+  reference, date, note count, first-line preview) via a new
+  `BereanApi.getJournalEntries()` (implemented in both `SupabaseBereanApi` and
+  the memory stub); tapping a row opens the study in `SessionEditor`. Notes in
+  `ReadingMode` now offer "Edit note" and "Open study" (jumps to the
+  SessionEditor under the Journal destination).
 
 - **Nav restructure (UX overhaul, workstream 1).** Sidebar/drawer removed; top
   nav (desktop) + bottom tab bar (mobile) with Bible · Journal · + Study ·

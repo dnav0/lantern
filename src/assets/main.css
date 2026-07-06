@@ -507,6 +507,100 @@ body.dark .bible-library-greeting {
   line-height: 1.65;
 }
 
+/* Journal index — study sessions grouped by book */
+.journal-index {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.journal-heading {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: -0.3px;
+  margin: 0 0 4px;
+}
+
+.journal-sub {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 24px;
+}
+
+.journal-book-group {
+  margin-bottom: 24px;
+}
+
+.journal-book-header {
+  font-size: 11px;
+  font-weight: 700;
+  color: #bbb;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.journal-entry {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: #fff;
+  border: 0.5px solid #edebe6;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.journal-entry:hover {
+  border-color: #d8d4f0;
+  background: #fbfaff;
+}
+
+.journal-entry-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.journal-entry-ref {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.journal-entry-date {
+  font-size: 11px;
+  color: #aaa;
+  flex-shrink: 0;
+}
+
+.journal-entry-bottom {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.journal-entry-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: #7f77dd;
+  flex-shrink: 0;
+}
+
+.journal-entry-preview {
+  font-size: 12px;
+  color: #999;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
 .profile-page-header {
   display: flex;
   flex-direction: column;
@@ -3113,6 +3207,31 @@ body.dark .journal-page-title {
 }
 body.dark .journal-page-hint {
   color: #55535a;
+}
+body.dark .journal-heading,
+body.dark .journal-entry-ref {
+  color: #eceae4;
+}
+body.dark .journal-sub,
+body.dark .journal-entry-preview {
+  color: #6f6d76;
+}
+body.dark .journal-book-header {
+  color: #55535a;
+}
+body.dark .journal-entry {
+  background: #1e1c28;
+  border-color: rgba(255, 255, 255, 0.07);
+}
+body.dark .journal-entry:hover {
+  border-color: #4a4570;
+  background: #232030;
+}
+body.dark .journal-entry-date {
+  color: #55535a;
+}
+body.dark .journal-entry-count {
+  color: #9d97e8;
 }
 body.dark .profile-page-avatar {
   background: #6b64c0;

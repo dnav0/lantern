@@ -1,5 +1,6 @@
 import type {
   Passage,
+  JournalEntry,
   Session,
   Note,
   NoteWithPassageInfo,
@@ -26,6 +27,9 @@ export interface BereanApi {
   getPassageById(id: string): Promise<Passage | null>
   createPassage(data: CreatePassageInput): Promise<Passage>
   deletePassageAll(passageId: string): Promise<{ deletedPassageId: string }>
+  // Journal listing: every studied passage with note count, last activity and a
+  // first-note preview, in one call (the Journal page's only read).
+  getJournalEntries(): Promise<JournalEntry[]>
 
   // Sessions
   getSessionsByPassage(passageId: string): Promise<Session[]>

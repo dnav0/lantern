@@ -5,6 +5,7 @@ import type {
   Session,
   Note,
   NoteWithPassageInfo,
+  JournalEntry,
   BiblePassage,
   CreatePassageInput,
   CreateNoteInput,
@@ -159,6 +160,42 @@ export class SupabaseBereanApi implements BereanApi {
       const { error } = await this.db.from('passages').delete().eq('id', passageId)
       if (error) throw new Error(error.message)
       return { deletedPassageId: passageId }
+    })
+  }
+
+  async getJournalEntries(): Promise<JournalEntry[]> {
+    return this.read('getJournalEntries', undefined, async () => {
+      // Two queries: all passages, plus one join query pulling every note's
+      // (content, created_at, passage_id) in the workspace; aggregate here.
+      const passages = await this.getPassages()
+      const { data, error } = await this.db
+        .from('notes')
+        .select(
+          'content, created_at, sessions!inner ( passage_id, passages!inner ( workspace_id ) )'
+        )
+        .eq('sessions.passages.workspace_id', this.workspaceId)
+        .order('created_at', { ascending: true })
+      const first = <T,>(v: T | T[]): T => (Array.isArray(v) ? v[0] : v)
+      const rows = this.assert(data, error) as unknown as Array<{
+        content: string
+        created_at: string
+        sessions: { passage_id: string } | { passage_id: string }[]
+      }>
+      const byPassage = new Map<string, { content: string; created_at: string }[]>()
+      for (const r of rows) {
+        const pid = first(r.sessions).passage_id
+        if (!byPassage.has(pid)) byPassage.set(pid, [])
+        byPassage.get(pid)!.push({ content: r.content, created_at: r.created_at })
+      }
+      return passages.map(p => {
+        const ns = byPassage.get(p.id) ?? []
+        return {
+          passage: p,
+          note_count: ns.length,
+          last_note_at: ns.length ? ns[ns.length - 1].created_at : null,
+          preview: ns.length ? ns[0].content : null
+        }
+      })
     })
   }
 

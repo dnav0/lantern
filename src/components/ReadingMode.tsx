@@ -11,6 +11,8 @@ interface ReadingModeProps {
   passage: Passage
   onCapture: (passageId: string) => void
   onRefresh?: () => void
+  // The bridge: jump from a note into the full study (SessionEditor flow).
+  onOpenStudy?: () => void
   onPassageDeleted?: () => void
 }
 
@@ -46,7 +48,7 @@ function RenderedNoteContent({ content }: { content: string }): React.ReactEleme
   )
 }
 
-export default function ReadingMode({ passage, onCapture, onRefresh, onPassageDeleted }: ReadingModeProps): React.ReactElement {
+export default function ReadingMode({ passage, onCapture, onRefresh, onOpenStudy, onPassageDeleted }: ReadingModeProps): React.ReactElement {
   const api = useApi()
   const [biblePassage, setBiblePassage] = useState<BiblePassage | null>(null)
   const [notes, setNotes] = useState<Note[]>([])
@@ -206,12 +208,20 @@ export default function ReadingMode({ passage, onCapture, onRefresh, onPassageDe
 
   const renderNoteActions = (note: Note): React.ReactElement => (
     <div className="se-note-actions">
-      <button className="se-icon-btn" title="Edit" onClick={e => { e.stopPropagation(); handleStartEdit(note) }}>
+      <button className="se-icon-btn" title="Edit note" onClick={e => { e.stopPropagation(); handleStartEdit(note) }}>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
         </svg>
       </button>
+      {onOpenStudy && (
+        <button className="se-icon-btn" title="Open study" onClick={e => { e.stopPropagation(); onOpenStudy() }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+        </button>
+      )}
       <button className="se-icon-btn se-icon-danger" title="Delete" onClick={e => { e.stopPropagation(); setConfirmDelete(note) }}>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>

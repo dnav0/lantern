@@ -115,6 +115,15 @@ export interface DeleteNoteResult {
   deletedPassageId?: string
 }
 
+// One row in the Journal index: a studied passage plus the aggregates the
+// listing shows (note count, last activity, first-note preview).
+export interface JournalEntry {
+  passage: Passage
+  note_count: number
+  last_note_at: string | null
+  preview: string | null
+}
+
 export interface PassageWithNotes {
   passage: Passage
   sessions: Array<Session & { notes: Note[] }>

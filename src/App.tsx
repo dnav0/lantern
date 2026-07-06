@@ -5,6 +5,7 @@ import ReadingMode from './components/ReadingMode'
 import BibleLibrary from './components/BibleLibrary'
 import BookDetailPage from './components/BookDetailPage'
 import JournalPage from './components/JournalPage'
+import SessionEditor from './components/SessionEditor'
 import ProfilePage from './components/ProfilePage'
 import ConfirmDialog from './components/ConfirmDialog'
 import SettingsModal from './components/SettingsModal'
@@ -27,6 +28,8 @@ interface AppState {
   // Bible destination drill-down: a book (chapter reading) or a saved passage.
   selectedBookName: string | null
   selectedPassageId: string | null
+  // Journal destination drill-down: the study (passage) open in SessionEditor.
+  journalPassageId: string | null
   // Study destination prefill (set when jumping in from the Bible view).
   captureReference: string
   capturePassageId: string | null
@@ -42,6 +45,7 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
     passages: [],
     selectedBookName: null,
     selectedPassageId: null,
+    journalPassageId: null,
     captureReference: '',
     capturePassageId: null
   })
@@ -65,13 +69,15 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
       destination: dest,
       // Tapping "Bible" always lands on the library, not a stale drill-down.
       ...(dest === 'bible' ? { selectedBookName: null, selectedPassageId: null } : {}),
+      // Tapping "Journal" always lands on the index, not a stale open study.
+      ...(dest === 'journal' ? { journalPassageId: null } : {}),
       // "+ Study" from the nav starts a blank study.
       ...(dest === 'study' ? { captureReference: '', capturePassageId: null } : {})
     }))
   }
 
   const handleNavigate = (dest: Destination): void => {
-    if (dest === state.destination && dest !== 'bible') return
+    if (dest === state.destination && dest !== 'bible' && dest !== 'journal') return
     if (state.destination === 'study' && dest !== 'study' && captureModeRef.current?.isDirty()) {
       setPendingNav(dest)
       return
@@ -111,6 +117,16 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
     }))
   }
 
+  // The bridge: jump from a note in the Bible reading view (or a Journal row)
+  // into the full study — the SessionEditor under the Journal destination.
+  const handleOpenStudy = (passageId: string): void => {
+    setState(prev => ({
+      ...prev,
+      destination: 'journal',
+      journalPassageId: passageId
+    }))
+  }
+
   const handleCaptureFromReading = (reference: string, passageId?: string): void => {
     setState(prev => ({
       ...prev,
@@ -125,6 +141,7 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
     passages,
     selectedBookName,
     selectedPassageId,
+    journalPassageId,
     captureReference,
     capturePassageId
   } = state
@@ -149,7 +166,24 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
     }
 
     if (destination === 'journal') {
-      return <JournalPage />
+      const journalPassage = journalPassageId
+        ? passages.find(p => p.id === journalPassageId) || null
+        : null
+      if (journalPassage) {
+        return (
+          <SessionEditor
+            key={journalPassage.id}
+            passage={journalPassage}
+            onBack={() => setState(prev => ({ ...prev, journalPassageId: null }))}
+            onRefresh={refresh}
+            onPassageDeleted={async () => {
+              await refresh()
+              setState(prev => ({ ...prev, journalPassageId: null }))
+            }}
+          />
+        )
+      }
+      return <JournalPage onOpenStudy={handleOpenStudy} />
     }
 
     if (destination === 'profile') {
@@ -188,6 +222,7 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
             handleCaptureFromReading(p?.reference_label || '', passageId)
           }}
           onRefresh={refresh}
+          onOpenStudy={() => handleOpenStudy(selectedPassage!.id)}
           onPassageDeleted={async () => {
             await refresh()
             setState(prev => ({ ...prev, selectedPassageId: null }))
