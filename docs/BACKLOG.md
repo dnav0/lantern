@@ -71,7 +71,19 @@ prioritized.
 
 ## Done
 
-- **Journal page + note→study bridge (UX overhaul, workstream 2).** Journal is a
+- **Study entry points + verse-range selection (UX overhaul, workstream 3).**
+  Renamed Capture→Study across UI copy and code (`CaptureMode`→`StudyMode`
+  component/handle, App state `capture*`→`study*`, `.capture-*` CSS →
+  `.study-*`, `btn-capture-chapter`→`btn-study-chapter`, Onboarding "Study
+  mode", chapter button "Study chapter"). Three convergent entry points to the
+  same `StudyMode`: blank from the nav, prefilled from the current chapter
+  ("Study chapter"), and verse-range selection in the Bible chapter reader
+  (`BookDetailPage` ChapterView) — tap a verse to start, tap another to extend,
+  a floating action bar offers "Start study on {ref}" (prefills StudyMode with
+  the exact range) and "Quick note" (opens the inline note input prefilled with
+  the verse-range tag). Quick note reuses the existing session+note flow — no
+  schema or `BereanApi` change. The floating bar clears via its × or by tapping
+  the sole selected verse again; on mobile it floats above the bottom tab bar. Journal is a
   browseable index of studies grouped by book (newest first within a group;
   reference, date, note count, first-line preview) via a new
   `BereanApi.getJournalEntries()` (implemented in both `SupabaseBereanApi` and

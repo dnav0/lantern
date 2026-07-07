@@ -682,14 +682,14 @@ body.dark .bible-library-greeting {
   flex-direction: column;
 }
 
-/* ─── Capture mode ──────────────────────────────────────────────────────────── */
-.capture-layout {
+/* ─── Study mode ────────────────────────────────────────────────────────────── */
+.study-layout {
   display: flex;
   height: 100%;
   overflow: hidden;
 }
 
-.capture-left {
+.study-left {
   flex: 0 0 60%;
   display: flex;
   flex-direction: column;
@@ -697,19 +697,19 @@ body.dark .bible-library-greeting {
   border-right: 0.5px solid #e8e6e1;
 }
 
-.capture-right {
+.study-right {
   flex: 1;
   overflow-y: auto;
   background: #f8f7f4;
 }
 
-.capture-right::-webkit-scrollbar {
+.study-right::-webkit-scrollbar {
   width: 4px;
 }
-.capture-right::-webkit-scrollbar-track {
+.study-right::-webkit-scrollbar-track {
   background: transparent;
 }
-.capture-right::-webkit-scrollbar-thumb {
+.study-right::-webkit-scrollbar-thumb {
   background: #ddd;
   border-radius: 2px;
 }
@@ -940,8 +940,8 @@ body.dark .bible-library-greeting {
   font-size: 11px;
 }
 
-/* Capture actions */
-.capture-actions {
+/* Study actions */
+.study-actions {
   padding: 14px 32px;
   border-top: 0.5px solid #edebe6;
   display: flex;
@@ -1116,6 +1116,10 @@ body.dark .bible-library-greeting {
 .reading-verse-row.highlighted {
   background: rgba(127, 119, 221, 0.1);
 }
+.reading-verse-row.selected {
+  background: rgba(127, 119, 221, 0.16);
+  box-shadow: inset 2px 0 0 #7f77dd;
+}
 
 .verse-add-btn {
   position: absolute;
@@ -1279,6 +1283,74 @@ body.dark .bible-library-greeting {
   font-size: 11px;
   color: #bbb;
   padding-top: 2px;
+}
+
+/* ─── Verse-range selection floating action bar ─────────────────────────────── */
+.verse-action-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: calc(100vw - 32px);
+  padding: 10px 12px 10px 18px;
+  background: #ffffff;
+  border: 0.5px solid #e6e3dd;
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(30, 26, 60, 0.18);
+}
+.verse-action-ref {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b6470;
+  white-space: nowrap;
+}
+.verse-action-btns {
+  display: flex;
+  gap: 8px;
+}
+.verse-action-btn {
+  border: 0.5px solid #e0ddd6;
+  background: #f6f5f2;
+  color: #2a2730;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 9px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.verse-action-btn:hover {
+  background: #eeece7;
+}
+.verse-action-btn.primary {
+  background: #7f77dd;
+  border-color: #7f77dd;
+  color: #fff;
+}
+.verse-action-btn.primary:hover {
+  background: #6f66d4;
+}
+.verse-action-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #9a94a2;
+  cursor: pointer;
+  border-radius: 7px;
+  flex-shrink: 0;
+}
+.verse-action-clear:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #4a4650;
 }
 
 /* ─── Empty states ──────────────────────────────────────────────────────────── */
@@ -1718,7 +1790,7 @@ body.dark .bible-library-greeting {
   max-width: 640px;
 }
 
-.btn-capture-chapter {
+.btn-study-chapter {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -1734,7 +1806,7 @@ body.dark .bible-library-greeting {
   transition: all 0.12s;
 }
 
-.btn-capture-chapter:hover {
+.btn-study-chapter:hover {
   background: rgba(127, 119, 221, 0.13);
 }
 
@@ -2948,17 +3020,17 @@ body.dark .upd-popover-btn-ghost:hover {
     overflow: hidden;
   }
 
-  /* Capture: stack the note editor over the passage pane instead of side-by-side. */
-  .capture-layout {
+  /* Study: stack the note editor over the passage pane instead of side-by-side. */
+  .study-layout {
     flex-direction: column;
     overflow-y: auto;
   }
-  .capture-left {
+  .study-left {
     flex: 0 0 auto;
     border-right: none;
     border-bottom: 0.5px solid #e8e6e1;
   }
-  .capture-right {
+  .study-right {
     flex: 0 0 auto;
     min-height: 40vh;
   }
@@ -2972,7 +3044,7 @@ body.dark .upd-popover-btn-ghost:hover {
   .notes-list {
     padding: 14px 18px 180px;
   }
-  .capture-actions {
+  .study-actions {
     padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
   }
   .btn-action {
@@ -3055,6 +3127,31 @@ body.dark .upd-popover-btn-ghost:hover {
   }
   .reading-verse-row {
     padding-right: 30px;
+  }
+
+  /* Floating action bar: sit just above the bottom tab bar, span the width, and
+     stack the reference above full-width buttons. */
+  .verse-action-bar {
+    left: 12px;
+    right: 12px;
+    max-width: none;
+    transform: none;
+    bottom: calc(56px + env(safe-area-inset-bottom) + 12px);
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    z-index: 290;
+  }
+  .verse-action-ref {
+    flex: 1;
+  }
+  .verse-action-btns {
+    flex-basis: 100%;
+    order: 3;
+  }
+  .verse-action-btn {
+    flex: 1;
+    padding: 12px 10px;
+    text-align: center;
   }
 
   /* Note action icons: bigger touch targets. */

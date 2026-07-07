@@ -9,7 +9,7 @@ import CrossRefPill from './CrossRefPill'
 
 interface ReadingModeProps {
   passage: Passage
-  onCapture: (passageId: string) => void
+  onStudy: (passageId: string) => void
   onRefresh?: () => void
   // The bridge: jump from a note into the full study (SessionEditor flow).
   onOpenStudy?: () => void
@@ -48,7 +48,7 @@ function RenderedNoteContent({ content }: { content: string }): React.ReactEleme
   )
 }
 
-export default function ReadingMode({ passage, onCapture, onRefresh, onOpenStudy, onPassageDeleted }: ReadingModeProps): React.ReactElement {
+export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, onPassageDeleted }: ReadingModeProps): React.ReactElement {
   const api = useApi()
   const [biblePassage, setBiblePassage] = useState<BiblePassage | null>(null)
   const [notes, setNotes] = useState<Note[]>([])
@@ -311,7 +311,7 @@ export default function ReadingMode({ passage, onCapture, onRefresh, onOpenStudy
             )}
             <span
               style={{ color: '#7F77DD', cursor: 'pointer', marginLeft: 'auto' }}
-              onClick={() => onCapture(passage.id)}
+              onClick={() => onStudy(passage.id)}
             >
               Edit notes
             </span>

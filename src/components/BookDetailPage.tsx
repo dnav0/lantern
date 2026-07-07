@@ -44,11 +44,11 @@ interface ChapterViewProps {
   bookName: string
   chapter: number
   notes: NoteWithPassageInfo[]
-  onCaptureChapter: (ref: string) => void
+  onStudyChapter: (ref: string) => void
   onNotesChanged: () => void
 }
 
-function ChapterView({ bookName, chapter, notes, onCaptureChapter, onNotesChanged }: ChapterViewProps): React.ReactElement {
+function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged }: ChapterViewProps): React.ReactElement {
   const api = useApi()
   const [bibleData, setBibleData] = useState<BiblePassage | null>(null)
   const [loading, setLoading] = useState(true)
@@ -57,6 +57,10 @@ function ChapterView({ bookName, chapter, notes, onCaptureChapter, onNotesChange
   const [inlineVerse, setInlineVerse] = useState<number | null>(null)
   const [inlineText, setInlineText] = useState('')
   const [savingInline, setSavingInline] = useState(false)
+  // Verse-range selection for the floating action bar: tap a verse to start,
+  // tap another to extend; the range spans min..max of the two anchors.
+  const [selAnchor, setSelAnchor] = useState<number | null>(null)
+  const [selFocus, setSelFocus] = useState<number | null>(null)
   const [localNotes, setLocalNotes] = useState<NoteWithPassageInfo[]>(notes)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
@@ -95,8 +99,32 @@ function ChapterView({ bookName, chapter, notes, onCaptureChapter, onNotesChange
 
   useEffect(() => { setLocalNotes(notes) }, [notes])
 
+  // Current selection as an inclusive [start, end] range, or null.
+  const selRange: [number, number] | null =
+    selAnchor === null || selFocus === null
+      ? null
+      : [Math.min(selAnchor, selFocus), Math.max(selAnchor, selFocus)]
+
+  const selReference = selRange
+    ? selRange[0] === selRange[1]
+      ? `${bookName} ${chapter}:${selRange[0]}`
+      : `${bookName} ${chapter}:${selRange[0]}-${selRange[1]}`
+    : ''
+
+  const selVerseTag = selRange
+    ? selRange[0] === selRange[1]
+      ? `v${selRange[0]} `
+      : `v${selRange[0]}-${selRange[1]} `
+    : ''
+
+  const clearSelection = (): void => {
+    setSelAnchor(null)
+    setSelFocus(null)
+  }
+
   const handleVerseClick = (v: number): void => {
     if (editingNoteId !== null) return
+    // Highlight notes anchored to this verse, as before.
     const anchored = chapterNotes.filter(n =>
       n.anchor_start_verse !== null &&
       v >= n.anchor_start_verse &&
@@ -104,8 +132,32 @@ function ChapterView({ bookName, chapter, notes, onCaptureChapter, onNotesChange
     )
     if (anchored.length) {
       setHighlightedNoteIds(new Set(anchored.map(n => n.id)))
-      setHighlightedVerses(new Set())
     }
+    setHighlightedVerses(new Set())
+    // Drive the range selection.
+    if (selAnchor === null) {
+      setSelAnchor(v)
+      setSelFocus(v)
+    } else if (selFocus === v && selAnchor === v) {
+      // Tapping the sole selected verse again clears.
+      clearSelection()
+    } else {
+      // Extend the range to the newly tapped verse.
+      setSelFocus(v)
+    }
+  }
+
+  const handleStartStudyOnSelection = (): void => {
+    if (!selReference) return
+    clearSelection()
+    onStudyChapter(selReference)
+  }
+
+  const handleQuickNoteFromSelection = (): void => {
+    if (selRange === null) return
+    setInlineVerse(selRange[0])
+    setInlineText(selVerseTag)
+    clearSelection()
   }
 
   const handleNoteClick = (n: NoteWithPassageInfo): void => {
@@ -312,26 +364,29 @@ function ChapterView({ bookName, chapter, notes, onCaptureChapter, onNotesChange
           CHAPTER {chapter}
         </div>
         <button
-          className="btn-capture-chapter"
-          onClick={() => onCaptureChapter(`${bookName} ${chapter}`)}
+          className="btn-study-chapter"
+          onClick={() => onStudyChapter(`${bookName} ${chapter}`)}
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
-          Add notes
+          Study chapter
         </button>
       </div>
 
       {bibleData.verses.map(v => {
+        const isSelected = selRange !== null && v.verse >= selRange[0] && v.verse <= selRange[1]
         const isHighlighted = highlightedVerses.has(v.verse)
-        const isDimmed = hasHighlightedVerse && !isHighlighted
+        const isDimmed =
+          (hasHighlightedVerse && !isHighlighted) ||
+          (selRange !== null && !isSelected)
         const verseNotes = byVerse.get(v.verse) || [] as NoteGroup[]
         const showInline = inlineVerse === v.verse
 
         return (
           <div key={v.verse} className="reading-verse-block">
             <div
-              className={`reading-verse-row${isHighlighted ? ' highlighted' : ''}`}
+              className={`reading-verse-row${isHighlighted ? ' highlighted' : ''}${isSelected ? ' selected' : ''}`}
               onClick={() => handleVerseClick(v.verse)}
               style={isDimmed ? { opacity: 0.35 } : undefined}
             >
@@ -378,6 +433,29 @@ function ChapterView({ bookName, chapter, notes, onCaptureChapter, onNotesChange
         </div>
       )}
 
+      {selRange !== null && inlineVerse === null && (
+        <div className="verse-action-bar" role="toolbar" aria-label="Selection actions">
+          <span className="verse-action-ref">{selReference}</span>
+          <div className="verse-action-btns">
+            <button className="verse-action-btn primary" onClick={handleStartStudyOnSelection}>
+              Start study on {selReference}
+            </button>
+            <button className="verse-action-btn" onClick={handleQuickNoteFromSelection}>
+              Quick note
+            </button>
+          </div>
+          <button
+            className="verse-action-clear"
+            onClick={clearSelection}
+            aria-label="Clear selection"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      )}
+
       <ConfirmDialog
         isOpen={confirmDelete !== null}
         title="Delete note?"
@@ -397,14 +475,14 @@ function ChapterView({ bookName, chapter, notes, onCaptureChapter, onNotesChange
 interface BookDetailPageProps {
   bibleBook: BibleBook
   onBack: () => void
-  onCapture: (reference: string) => void
+  onStudy: (reference: string) => void
   onRefresh?: () => void
 }
 
 export default function BookDetailPage({
   bibleBook,
   onBack,
-  onCapture,
+  onStudy,
   onRefresh
 }: BookDetailPageProps): React.ReactElement {
   const api = useApi()
@@ -487,7 +565,7 @@ export default function BookDetailPage({
           bookName={bibleBook.name}
           chapter={selectedChapter}
           notes={allNotes}
-          onCaptureChapter={onCapture}
+          onStudyChapter={onStudy}
           onNotesChanged={reloadNotes}
         />
       </div>

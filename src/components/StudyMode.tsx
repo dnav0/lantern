@@ -13,12 +13,12 @@ interface LineData {
   indent: number
 }
 
-export interface CaptureModeHandle {
+export interface StudyModeHandle {
   isDirty: () => boolean
   save: () => Promise<string | null>
 }
 
-interface CaptureModeProps {
+interface StudyModeProps {
   initialReference?: string
   initialPassageId?: string | null
   onSaveRead: (passageId: string) => void
@@ -36,7 +36,7 @@ function guessNextReference(label: string): string {
   return `${bookPart} ${ch}:${ve + 1}-${ve + 1 + len}`
 }
 
-const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function CaptureMode({
+const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode({
   initialReference = '',
   initialPassageId = null,
   onSaveRead,
@@ -200,8 +200,8 @@ const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function Cap
   }
 
   return (
-    <div className="capture-layout">
-      <div className="capture-left">
+    <div className="study-layout">
+      <div className="study-left">
         <div className="passage-heading-wrap">
           <ReferenceInput
             className="passage-heading-input"
@@ -221,7 +221,7 @@ const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function Cap
           onCursorLine={handleCursorLine}
         />
 
-        <div className="capture-actions">
+        <div className="study-actions">
           <button
             className="btn-action btn-save-read"
             onClick={handleSaveRead}
@@ -251,7 +251,7 @@ const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function Cap
         </div>
       </div>
 
-      <div className="capture-right">
+      <div className="study-right">
         <PassagePane
           passage={passage}
           loading={loadingPassage}
@@ -263,4 +263,4 @@ const CaptureMode = forwardRef<CaptureModeHandle, CaptureModeProps>(function Cap
   )
 })
 
-export default CaptureMode
+export default StudyMode

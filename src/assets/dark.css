@@ -14,14 +14,14 @@ body.dark .main-area {
   background: #14131a;
 }
 
-/* ── Capture mode ── */
-body.dark .capture-left {
+/* ── Study mode ── */
+body.dark .study-left {
   border-right-color: rgba(255, 255, 255, 0.06);
 }
-body.dark .capture-right {
+body.dark .study-right {
   background: #100f16;
 }
-body.dark .capture-right::-webkit-scrollbar-thumb {
+body.dark .study-right::-webkit-scrollbar-thumb {
   background: #2a2830;
 }
 body.dark .passage-heading-wrap {
@@ -54,7 +54,7 @@ body.dark .note-input::placeholder {
 body.dark .note-bullet {
   color: #3a3840;
 }
-body.dark .capture-actions {
+body.dark .study-actions {
   border-top-color: rgba(255, 255, 255, 0.06);
 }
 body.dark .btn-save-read {
@@ -105,6 +105,10 @@ body.dark .reading-verse-row:hover {
 body.dark .reading-verse-row.highlighted {
   background: rgba(127, 119, 221, 0.12);
 }
+body.dark .reading-verse-row.selected {
+  background: rgba(127, 119, 221, 0.2);
+  box-shadow: inset 2px 0 0 #8b83e6;
+}
 body.dark .reading-note-card {
   color: #8a8890;
   background: rgba(255, 255, 255, 0.03);
@@ -124,6 +128,39 @@ body.dark .inline-note-input {
 }
 body.dark .inline-note-hint {
   color: #30303a;
+}
+
+/* ── Verse-range floating action bar ── */
+body.dark .verse-action-bar {
+  background: #17151d;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+body.dark .verse-action-ref {
+  color: #8a8890;
+}
+body.dark .verse-action-btn {
+  background: #211f2a;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #d8d5e0;
+}
+body.dark .verse-action-btn:hover {
+  background: #2a2833;
+}
+body.dark .verse-action-btn.primary {
+  background: #7f77dd;
+  border-color: #7f77dd;
+  color: #fff;
+}
+body.dark .verse-action-btn.primary:hover {
+  background: #8b83e6;
+}
+body.dark .verse-action-clear {
+  color: #6a6674;
+}
+body.dark .verse-action-clear:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #b0abbb;
 }
 
 /* ── Empty / welcome states ── */

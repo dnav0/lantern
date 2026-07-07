@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import NavBar, { Destination } from './components/NavBar'
-import CaptureMode, { CaptureModeHandle } from './components/CaptureMode'
+import StudyMode, { StudyModeHandle } from './components/StudyMode'
 import ReadingMode from './components/ReadingMode'
 import BibleLibrary from './components/BibleLibrary'
 import BookDetailPage from './components/BookDetailPage'
@@ -31,8 +31,8 @@ interface AppState {
   // Journal destination drill-down: the study (passage) open in SessionEditor.
   journalPassageId: string | null
   // Study destination prefill (set when jumping in from the Bible view).
-  captureReference: string
-  capturePassageId: string | null
+  studyReference: string
+  studyPassageId: string | null
 }
 
 export default function App({ displayName, onSignOut }: AppProps): React.ReactElement {
@@ -46,13 +46,13 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
     selectedBookName: null,
     selectedPassageId: null,
     journalPassageId: null,
-    captureReference: '',
-    capturePassageId: null
+    studyReference: '',
+    studyPassageId: null
   })
   // Navigation guard: destination we're trying to reach while the study
   // surface has unsaved notes.
   const [pendingNav, setPendingNav] = useState<Destination | null>(null)
-  const captureModeRef = useRef<CaptureModeHandle>(null)
+  const studyModeRef = useRef<StudyModeHandle>(null)
 
   const refresh = useCallback(async () => {
     const passages = await api.getPassages()
@@ -72,13 +72,13 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
       // Tapping "Journal" always lands on the index, not a stale open study.
       ...(dest === 'journal' ? { journalPassageId: null } : {}),
       // "+ Study" from the nav starts a blank study.
-      ...(dest === 'study' ? { captureReference: '', capturePassageId: null } : {})
+      ...(dest === 'study' ? { studyReference: '', studyPassageId: null } : {})
     }))
   }
 
   const handleNavigate = (dest: Destination): void => {
     if (dest === state.destination && dest !== 'bible' && dest !== 'journal') return
-    if (state.destination === 'study' && dest !== 'study' && captureModeRef.current?.isDirty()) {
+    if (state.destination === 'study' && dest !== 'study' && studyModeRef.current?.isDirty()) {
       setPendingNav(dest)
       return
     }
@@ -101,7 +101,7 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
       destination: 'bible',
       selectedPassageId: passageId,
       selectedBookName: null,
-      capturePassageId: null
+      studyPassageId: null
     }))
   }
 
@@ -112,8 +112,8 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
       destination: 'study',
       selectedBookName: null,
       selectedPassageId: null,
-      capturePassageId: null,
-      captureReference: nextRef || ''
+      studyPassageId: null,
+      studyReference: nextRef || ''
     }))
   }
 
@@ -127,12 +127,12 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
     }))
   }
 
-  const handleCaptureFromReading = (reference: string, passageId?: string): void => {
+  const handleStudyFromReading = (reference: string, passageId?: string): void => {
     setState(prev => ({
       ...prev,
       destination: 'study',
-      captureReference: reference,
-      capturePassageId: passageId ?? null
+      studyReference: reference,
+      studyPassageId: passageId ?? null
     }))
   }
 
@@ -142,8 +142,8 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
     selectedBookName,
     selectedPassageId,
     journalPassageId,
-    captureReference,
-    capturePassageId
+    studyReference,
+    studyPassageId
   } = state
 
   const selectedPassage = passages.find(p => p.id === selectedPassageId) || null
@@ -154,11 +154,11 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
   function renderMain(): React.ReactElement {
     if (destination === 'study') {
       return (
-        <CaptureMode
-          ref={captureModeRef}
-          key={capturePassageId ?? captureReference}
-          initialReference={captureReference}
-          initialPassageId={capturePassageId}
+        <StudyMode
+          ref={studyModeRef}
+          key={studyPassageId ?? studyReference}
+          initialReference={studyReference}
+          initialPassageId={studyPassageId}
           onSaveRead={handleSaveRead}
           onSaveNext={handleSaveNext}
         />
@@ -203,8 +203,8 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
           key={selectedBibleBook.id}
           bibleBook={selectedBibleBook}
           onBack={() => setState(prev => ({ ...prev, selectedBookName: null }))}
-          onCapture={ref => {
-            handleCaptureFromReading(ref)
+          onStudy={ref => {
+            handleStudyFromReading(ref)
             refresh()
           }}
           onRefresh={refresh}
@@ -217,9 +217,9 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
         <ReadingMode
           key={selectedPassage.id}
           passage={selectedPassage}
-          onCapture={passageId => {
+          onStudy={passageId => {
             const p = passages.find(p => p.id === passageId)
-            handleCaptureFromReading(p?.reference_label || '', passageId)
+            handleStudyFromReading(p?.reference_label || '', passageId)
           }}
           onRefresh={refresh}
           onOpenStudy={() => handleOpenStudy(selectedPassage!.id)}
@@ -270,7 +270,7 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
             onClick: () => {
               const dest = pendingNav
               void (async () => {
-                const passageId = await captureModeRef.current?.save()
+                const passageId = await studyModeRef.current?.save()
                 setPendingNav(null)
                 await refresh()
                 if (dest === 'bible' && passageId) {
@@ -279,8 +279,8 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
                     destination: 'bible',
                     selectedPassageId: passageId,
                     selectedBookName: null,
-                    captureReference: '',
-                    capturePassageId: null
+                    studyReference: '',
+                    studyPassageId: null
                   }))
                 } else if (dest) {
                   doNavigate(dest)
@@ -295,7 +295,7 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
             onClick: () => {
               const dest = pendingNav
               setPendingNav(null)
-              setState(prev => ({ ...prev, captureReference: '', capturePassageId: null }))
+              setState(prev => ({ ...prev, studyReference: '', studyPassageId: null }))
               if (dest) doNavigate(dest)
             }
           },

@@ -1,6 +1,6 @@
 /**
  * Contenteditable note editor for inline editing in reading view.
- * Renders pills (verse anchors, tags, cross-refs) exactly like capture mode,
+ * Renders pills (verse anchors, tags, cross-refs) exactly like study mode,
  * with the same @tag autocomplete dropdown.
  * Cmd/Ctrl+Enter → save, Escape → cancel.
  */

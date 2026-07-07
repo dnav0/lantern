@@ -8,7 +8,7 @@ interface OnboardingProps {
 }
 
 // First-run flow after the first sign-in: an optional name step, then two short
-// screens introducing capture and reading modes. Skippable at every step. Copy is
+// screens introducing study and reading modes. Skippable at every step. Copy is
 // plain and quiet — no exclamation marks, no marketing.
 export default function Onboarding({ onDone }: OnboardingProps): React.ReactElement {
   const [step, setStep] = useState(0)
@@ -69,7 +69,7 @@ export default function Onboarding({ onDone }: OnboardingProps): React.ReactElem
 
         {step === 1 && (
           <>
-            <h1 className="welcome-title">Capture mode</h1>
+            <h1 className="welcome-title">Study mode</h1>
             <p className="welcome-body">
               Type a reference, read the passage, and write what you see —
               observations, historical context, application, personal reflection.

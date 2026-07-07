@@ -20,7 +20,7 @@ interface ParsedReference {
 }
 
 // Parses references in the two shapes call sites produce:
-//   "Book ch:v"          "Book ch:v-v"        (CaptureMode, NoteEditor, ReadingMode's reference_label)
+//   "Book ch:v"          "Book ch:v-v"        (StudyMode, NoteEditor, ReadingMode's reference_label)
 //   "Book ch"             (BookDetailPage chapter view: no verse component)
 // Multi-word book names (e.g. "Song of Solomon", "1 Corinthians") are handled
 // by trying progressively shorter prefixes against the alias table, since the
