@@ -703,6 +703,16 @@ body.dark .bible-library-greeting {
   background: #f8f7f4;
 }
 
+/* The mobile collapse header + body wrapper are inert on desktop: the header is
+   hidden and the body is a plain passthrough so .study-right stays the single
+   scroll container (unchanged side-by-side behavior). */
+.study-scripture-toggle {
+  display: none;
+}
+.study-scripture-body {
+  display: contents;
+}
+
 .study-right::-webkit-scrollbar {
   width: 4px;
 }
@@ -1183,12 +1193,34 @@ body.dark .bible-library-greeting {
   border-left-color: #d4537e;
 }
 
+.reading-note-metarow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
 .reading-note-meta {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin-bottom: 3px;
+}
+
+.reading-note-metarow .reading-note-meta {
+  margin-bottom: 0;
+}
+
+/* Extremely subtle note timestamp: muted, small, pushed to the trailing edge.
+   Reference metadata only — never competes with the note content. */
+.note-timestamp {
+  margin-left: auto;
+  font-size: 10px;
+  color: #c4c1ba;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  user-select: none;
 }
 
 .reading-note-meta.cat-observation {
@@ -3105,19 +3137,76 @@ body.dark .upd-popover-btn-ghost:hover {
     overflow: hidden;
   }
 
-  /* Study: stack the note editor over the passage pane instead of side-by-side. */
+  /* Study (mobile): scripture is a pinned, collapsible panel at the TOP; the
+     note editor scrolls independently below it. The panel peeks a few lines by
+     default and expands on tap — it never scrolls fully off-screen. */
   .study-layout {
     flex-direction: column;
+    overflow: hidden;
+  }
+  /* Scripture pinned on top via flex order; it owns a bounded height (peek) and
+     scrolls internally. Notes take the remaining space and scroll on their own. */
+  .study-right {
+    order: -1;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    max-height: 34vh;
+    min-height: 0;
+    border-bottom: 0.5px solid #e8e6e1;
+    background: #f8f7f4;
+  }
+  .study-layout--scripture-expanded .study-right {
+    max-height: 62vh;
+  }
+  /* The scrollable scripture body inside the pinned panel. */
+  .study-scripture-body {
+    display: block;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
   }
-  .study-left {
-    flex: 0 0 auto;
-    border-right: none;
-    border-bottom: 0.5px solid #e8e6e1;
+  /* Collapse/expand header — mobile only. */
+  .study-scripture-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    border: none;
+    border-bottom: 0.5px solid #edebe6;
+    background: rgba(248, 247, 244, 0.96);
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    cursor: pointer;
+    text-align: left;
+    flex-shrink: 0;
   }
-  .study-right {
-    flex: 0 0 auto;
-    min-height: 40vh;
+  .study-scripture-toggle-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .study-scripture-toggle-hint {
+    font-size: 11px;
+    font-weight: 400;
+    color: #aaa;
+  }
+  .study-scripture-chevron {
+    flex-shrink: 0;
+    color: #999;
+    transition: transform 0.15s ease;
+  }
+  .study-scripture-chevron.expanded {
+    transform: rotate(180deg);
+  }
+  .study-left {
+    flex: 1;
+    min-height: 0;
+    border-right: none;
   }
 
   .passage-heading-wrap {

@@ -5,6 +5,7 @@ import { useApi } from '../api/context'
 import InlineTagInput from './InlineTagInput'
 import ConfirmDialog from './ConfirmDialog'
 import CrossRefPill from './CrossRefPill'
+import { formatRelativeTime } from '../utils/relativeTime'
 
 interface NoteCardEditProps {
   note: Note
@@ -36,9 +37,14 @@ function NoteCardEdit({ note, onSave, onDelete, onHighlight, isHighlighted }: No
       className={`se-note-card cat-${note.category || 'none'}${isHighlighted ? ' highlighted' : ''}`}
       onClick={() => !editing && onHighlight(note)}
     >
-      {note.category && (
-        <div className={`reading-note-meta cat-${note.category}`}>{CATEGORY_LABELS[note.category]}</div>
-      )}
+      <div className="reading-note-metarow">
+        {note.category && (
+          <span className={`reading-note-meta cat-${note.category}`}>{CATEGORY_LABELS[note.category]}</span>
+        )}
+        <time className="note-timestamp" dateTime={note.updated_at || note.created_at}>
+          {formatRelativeTime(note.updated_at || note.created_at)}
+        </time>
+      </div>
 
       {editing ? (
         <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start', marginTop: 2 }}>

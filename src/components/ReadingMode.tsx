@@ -6,6 +6,7 @@ import InlineTagInput from './InlineTagInput'
 import RichEditInput from './RichEditInput'
 import ConfirmDialog from './ConfirmDialog'
 import CrossRefPill from './CrossRefPill'
+import { formatRelativeTime } from '../utils/relativeTime'
 
 interface ReadingModeProps {
   passage: Passage
@@ -239,11 +240,16 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
         key={main.id}
         className={`reading-note-card cat-${main.category || 'none'}${isHighlighted ? ' highlighted' : ''}`}
       >
-        {main.category && (
-          <div className={`reading-note-meta cat-${main.category}`}>
-            {CATEGORY_LABELS[main.category]}
-          </div>
-        )}
+        <div className="reading-note-metarow">
+          {main.category && (
+            <span className={`reading-note-meta cat-${main.category}`}>
+              {CATEGORY_LABELS[main.category]}
+            </span>
+          )}
+          <time className="note-timestamp" dateTime={main.updated_at || main.created_at}>
+            {formatRelativeTime(main.updated_at || main.created_at)}
+          </time>
+        </div>
         {isEditing ? (
           <div style={{ marginTop: 2 }}>
             <RichEditInput className="note-edit-textarea" initialValue={editText} onChange={setEditText} onSave={() => void handleSaveEdit()} onCancel={() => setEditingNoteId(null)} />

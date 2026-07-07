@@ -21,6 +21,20 @@ body.dark .study-left {
 body.dark .study-right {
   background: #100f16;
 }
+body.dark .study-scripture-toggle {
+  background: rgba(16, 15, 22, 0.96);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+  color: #c8c6cf;
+}
+body.dark .study-scripture-toggle-hint {
+  color: #55535d;
+}
+body.dark .study-scripture-chevron {
+  color: #55535d;
+}
+body.dark .note-timestamp {
+  color: #3f3e47;
+}
 body.dark .study-right::-webkit-scrollbar-thumb {
   background: #2a2830;
 }

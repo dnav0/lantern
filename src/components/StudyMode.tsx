@@ -53,6 +53,10 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
   const [saving, setSaving] = useState(false)
   const [editSessionId, setEditSessionId] = useState<string | null>(null)
   const [noteFocusNonce, setNoteFocusNonce] = useState(0)
+  // Mobile only: the pinned scripture panel starts collapsed (peek) so the notes
+  // get the room; tap the header to expand. Ignored by the desktop side-by-side
+  // layout, which shows the full pane regardless.
+  const [scriptureExpanded, setScriptureExpanded] = useState(false)
 
   useEffect(() => {
     if (initialReference) {
@@ -214,7 +218,7 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
   }
 
   return (
-    <div className="study-layout">
+    <div className={`study-layout${scriptureExpanded ? ' study-layout--scripture-expanded' : ''}`}>
       <div className="study-left">
         <div className="passage-heading-wrap">
           <ReferenceInput
@@ -267,12 +271,37 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
       </div>
 
       <div className="study-right">
-        <PassagePane
-          passage={passage}
-          loading={loadingPassage}
-          highlightedVerses={highlightedVerses}
-          hasAnyHighlight={hasHighlight}
-        />
+        {/* Mobile-only collapse toggle. On desktop the pane is always fully
+            shown (this header is hidden via CSS). Scripture stays pinned at the
+            top on mobile and never scrolls fully off-screen. */}
+        <button
+          type="button"
+          className="study-scripture-toggle"
+          aria-expanded={scriptureExpanded}
+          onClick={() => setScriptureExpanded(v => !v)}
+        >
+          <span className="study-scripture-toggle-label">
+            {passage ? passage.reference : 'Scripture'}
+          </span>
+          <span className="study-scripture-toggle-hint">
+            {scriptureExpanded ? 'Tap to collapse' : 'Tap to expand'}
+          </span>
+          <svg
+            className={`study-scripture-chevron${scriptureExpanded ? ' expanded' : ''}`}
+            width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+        <div className="study-scripture-body">
+          <PassagePane
+            passage={passage}
+            loading={loadingPassage}
+            highlightedVerses={highlightedVerses}
+            hasAnyHighlight={hasHighlight}
+          />
+        </div>
       </div>
     </div>
   )

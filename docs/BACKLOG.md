@@ -71,6 +71,28 @@ prioritized.
 
 ## Done
 
+- **Mobile study layout (UX overhaul, workstream 5).** On mobile (<=768px) the
+  scripture pane is now a pinned, collapsible panel at the TOP of the study view
+  (`StudyMode`): it peeks (~34vh) by default and expands (~62vh) on tapping its
+  header, which shows the loaded reference + a chevron. It scrolls internally and
+  never scrolls fully off-screen; notes render below it and scroll independently.
+  Achieved with CSS only (flex `order: -1`, bounded `max-height`, a
+  `.study-scripture-body` wrapper that is `display: contents` on desktop so the
+  side-by-side layout is untouched) plus one `scriptureExpanded` state + toggle
+  header in `StudyMode`. Desktop side-by-side (`.study-left`/`.study-right`) is
+  unchanged (toggle hidden). Caret-visible-above-keyboard: `NoteEditor`'s
+  `scrollLineIntoView` gained a `keyboardAware` mode that clamps the effective
+  container bottom to `visualViewport.offsetTop + height`; a `visualViewport`
+  resize/scroll listener (keyed to the focused line) and the input handler re-run
+  it so the caret stays above the soft keyboard as lines wrap/add. No-op where the
+  API is absent (desktop). Add-on: an extremely subtle note timestamp
+  (`.note-timestamp`, muted 10px, trailing edge) rendered on note cards in
+  `ReadingMode` and `SessionEditor` via a shared `formatRelativeTime` helper
+  (`src/utils/relativeTime.ts`), using `updated_at` (falling back to
+  `created_at`). No schema or `BereanApi` changes. NOTE for future: timestamps are
+  intentionally NOT shown on the ephemeral `NoteEditor` editing lines (those rows
+  carry no persisted timestamp) — only on rendered/persisted note cards.
+
 - **Editor behaviors (UX overhaul, workstream 4).** Reference field commits on
   Enter/Tab and moves focus to the first note line *immediately* (synchronous —
   never on the async verse fetch); parse failure keeps focus in the field and

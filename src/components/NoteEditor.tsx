@@ -63,20 +63,44 @@ function filterTags(q: string): TagOption[] {
 }
 
 /**
+ * The bottom edge of the usable viewport. On mobile the soft keyboard covers the
+ * lower part of the layout viewport; the visualViewport API reports the smaller,
+ * un-occluded region, so its (offsetTop + height) is the real bottom the caret
+ * must stay above. Falls back to window.innerHeight where the API is absent.
+ */
+function usableViewportBottom(): number {
+  const vv = window.visualViewport
+  if (vv) return vv.offsetTop + vv.height
+  return window.innerHeight
+}
+
+/**
  * Smooth-scroll the notes list so the focused line is comfortably visible.
  * Triggers when the line is in the bottom third of the scrollable container,
  * or when it's above the top edge. Scrolls just enough to place it at ~60%
  * from the top — feels natural without aggressively centering every line.
+ *
+ * `keyboardAware` clamps the effective container bottom to the visualViewport
+ * bottom so the caret stays above the on-screen keyboard (mobile). Desktop and
+ * keyboard-closed states are unaffected because the viewport bottom sits below
+ * the container.
  */
-function scrollLineIntoView(lineEl: HTMLElement): void {
+function scrollLineIntoView(lineEl: HTMLElement, keyboardAware = false): void {
   const container = lineEl.closest('.notes-list') as HTMLElement | null
   if (!container) return
   const lineRect = lineEl.getBoundingClientRect()
   const cRect = container.getBoundingClientRect()
-  const cHeight = cRect.height
 
-  if (lineRect.bottom > cRect.top + cHeight * 0.4) {
-    const delta = lineRect.bottom - cRect.top - cHeight * 0.3
+  // Effective bottom of the visible area: the smaller of the container's own
+  // bottom and the keyboard-clamped viewport bottom.
+  const effectiveBottom = keyboardAware
+    ? Math.min(cRect.bottom, usableViewportBottom())
+    : cRect.bottom
+  const visibleHeight = effectiveBottom - cRect.top
+  if (visibleHeight <= 0) return
+
+  if (lineRect.bottom > cRect.top + visibleHeight * 0.4) {
+    const delta = lineRect.bottom - cRect.top - visibleHeight * 0.3
     container.scrollBy({ top: delta, behavior: 'smooth' })
   } else if (lineRect.top < cRect.top) {
     container.scrollBy({ top: lineRect.top - cRect.top - 8, behavior: 'smooth' })
@@ -148,6 +172,28 @@ export default function NoteEditor({
       }
     })
   }, [focusNonce, focusedLineId])
+
+  // Keep the caret visible above the on-screen keyboard. The visualViewport
+  // shrinks when the keyboard opens (and as it settles / rotates); on each of
+  // those geometry changes we re-run the keyboard-aware scroll for the focused
+  // line. This reconciles with scrollLineIntoView rather than duplicating it —
+  // same helper, just clamped to the visualViewport bottom. No-op where the API
+  // is unavailable (older/desktop browsers), so nothing to guard against there.
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv || !focusedLineId) return
+    const onGeometryChange = (): void => {
+      const el = elRefs.current.get(focusedLineId)
+      const noteLine = el?.closest('.note-line') as HTMLElement | null
+      if (noteLine) scrollLineIntoView(noteLine, true)
+    }
+    vv.addEventListener('resize', onGeometryChange)
+    vv.addEventListener('scroll', onGeometryChange)
+    return () => {
+      vv.removeEventListener('resize', onGeometryChange)
+      vv.removeEventListener('scroll', onGeometryChange)
+    }
+  }, [focusedLineId])
 
   const filteredTags = tagDropdown ? filterTags(tagDropdown.query) : []
   const hasDropdown = filteredTags.length > 0 && tagDropdown !== null
@@ -258,6 +304,10 @@ export default function NoteEditor({
     } else {
       setTagDropdown(null)
     }
+
+    // As the line wraps or grows while typing, keep the caret above the keyboard.
+    const noteLine = el.closest('.note-line') as HTMLElement | null
+    if (noteLine) scrollLineIntoView(noteLine, true)
   }, [lines, onChange, onCursorLine])
 
   // ── keydown ────────────────────────────────────────────────────────────────
