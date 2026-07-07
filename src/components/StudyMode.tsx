@@ -52,6 +52,7 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
   const [hasHighlight, setHasHighlight] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editSessionId, setEditSessionId] = useState<string | null>(null)
+  const [noteFocusNonce, setNoteFocusNonce] = useState(0)
 
   useEffect(() => {
     if (initialReference) {
@@ -87,6 +88,19 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
       setLoadingPassage(false)
     }
   }
+
+  // Reference-commit (Enter/Tab in the field): validate the reference
+  // *synchronously*, move focus to the first note line immediately, and kick the
+  // verse fetch off in the background. Returns false on parse failure so the
+  // ReferenceInput keeps focus and shows its error — focus never moves on async.
+  const commitReference = useCallback((ref: string): boolean => {
+    const trimmed = ref.trim()
+    if (!trimmed || !parseReferenceLabel(trimmed)) return false
+    setFocusedLineId(lines[0].id)
+    setNoteFocusNonce(n => n + 1)
+    void loadPassageByReference(trimmed)
+    return true
+  }, [lines])
 
   const handleCursorLine = useCallback((parsed: ReturnType<typeof parseNoteLine> | null) => {
     if (!parsed || !passage) {
@@ -207,7 +221,7 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
             className="passage-heading-input"
             value={reference}
             onChange={setReference}
-            onSubmit={loadPassageByReference}
+            onSubmit={commitReference}
             placeholder="e.g. 1 Corinthians 7:1-15"
           />
           <div className="passage-heading-hint">Press Enter or Tab to load verse text</div>
@@ -219,6 +233,7 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
           onChange={setLines}
           onFocusChange={setFocusedLineId}
           onCursorLine={handleCursorLine}
+          focusNonce={noteFocusNonce}
         />
 
         <div className="study-actions">

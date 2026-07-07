@@ -43,7 +43,12 @@ function getBookSuggestions(query: string): BibleBook[] {
 interface ReferenceInputProps {
   value: string
   onChange: (val: string) => void
-  onSubmit: (val: string) => void
+  /**
+   * Commit the reference. Return `true` when the reference parsed and focus may
+   * leave the field (the caller moves it to the first note line synchronously),
+   * or `false` to keep focus here and surface the parse error.
+   */
+  onSubmit: (val: string) => boolean
   className?: string
   placeholder?: string
 }
@@ -57,9 +62,21 @@ export default function ReferenceInput({
 }: ReferenceInputProps): React.ReactElement {
   const [suggestions, setSuggestions] = useState<BibleBook[]>([])
   const [activeIdx, setActiveIdx] = useState(-1)
+  const [error, setError] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const open = suggestions.length > 0
+
+  // Commit + decide focus. On parse failure keep focus here and flag the error.
+  const commit = useCallback((val: string): void => {
+    const ok = onSubmit(val)
+    if (ok) {
+      setError(false)
+    } else {
+      setError(true)
+      inputRef.current?.focus()
+    }
+  }, [onSubmit])
 
   // Derive the "book query" portion — only when no chapter:verse present
   function getBookQuery(val: string): string | null {
@@ -71,6 +88,7 @@ export default function ReferenceInput({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const val = e.target.value
     onChange(val)
+    if (error) setError(false)
     const q = getBookQuery(val)
     if (q && q.trim().length >= 2) {
       const matches = getBookSuggestions(q)
@@ -96,7 +114,7 @@ export default function ReferenceInput({
     if (!open) {
       if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault()
-        onSubmit(value)
+        commit(value)
       }
       return
     }
@@ -115,7 +133,7 @@ export default function ReferenceInput({
         selectBook(suggestions[0])
       } else {
         setSuggestions([])
-        onSubmit(value)
+        commit(value)
       }
     } else if (e.key === 'Escape') {
       setSuggestions([])
@@ -140,14 +158,21 @@ export default function ReferenceInput({
     <div style={{ position: 'relative' }}>
       <input
         ref={inputRef}
-        className={className}
+        className={`${className ?? ''}${error ? ' reference-input--error' : ''}`}
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         spellCheck={false}
         autoComplete="off"
+        enterKeyHint="go"
+        aria-invalid={error}
       />
+      {error && (
+        <div className="reference-input-error" role="alert">
+          Couldn’t read that reference — try “John 3:16” or “Matt 5:1-12”.
+        </div>
+      )}
       {open && (
         <div ref={dropdownRef} className="ref-autocomplete-dropdown">
           {suggestions.map((book, i) => (

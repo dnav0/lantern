@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react'
 import { NoteCategory } from '../types'
 import { parseNoteLine } from '../utils/noteParser'
+import { decideEnter, decideBackspace } from '../utils/noteKeydown'
 import { getRawText, getRawCursorPos, setRawCursorPos, renderRich } from '../utils/richText'
 import CrossRefPill from './CrossRefPill'
 
@@ -35,6 +36,27 @@ interface TagDropdown {
 
 let lineIdCounter = 0
 export function makeLineId(): string { return `ln-${++lineIdCounter}` }
+
+// One-time discoverability hint on first note-line focus. localStorage is fine —
+// this is pure web and the flag is non-critical (worst case the hint reappears).
+const HINT_SEEN_KEY = 'berean.noteHintSeen'
+function hintAlreadySeen(): boolean {
+  try { return localStorage.getItem(HINT_SEEN_KEY) === '1' } catch { return true }
+}
+function markHintSeen(): void {
+  try { localStorage.setItem(HINT_SEEN_KEY, '1') } catch { /* ignore */ }
+}
+
+// Tap-to-insert chips for the mobile chip row. Same data model as typing the
+// tokens by hand — an input method only, no new schema.
+interface ChipOption { label: string; insert: string }
+const CHIP_OPTIONS: ChipOption[] = [
+  { label: 'v', insert: 'v' },
+  { label: '@observation', insert: '@observation ' },
+  { label: '@historical', insert: '@historical ' },
+  { label: '@application', insert: '@application ' },
+  { label: '@personal', insert: '@personal ' },
+]
 
 function filterTags(q: string): TagOption[] {
   return TAG_OPTIONS.filter(t => t.name.startsWith(q.toLowerCase()))
@@ -94,6 +116,12 @@ interface NoteEditorProps {
   onChange: (lines: NoteLineData[]) => void
   onFocusChange: (id: string | null) => void
   onCursorLine: (parsed: ReturnType<typeof parseNoteLine> | null) => void
+  /**
+   * Bump to imperatively move DOM focus to the currently `focusedLineId` line
+   * (used by the reference-commit flow). A nonce so the same target can be
+   * re-focused on demand without an extra id.
+   */
+  focusNonce?: number
 }
 
 export default function NoteEditor({
@@ -101,10 +129,25 @@ export default function NoteEditor({
   focusedLineId,
   onChange,
   onFocusChange,
-  onCursorLine
+  onCursorLine,
+  focusNonce
 }: NoteEditorProps): React.ReactElement {
   const elRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const [tagDropdown, setTagDropdown] = useState<TagDropdown | null>(null)
+  const [showHint, setShowHint] = useState(false)
+
+  // Imperative focus request (e.g. after committing the reference). Runs after
+  // paint so the target line's contentEditable is mounted.
+  useEffect(() => {
+    if (!focusNonce || !focusedLineId) return
+    requestAnimationFrame(() => {
+      const el = elRefs.current.get(focusedLineId)
+      if (el) {
+        el.focus()
+        setRawCursorPos(el, getRawText(el).length)
+      }
+    })
+  }, [focusNonce, focusedLineId])
 
   const filteredTags = tagDropdown ? filterTags(tagDropdown.query) : []
   const hasDropdown = filteredTags.length > 0 && tagDropdown !== null
@@ -153,6 +196,44 @@ export default function NoteEditor({
       }
     }, 0)
   }, [tagDropdown, lines, onChange, onCursorLine])
+
+  // ── tap-to-insert (mobile chip row) ─────────────────────────────────────────
+  // Inserts a token at the caret of the focused line, then restores focus/caret.
+  // Same effect as typing the token — the data model is untouched.
+  const insertAtCaret = useCallback((insert: string) => {
+    const lineId = focusedLineId
+    if (!lineId) return
+    const line = lines.find(l => l.id === lineId)
+    if (!line) return
+    const el = elRefs.current.get(lineId)
+    const caret = el ? getRawCursorPos(el) : line.text.length
+    const before = line.text.slice(0, caret)
+    const after = line.text.slice(caret)
+    const newText = before + insert + after
+
+    onChange(lines.map(l => l.id === lineId ? { ...l, text: newText } : l))
+    onCursorLine(getEffectiveParsed(lineId, newText))
+
+    setTimeout(() => {
+      const target = elRefs.current.get(lineId)
+      if (target) {
+        renderRich(target, newText)
+        target.focus()
+        setRawCursorPos(target, before.length + insert.length)
+      }
+    }, 0)
+  }, [focusedLineId, lines, onChange, onCursorLine, getEffectiveParsed])
+
+  // First-use hint on first note-line focus.
+  const handleNoteFocus = useCallback((lineId: string, text: string) => {
+    onCursorLine(getEffectiveParsed(lineId, text))
+    if (!hintAlreadySeen()) setShowHint(true)
+  }, [onCursorLine, getEffectiveParsed])
+
+  const dismissHint = useCallback(() => {
+    markHintSeen()
+    setShowHint(false)
+  }, [])
 
   // ── input handler ──────────────────────────────────────────────────────────
   // Note: no useLayoutEffect — handleInput and selectTag own the DOM directly.
@@ -221,9 +302,21 @@ export default function NoteEditor({
 
     if (e.key === 'Enter') {
       e.preventDefault()
+      const line = lines[idx]
+      const action = decideEnter({
+        text: getRawText(el),
+        indent: line.indent,
+        caret: getRawCursorPos(el),
+        lineCount: lines.length
+      })
+      if (action.type === 'noop') return
+      if (action.type === 'outdent') {
+        // Empty indented bullet: drop one level in place, keep focus/caret.
+        onChange(lines.map((l, i) => i === idx ? { ...l, indent: line.indent - 1 } : l))
+        return
+      }
       const newId = makeLineId()
-      const currentIndent = lines[idx].indent
-      onChange([...lines.slice(0, idx + 1), { id: newId, text: '', indent: currentIndent }, ...lines.slice(idx + 1)])
+      onChange([...lines.slice(0, idx + 1), { id: newId, text: '', indent: line.indent }, ...lines.slice(idx + 1)])
       onFocusChange(newId)
       return
     }
@@ -234,6 +327,15 @@ export default function NoteEditor({
       if (sel && sel.rangeCount > 0 && !sel.getRangeAt(0).collapsed) return
 
       const text = getRawText(el)
+      const line = lines[idx]
+
+      // Empty indented bullet at the start → outdent one level in place first,
+      // rather than deleting the line. Only collapses to line-removal at indent 0.
+      if (decideBackspace({ text, indent: line.indent, caret: getRawCursorPos(el), lineCount: lines.length }).type === 'outdent') {
+        e.preventDefault()
+        onChange(lines.map((l, i) => i === idx ? { ...l, indent: line.indent - 1 } : l))
+        return
+      }
 
       if (text === '' && lines.length > 1) {
         // Empty line → remove it and move focus
@@ -374,10 +476,10 @@ export default function NoteEditor({
                 suppressContentEditableWarning
                 onInput={e => handleInput(e, line.id)}
                 onKeyDown={e => handleKeyDown(e, line.id)}
-                onFocus={() => onCursorLine(getEffectiveParsed(line.id, line.text))}
+                onFocus={() => handleNoteFocus(line.id, line.text)}
                 onBlur={handleBlur}
                 onPaste={e => handlePaste(e, line.id)}
-                data-placeholder={line.id === lines[0]?.id ? 'Type a note… (v4, @obs, Matt 5:9)' : ''}
+                data-placeholder="Type your note — @ for a category, v4 to tag verse 4"
               />
             ) : (
               <div
@@ -404,9 +506,41 @@ export default function NoteEditor({
                 ))}
               </div>
             )}
+
+            {isFocused && showHint && (
+              <div className="note-hint-popover" role="note">
+                <span className="note-hint-text">
+                  Tip: type <strong>@</strong> to tag a category, or <strong>v4</strong> to
+                  anchor a note to verse 4. A reference like <strong>Matt 5:9</strong> becomes a link.
+                </span>
+                <button
+                  type="button"
+                  className="note-hint-dismiss"
+                  onMouseDown={e => { e.preventDefault(); dismissHint() }}
+                >
+                  Got it
+                </button>
+              </div>
+            )}
           </div>
         )
       })}
+
+      {focusedLineId !== null && (
+        <div className="note-chip-row" role="toolbar" aria-label="Insert tag">
+          {CHIP_OPTIONS.map(chip => (
+            <button
+              key={chip.label}
+              type="button"
+              className="note-chip"
+              // preventDefault keeps focus/caret in the editor while inserting.
+              onMouseDown={e => { e.preventDefault(); insertAtCaret(chip.insert) }}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

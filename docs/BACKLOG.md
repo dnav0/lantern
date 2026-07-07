@@ -71,6 +71,27 @@ prioritized.
 
 ## Done
 
+- **Editor behaviors (UX overhaul, workstream 4).** Reference field commits on
+  Enter/Tab and moves focus to the first note line *immediately* (synchronous —
+  never on the async verse fetch); parse failure keeps focus in the field and
+  shows an inline error; `enterKeyHint="go"` for mobile. `ReferenceInput.onSubmit`
+  now returns a boolean so the field can decide focus-vs-error, and `StudyMode`
+  bumps a `focusNonce` prop the `NoteEditor` watches to imperatively focus the
+  target line. Outdent rules in `NoteEditor` keydown: Enter on an empty bullet at
+  indent > 0 outdents in place (keeps the bullet, no new line); Enter on an empty
+  level-0 bullet is a no-op; Backspace at the start of an empty indented bullet
+  also outdents; Shift+Tab unchanged. The keydown *decisions* were extracted to a
+  pure module (`src/utils/noteKeydown.ts`) so they're unit-testable without a
+  contenteditable — tag parsing stayed in `noteParser.ts`, layers kept separate.
+  Tag discoverability (all passive): every empty note line shows the placeholder
+  "Type your note — @ for a category, v4 to tag verse 4"; recognized tags render
+  as pills as parsed (already the case); a one-time first-use hint popover fires
+  on first note-line focus (localStorage flag `berean.noteHintSeen`); a mobile
+  chip row above the keyboard offers tap-to-insert for verse/category tags (same
+  data model, input method only — desktop hides it). Test infra added: Vitest
+  (`npm test` → `vitest run`), covering the keydown decisions and a regression
+  pin on `@`-tag + verse parsing. No schema or `BereanApi` changes.
+
 - **Study entry points + verse-range selection (UX overhaul, workstream 3).**
   Renamed Capture→Study across UI copy and code (`CaptureMode`→`StudyMode`
   component/handle, App state `capture*`→`study*`, `.capture-*` CSS →

@@ -1633,6 +1633,91 @@ body.dark .bible-library-greeting {
   font-weight: 500;
 }
 
+/* ─── Reference input error ──────────────────────────────────────────────────── */
+.reference-input--error {
+  color: #d4537e;
+}
+.reference-input-error {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #d4537e;
+}
+
+/* ─── Note discoverability: first-use hint + mobile chip row ──────────────────── */
+.note-hint-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 18px;
+  right: 0;
+  max-width: 340px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fff;
+  border: 0.5px solid #e0ddd8;
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.1),
+    0 1px 4px rgba(0, 0, 0, 0.04);
+  z-index: 210;
+  animation: fadeIn 0.12s ease;
+}
+.note-hint-text {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #555;
+}
+.note-hint-text strong {
+  color: #7f77dd;
+  font-weight: 600;
+}
+.note-hint-dismiss {
+  flex-shrink: 0;
+  align-self: center;
+  border: none;
+  background: #f5f3ff;
+  color: #7f77dd;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.note-hint-dismiss:hover {
+  background: #ece8ff;
+}
+
+/* Mobile chip row: tap-to-insert tags above the keyboard. Desktop hides it —
+   the @/v typing affordances and the dropdown already cover pointer users. */
+.note-chip-row {
+  display: none;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 4px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.note-chip-row::-webkit-scrollbar {
+  display: none;
+}
+.note-chip {
+  flex-shrink: 0;
+  border: 0.5px solid #e0ddd8;
+  background: #faf9f6;
+  color: #555;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 16px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+.note-chip:active {
+  background: #f0eee8;
+}
+
 /* ─── Book detail page ───────────────────────────────────────────────────────── */
 .book-detail-layout {
   display: flex;
@@ -3043,6 +3128,19 @@ body.dark .upd-popover-btn-ghost:hover {
   }
   .notes-list {
     padding: 14px 18px 180px;
+  }
+  /* Chip row: sticky just above the keyboard/action bar so tap-to-insert stays
+     reachable while typing. Only shown on mobile. */
+  .note-chip-row {
+    display: flex;
+    position: sticky;
+    bottom: 0;
+    margin: 0 -18px;
+    padding: 8px 18px calc(8px + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-top: 0.5px solid #edebe6;
   }
   .study-actions {
     padding: 12px 18px calc(12px + env(safe-area-inset-bottom));

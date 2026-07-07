@@ -211,6 +211,42 @@ body.dark .tag-dropdown-item.active {
   background: rgba(127, 119, 221, 0.1);
 }
 
+/* ── Note discoverability ── */
+body.dark .note-hint-popover {
+  background: #1a1922;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+body.dark .note-hint-text {
+  color: #9a989f;
+}
+body.dark .note-hint-text strong {
+  color: #9d97e8;
+}
+body.dark .note-hint-dismiss {
+  background: rgba(127, 119, 221, 0.14);
+  color: #9d97e8;
+}
+body.dark .note-hint-dismiss:hover {
+  background: rgba(127, 119, 221, 0.24);
+}
+body.dark .note-chip-row {
+  background: rgba(20, 19, 26, 0.92);
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+body.dark .note-chip {
+  background: #1a1922;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #9a989f;
+}
+body.dark .note-chip:active {
+  background: #22212b;
+}
+body.dark .reference-input-error,
+body.dark .reference-input--error {
+  color: #e07a9f;
+}
+
 /* ── Cross-ref hover card ── */
 body.dark .crossref-hover-card {
   background: #1a1922;
