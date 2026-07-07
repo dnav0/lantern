@@ -128,3 +128,14 @@ export interface PassageWithNotes {
   passage: Passage
   sessions: Array<Session & { notes: Note[] }>
 }
+
+// One note matched by the global search (searchNotes). Carries enough passage
+// context to render a result row and to jump the reader to the note in context:
+// the passage id opens the study, the reference label + book number drive the
+// row's heading and any Bible-view navigation.
+export interface NoteSearchResult {
+  note: Note
+  passage_id: string
+  book_number: number
+  reference_label: string
+}

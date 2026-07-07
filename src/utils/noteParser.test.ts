@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseNoteLine, parseReferenceLabel } from './noteParser'
+import { parseNoteLine, parseReferenceLabel, parseScriptureQuery } from './noteParser'
 
 // Regression coverage for the tag-parsing layer. The workstream-4 keydown changes
 // must NOT touch this behavior — these tests pin it so a regression fails loudly.
@@ -68,5 +68,48 @@ describe('parseReferenceLabel', () => {
 
   it('returns null for an unparseable reference', () => {
     expect(parseReferenceLabel('not a reference')).toBeNull()
+  })
+})
+
+describe('parseScriptureQuery — search reference jump', () => {
+  it('parses an abbreviation + chapter + verse ("mat 2:13")', () => {
+    expect(parseScriptureQuery('mat 2:13')).toEqual({
+      bookNumber: 40, bookName: 'Matthew', chapter: 2, verse: 13
+    })
+  })
+
+  it('parses a full book name + chapter only ("john 1")', () => {
+    expect(parseScriptureQuery('john 1')).toEqual({
+      bookNumber: 43, bookName: 'John', chapter: 1, verse: null
+    })
+  })
+
+  it('parses a numbered book ("1 cor 13:4")', () => {
+    expect(parseScriptureQuery('1 cor 13:4')).toEqual({
+      bookNumber: 46, bookName: '1 Corinthians', chapter: 13, verse: 4
+    })
+  })
+
+  it('is case- and whitespace-insensitive', () => {
+    expect(parseScriptureQuery('  GEN   3 ')).toEqual({
+      bookNumber: 1, bookName: 'Genesis', chapter: 3, verse: null
+    })
+  })
+
+  it('clamps an over-large chapter to the book maximum', () => {
+    // Jude has a single chapter; asking for 9 clamps to 1.
+    expect(parseScriptureQuery('jude 9')?.chapter).toBe(1)
+  })
+
+  it('returns null for a bare book name (no chapter to target)', () => {
+    expect(parseScriptureQuery('john')).toBeNull()
+  })
+
+  it('returns null for an unknown book', () => {
+    expect(parseScriptureQuery('hesitations 3:1')).toBeNull()
+  })
+
+  it('returns null for empty input', () => {
+    expect(parseScriptureQuery('')).toBeNull()
   })
 })

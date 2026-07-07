@@ -474,6 +474,8 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
 
 interface BookDetailPageProps {
   bibleBook: BibleBook
+  // Chapter to open on first mount (e.g. a search jump); defaults to 1.
+  initialChapter?: number
   onBack: () => void
   onStudy: (reference: string) => void
   onRefresh?: () => void
@@ -481,12 +483,13 @@ interface BookDetailPageProps {
 
 export default function BookDetailPage({
   bibleBook,
+  initialChapter,
   onBack,
   onStudy,
   onRefresh
 }: BookDetailPageProps): React.ReactElement {
   const api = useApi()
-  const [selectedChapter, setSelectedChapter] = useState(1)
+  const [selectedChapter, setSelectedChapter] = useState(initialChapter ?? 1)
   const [allNotes, setAllNotes] = useState<NoteWithPassageInfo[]>([])
   const chapterSelectorRef = useRef<HTMLDivElement>(null)
 

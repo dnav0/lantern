@@ -5,6 +5,7 @@ import type {
   Session,
   Note,
   NoteWithPassageInfo,
+  NoteSearchResult,
   JournalEntry,
   BiblePassage,
   CreatePassageInput,
@@ -357,6 +358,48 @@ export class SupabaseBereanApi implements BereanApi {
       if (pDelErr) throw new Error(pDelErr.message)
       result.deletedPassageId = passageId
       return result
+    })
+  }
+
+  async searchNotes(query: string): Promise<NoteSearchResult[]> {
+    const q = query.trim()
+    if (!q) return []
+    return this.read('searchNotes', q, async () => {
+      // v1: case-insensitive substring match via ilike, joined up to the
+      // owning passage for the workspace filter + result context. A Postgres
+      // full-text index is a future optimization (see docs/BACKLOG.md).
+      // `%` and `_` are ilike wildcards — escape them so a literal query with
+      // those characters still matches literally.
+      const escaped = q.replace(/[\\%_]/g, m => `\\${m}`)
+      const { data, error } = await this.db
+        .from('notes')
+        .select(
+          `${NOTE_COLS}, sessions!inner ( passage_id, passages!inner ( workspace_id, book_number, reference_label ) )`
+        )
+        .eq('sessions.passages.workspace_id', this.workspaceId)
+        .ilike('content', `%${escaped}%`)
+        .order('updated_at', { ascending: false })
+        .limit(50)
+      const first = <T,>(v: T | T[]): T => (Array.isArray(v) ? v[0] : v)
+      const rows = this.assert(data, error) as unknown as Array<
+        Record<string, unknown> & {
+          sessions:
+            | { passage_id: string; passages: Record<string, unknown> }
+            | { passage_id: string; passages: Record<string, unknown> }[]
+        }
+      >
+      return rows.map(r => {
+        const sess = first(r.sessions)
+        const p = first(sess.passages) as Record<string, unknown>
+        const note = { ...r } as Record<string, unknown>
+        delete note.sessions
+        return {
+          note: note as unknown as Note,
+          passage_id: sess.passage_id,
+          book_number: p.book_number as number,
+          reference_label: p.reference_label as string
+        }
+      })
     })
   }
 

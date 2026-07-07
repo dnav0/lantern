@@ -12,6 +12,12 @@ interface NavBarProps {
   onOpenSettings: () => void
   // Sign-out handler, or null when there is no auth (memory stub / dev).
   onSignOut: (() => Promise<void>) | null
+  // The always-present desktop search box (rendered in the top bar between the
+  // tabs and the avatar). Hidden on mobile via CSS.
+  searchSlot?: React.ReactNode
+  // Opens the dedicated mobile search surface (a tap target in the top bar,
+  // shown only under the breakpoint).
+  onOpenSearch?: () => void
 }
 
 /** Closes the dropdown when a click lands outside `ref`. */
@@ -43,7 +49,9 @@ export default function NavBar({
   onNavigate,
   displayName,
   onOpenSettings,
-  onSignOut
+  onSignOut,
+  searchSlot,
+  onOpenSearch
 }: NavBarProps): React.ReactElement {
   const api = useApi()
   const [workspaceOpen, setWorkspaceOpen] = useState(false)
@@ -216,6 +224,27 @@ export default function NavBar({
           {navTab('journal', 'Journal', journalIcon)}
           {navTab('study', '+ Study', studyIcon)}
         </nav>
+
+        {searchSlot && <div className="topnav-search">{searchSlot}</div>}
+
+        {/* Mobile-only search trigger — opens the dedicated search surface. */}
+        {onOpenSearch && (
+          <button className="topnav-search-btn" onClick={onOpenSearch} aria-label="Search">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </button>
+        )}
 
         <div className="topnav-trail">
           <div className="profile-menu-host" ref={profileRef}>

@@ -11,15 +11,52 @@ carries over nearly untouched and only the layer behind the seam changes.
 
 ## Shape of the app
 
-The UI is a single React tree. `App.tsx` owns view state (which mode, which
-passage/book is selected, editor state) and switches between:
+The UI is a single React tree. `App.tsx` owns view state (the current
+destination, which book/chapter/passage is selected, editor state). There is no
+router and no global store — state is local to `App.tsx` and passed down; data
+comes exclusively through the `BereanApi` context.
 
-- **Capture mode** — reference input + verse pane + note editor.
-- **Reading mode** — a passage's notes against its verses, plus a Bible library
-  and per-book chapter browser.
+### Information architecture (Bible-centric, July 2026 overhaul)
 
-There is no router and no global store. State is local to `App.tsx` and passed
-down; data comes exclusively through the `BereanApi` context.
+The old capture/reading *mode toggle* and the left sidebar/drawer are gone. The
+app is organized around **four destinations** in a single nav bar
+(`src/components/NavBar.tsx`, `type Destination = 'bible' | 'journal' | 'study'
+| 'profile'`) — a top bar on desktop, a bottom tab bar on mobile:
+
+- **Bible** (home) — the annotated Bible: a book library → per-book chapter
+  reader (`BibleLibrary` → `BookDetailPage`) with notes rendered inline against
+  the verses, plus the saved-passage `ReadingMode`. Tapping verses selects a
+  range and raises a floating action bar ("Start study on {ref}" / "Quick
+  note"). This is the landing view.
+- **Journal** — a browseable index of study sessions grouped by book
+  (`JournalPage`, fed by `BereanApi.getJournalEntries`); tapping a row opens the
+  full study in `SessionEditor`.
+- **+ Study** — the capture surface (`StudyMode`, formerly CaptureMode), reached
+  three convergent ways: blank from the nav, prefilled from the current chapter,
+  or from a verse-range selection in the Bible view.
+- **Profile** — display name, Settings, Export, Sign out (`ProfilePage` +
+  `SettingsModal`); on desktop this is the top-bar avatar menu.
+
+The leading top-bar slot carries the app logo and a **"Personal ▾" workspace
+selector stub** — it renders the personal workspace only, a placeholder so the
+future group switcher (see backlog) drops in without restructuring the bar.
+
+**The note→study bridge.** A note shown in the Bible reading view offers "Edit
+note" (inline quick edit) and "Open study" (`handleOpenStudy(passageId)` → the
+`SessionEditor` under the Journal destination), replacing the old
+find-it-in-the-sidebar edit path.
+
+**Search** (`src/components/GlobalSearch.tsx`) is one box with two
+independently-populating sections: (1) a scripture-reference jump, parsed
+client-side by `parseScriptureQuery` (reusing the book-alias table) — no verse
+text is searched; and (2) matching notes via the additive
+`BereanApi.searchNotes` (case-insensitive substring; `ilike` in Supabase, a
+workspace scan in the memory stub). On desktop it's an always-present top-bar
+input rendering a popover; on mobile a dedicated full-screen surface opened from
+a top-bar search button. The two sections are structurally decoupled (a
+synchronous `useMemo` for section 1, a debounced effect for section 2) so
+neither blocks the other. Scripture verse-text search and a Postgres FTS index
+are backlogged.
 
 ### The `BereanApi` seam
 
@@ -294,15 +331,14 @@ The app is mobile-first responsive from a single `max-width: 768px` breakpoint i
 `src/assets/main.css`. Above it, the original desktop layout is untouched; below
 it the shell reflows for a phone (primary target: Android Chrome, ~360–430px).
 
-- **Shell.** The persistent 220px sidebar becomes a **slide-in left drawer** on
-  mobile, opened by a hamburger in a fixed top bar (`.mobile-topbar`,
-  `.sidebar-host`, `.drawer-backdrop`, all rendered always but shown only under
-  the breakpoint). A drawer — not a bottom bar — because the sidebar carries more
-  than mode switching: the mode toggle, a scrollable book/passage tree, New
-  Passage, and Settings. That doesn't compress into a bar, and a drawer lets the
-  exact desktop sidebar content carry over unchanged. Drawer state lives in
-  `App.tsx`; any navigation choice closes it (`withCloseDrawer`).
-- **Single column.** Capture mode stacks the note editor over the passage pane
+- **Shell.** The July-2026 IA overhaul replaced the sidebar/drawer with the
+  `NavBar` (`src/components/NavBar.tsx`): a **top bar on desktop** (logo +
+  workspace stub, centered destination tabs, search box, avatar menu) and a
+  **fixed bottom tab bar on mobile** (Bible · Journal · + Study · Profile). The
+  swap is driven by one `max-width: 768px` breakpoint — the desktop `.topnav`
+  hides its tabs/trail/search and the `.bottomnav` appears; the mobile search box
+  collapses to a top-bar button that opens the full-screen `.search-surface`.
+- **Single column.** Study mode stacks the note editor over the passage pane
   (desktop is a 60/40 split); reading, book detail, session editor, and library
   go full-width with comfortable padding. The library grid drops from 3 to 2
   columns so book names don't truncate.

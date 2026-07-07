@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import NavBar, { Destination } from './components/NavBar'
+import GlobalSearch from './components/GlobalSearch'
 import StudyMode, { StudyModeHandle } from './components/StudyMode'
 import ReadingMode from './components/ReadingMode'
 import BibleLibrary from './components/BibleLibrary'
@@ -28,6 +29,8 @@ interface AppState {
   // Bible destination drill-down: a book (chapter reading) or a saved passage.
   selectedBookName: string | null
   selectedPassageId: string | null
+  // Chapter to open when drilling into a book (e.g. a search jump). null = 1.
+  selectedChapter: number | null
   // Journal destination drill-down: the study (passage) open in SessionEditor.
   journalPassageId: string | null
   // Study destination prefill (set when jumping in from the Bible view).
@@ -45,10 +48,14 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
     passages: [],
     selectedBookName: null,
     selectedPassageId: null,
+    selectedChapter: null,
     journalPassageId: null,
     studyReference: '',
     studyPassageId: null
   })
+  // Mobile-only: the dedicated search surface (an overlay). Desktop search is
+  // the always-present top-bar input, so this stays false there.
+  const [searchOpen, setSearchOpen] = useState(false)
   // Navigation guard: destination we're trying to reach while the study
   // surface has unsaved notes.
   const [pendingNav, setPendingNav] = useState<Destination | null>(null)
@@ -68,7 +75,9 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
       ...prev,
       destination: dest,
       // Tapping "Bible" always lands on the library, not a stale drill-down.
-      ...(dest === 'bible' ? { selectedBookName: null, selectedPassageId: null } : {}),
+      ...(dest === 'bible'
+        ? { selectedBookName: null, selectedPassageId: null, selectedChapter: null }
+        : {}),
       // Tapping "Journal" always lands on the index, not a stale open study.
       ...(dest === 'journal' ? { journalPassageId: null } : {}),
       // "+ Study" from the nav starts a blank study.
@@ -90,6 +99,19 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
       ...prev,
       destination: 'bible',
       selectedBookName: bookName,
+      selectedPassageId: null,
+      selectedChapter: null
+    }))
+  }
+
+  // Search jump (section 1): open the Bible view at a specific book + chapter.
+  const handleJumpToChapter = (bookName: string, chapter: number): void => {
+    setSearchOpen(false)
+    setState(prev => ({
+      ...prev,
+      destination: 'bible',
+      selectedBookName: bookName,
+      selectedChapter: chapter,
       selectedPassageId: null
     }))
   }
@@ -120,6 +142,7 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
   // The bridge: jump from a note in the Bible reading view (or a Journal row)
   // into the full study — the SessionEditor under the Journal destination.
   const handleOpenStudy = (passageId: string): void => {
+    setSearchOpen(false)
     setState(prev => ({
       ...prev,
       destination: 'journal',
@@ -141,6 +164,7 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
     passages,
     selectedBookName,
     selectedPassageId,
+    selectedChapter,
     journalPassageId,
     studyReference,
     studyPassageId
@@ -200,9 +224,10 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
     if (selectedBibleBook) {
       return (
         <BookDetailPage
-          key={selectedBibleBook.id}
+          key={`${selectedBibleBook.id}-${selectedChapter ?? 1}`}
           bibleBook={selectedBibleBook}
-          onBack={() => setState(prev => ({ ...prev, selectedBookName: null }))}
+          initialChapter={selectedChapter ?? 1}
+          onBack={() => setState(prev => ({ ...prev, selectedBookName: null, selectedChapter: null }))}
           onStudy={ref => {
             handleStudyFromReading(ref)
             refresh()
@@ -244,9 +269,39 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
         displayName={displayName}
         onOpenSettings={() => setSettingsOpen(true)}
         onSignOut={onSignOut}
+        onOpenSearch={() => setSearchOpen(true)}
+        searchSlot={
+          <GlobalSearch
+            variant="bar"
+            onJumpToChapter={handleJumpToChapter}
+            onOpenStudy={handleOpenStudy}
+          />
+        }
       />
 
       <div className="main-area">{renderMain()}</div>
+
+      {/* Dedicated mobile search surface (overlay). Desktop uses the top-bar box. */}
+      {searchOpen && (
+        <div className="search-surface" role="dialog" aria-modal="true" aria-label="Search">
+          <div className="search-surface-head">
+            <GlobalSearch
+              variant="surface"
+              autoFocus
+              onJumpToChapter={handleJumpToChapter}
+              onOpenStudy={handleOpenStudy}
+              onClose={() => setSearchOpen(false)}
+            />
+            <button
+              className="search-surface-close"
+              onClick={() => setSearchOpen(false)}
+              aria-label="Close search"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       <SettingsModal
         isOpen={settingsOpen}

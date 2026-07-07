@@ -474,6 +474,165 @@ body.dark .bible-library-greeting {
   line-height: 1.5;
 }
 
+/* ─── Global search ─────────────────────────────────────────────────────────
+   Desktop: an always-present box in the top bar (.topnav-search wraps it).
+   Mobile: a dedicated overlay surface (.search-surface). One component, two
+   variants; the two result sections populate independently. */
+
+.topnav-search {
+  width: 260px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+/* The mobile-only search trigger button lives in the top bar; hidden on desktop. */
+.topnav-search-btn {
+  display: none;
+}
+
+.global-search {
+  position: relative;
+}
+
+.search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input-icon {
+  position: absolute;
+  left: 9px;
+  color: #aaa;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  height: 30px;
+  padding: 0 10px 0 30px;
+  border: 1px solid #e0ddd8;
+  border-radius: 8px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  color: #1a1a1a;
+  outline: none;
+  transition:
+    border-color 0.12s,
+    box-shadow 0.12s;
+}
+.search-input::placeholder {
+  color: #aaa;
+}
+.search-input:focus {
+  border-color: #7f77dd;
+  box-shadow: 0 0 0 3px rgba(127, 119, 221, 0.12);
+}
+/* Kill the native search-field clear affordance for a consistent look. */
+.search-input::-webkit-search-decoration,
+.search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Results — a popover on the desktop bar; inline on the mobile surface. */
+.global-search--bar .search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 340px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #e4e1dc;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+  padding: 6px;
+  z-index: 500;
+}
+
+.search-section + .search-section {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #eeece7;
+}
+
+.search-section-label {
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #aaa;
+}
+
+.search-result {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  border-radius: 7px;
+  padding: 7px 8px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.search-result:hover {
+  background: rgba(127, 119, 221, 0.08);
+}
+
+.search-result--scripture {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.search-result-ref {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.search-result-kind {
+  font-size: 11px;
+  color: #7f77dd;
+  flex-shrink: 0;
+}
+
+.search-result-note-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.search-result-time {
+  flex-shrink: 0;
+}
+.search-result-note-preview {
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: #666;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-note-loading,
+.search-empty {
+  padding: 8px;
+  font-size: 12px;
+  color: #999;
+}
+
+/* Mobile search surface (overlay). Shown only when opened; the component is
+   rendered inline within it (results flow beneath the input). */
+.search-surface {
+  display: none;
+}
+
 /* Bottom tab bar — hidden on desktop, shown under 768px. */
 .bottomnav {
   display: none;
@@ -3087,6 +3246,70 @@ body.dark .upd-popover-btn-ghost:hover {
     display: none;
   }
 
+  /* The always-present desktop search box is replaced by a tap trigger that
+     opens the dedicated search surface. */
+  .topnav-search {
+    display: none;
+  }
+  .topnav-search-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    margin-left: auto;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    color: #555;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Dedicated mobile search surface: a full-screen overlay anchored to the top,
+     the input + independently-populating result sections below it. */
+  .search-surface {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 600;
+    background: #faf9f6;
+    padding: calc(env(safe-area-inset-top) + 10px) 14px 14px;
+    overflow-y: auto;
+  }
+  .search-surface-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .search-surface .global-search {
+    flex: 1;
+    min-width: 0;
+  }
+  .search-surface .search-input {
+    height: 40px;
+    font-size: 16px;
+  }
+  .search-surface-close {
+    flex-shrink: 0;
+    height: 40px;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 14px;
+    color: #7f77dd;
+    cursor: pointer;
+  }
+  .global-search--surface .search-results {
+    margin-top: 14px;
+  }
+  .global-search--surface .search-result {
+    padding: 11px 8px;
+  }
+  .global-search--surface .search-result-note-preview {
+    white-space: normal;
+  }
+
   /* ── Bottom tab bar ───────────────────────────────────────────────────────── */
   .bottomnav {
     display: flex;
@@ -3486,6 +3709,60 @@ body.dark .bottomnav .nav-tab {
 body.dark .bottomnav .nav-tab.active {
   color: #9d97e8;
 }
+
+/* Dark mode — global search. */
+body.dark .topnav-search-btn {
+  color: #8a8890;
+}
+body.dark .search-input {
+  background: #1e1c28;
+  border-color: #333;
+  color: #eceae4;
+}
+body.dark .search-input::placeholder {
+  color: #55535a;
+}
+body.dark .search-input-icon {
+  color: #55535a;
+}
+body.dark .search-input:focus {
+  border-color: #6b64c0;
+  box-shadow: 0 0 0 3px rgba(127, 119, 221, 0.18);
+}
+body.dark .global-search--bar .search-results,
+body.dark .search-surface {
+  background: #1e1c28;
+}
+body.dark .global-search--bar .search-results {
+  border-color: #333;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+}
+body.dark .search-section + .search-section {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+body.dark .search-section-label {
+  color: #55535a;
+}
+body.dark .search-result:hover {
+  background: rgba(127, 119, 221, 0.14);
+}
+body.dark .search-result-ref {
+  color: #eceae4;
+}
+body.dark .search-result-kind {
+  color: #9d97e8;
+}
+body.dark .search-result-note-preview {
+  color: #8a8890;
+}
+body.dark .search-note-loading,
+body.dark .search-empty {
+  color: #6f6d76;
+}
+body.dark .search-surface-close {
+  color: #9d97e8;
+}
+
 body.dark .journal-page-title {
   color: #eceae4;
 }

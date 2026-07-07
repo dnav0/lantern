@@ -4,6 +4,7 @@ import type {
   Session,
   Note,
   NoteWithPassageInfo,
+  NoteSearchResult,
   BiblePassage,
   CreatePassageInput,
   CreateNoteInput,
@@ -43,6 +44,12 @@ export interface BereanApi {
   updateNote(id: string, data: UpdateNoteInput): Promise<Note>
   deleteNote(id: string): Promise<void>
   deleteNoteAndCascade(id: string): Promise<DeleteNoteResult>
+
+  // Search: match note content across the whole workspace (case-insensitive
+  // substring, v1). Returns each match with the passage context needed to jump
+  // to it. Scripture-reference matching is done client-side (parseScriptureQuery)
+  // and is NOT part of this method — this searches note text only.
+  searchNotes(query: string): Promise<NoteSearchResult[]>
 
   // Scripture
   getBibleVerse(reference: string): Promise<BiblePassage | null>

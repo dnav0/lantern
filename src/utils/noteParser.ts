@@ -1,5 +1,5 @@
 import { NoteSegment, NoteSegmentType, NoteCategory, ParsedNote } from '../types'
-import { buildCrossRefRegex } from './bibleBooks'
+import { buildCrossRefRegex, findBookByAlias } from './bibleBooks'
 
 const TAG_PATTERN = /@(obs(?:ervation)?|hist(?:orical)?|app(?:lication)?|per(?:sonal)?)\b/gi
 
@@ -139,4 +139,44 @@ export function parseReferenceLabel(label: string): {
   const chapter_end = simple[3] ? parseInt(simple[3], 10) : chapter_start
   const verse_end = simple[4] ? parseInt(simple[4], 10) : verse_start
   return { chapter_start, verse_start, chapter_end, verse_end }
+}
+
+export interface ScriptureQuery {
+  bookNumber: number
+  bookName: string
+  chapter: number
+  // Optional target verse (e.g. the ":13" in "mat 2:13"); null when only a
+  // book+chapter was typed.
+  verse: number | null
+}
+
+/**
+ * Smart-parse a free-text search query into a scripture reference target
+ * (e.g. "mat 2:13", "john 1", "1 cor 13:4"). Reuses the book-alias table so
+ * abbreviations resolve exactly as the reference input does. Returns null when
+ * the query does not name a known book followed by a chapter.
+ *
+ * This is reference PARSING only — it never searches verse text (that's a
+ * separate, backlogged feature). Clamps chapter to the book's real chapter
+ * count so a jump target is always valid.
+ */
+export function parseScriptureQuery(query: string): ScriptureQuery | null {
+  const trimmed = query.trim().replace(/\s+/g, ' ')
+  if (!trimmed) return null
+
+  // Split "<book> <chapter>[:<verse>]" — the trailing chapter[:verse] is
+  // optional so a bare book name yields no jump (needs a chapter to target).
+  const m = /^(.+?)\s+(\d+)(?::(\d+))?\s*$/.exec(trimmed)
+  if (!m) return null
+
+  const book = findBookByAlias(m[1])
+  if (!book) return null
+
+  let chapter = parseInt(m[2], 10)
+  if (chapter < 1) return null
+  if (chapter > book.chapters) chapter = book.chapters
+
+  const verse = m[3] ? parseInt(m[3], 10) : null
+
+  return { bookNumber: book.number, bookName: book.name, chapter, verse }
 }

@@ -4,6 +4,7 @@ import type {
   Session,
   Note,
   NoteWithPassageInfo,
+  NoteSearchResult,
   JournalEntry,
   CreatePassageInput,
   CreateNoteInput,
@@ -178,6 +179,35 @@ export function createMemoryApi(): BereanApi {
       passages.delete(passageId)
       result.deletedPassageId = passageId
       return result
+    },
+
+    async searchNotes(query) {
+      const q = query.trim().toLowerCase()
+      if (!q) return []
+      // session_id -> passage, resolved once so each match carries its context.
+      const passageBySession = new Map<string, Passage>()
+      for (const s of sessions.values()) {
+        const p = passages.get(s.passage_id)
+        if (p) passageBySession.set(s.id, p)
+      }
+      const results: NoteSearchResult[] = []
+      for (const n of notes.values()) {
+        if (!n.content.toLowerCase().includes(q)) continue
+        const p = passageBySession.get(n.session_id)
+        if (!p) continue
+        results.push({
+          note: n,
+          passage_id: p.id,
+          book_number: p.book_number,
+          reference_label: p.reference_label
+        })
+      }
+      // Newest first — most recently touched notes are the likeliest target.
+      return results.sort((a, b) =>
+        (b.note.updated_at ?? b.note.created_at).localeCompare(
+          a.note.updated_at ?? a.note.created_at
+        )
+      )
     },
 
     async getBibleVerse(reference) {

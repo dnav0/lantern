@@ -48,6 +48,20 @@ prioritized.
 - **Full-Bible offline prefetch.** Optionally cache the entire BSB into IndexedDB
   up front, rather than lazily per chapter, for guaranteed offline reading.
 
+- **Scripture full-text search (verse-text search).** Search v1 (UX overhaul,
+  workstream 6) only *parses* a query into a reference jump ("mat 2:13" →
+  Matthew 2) via `parseScriptureQuery`; it does NOT search the words of
+  scripture. Searching verse text depends on having the full BSB available to
+  index (the Full-Bible offline prefetch item above) plus a client-side index
+  strategy. Deferred deliberately.
+
+- **Postgres full-text index for note search.** `SupabaseBereanApi.searchNotes`
+  is a case-insensitive `ilike '%q%'` scan (v1, acceptable per the plan). For
+  larger workspaces, replace with a `tsvector` column + GIN index and
+  `websearch_to_tsquery` — a schema/migration change, hence deferred. The
+  `BereanApi.searchNotes` seam and both implementations already exist, so this is
+  purely an implementation swap behind the interface.
+
 - **Capacitor mobile wrap.** Package the web app as a native iOS/Android app
   reusing the same code. Platform capabilities (export, TTS) get native
   implementations behind their `platform/` interfaces.
@@ -70,6 +84,30 @@ prioritized.
   there needs a note→passage resolution step first.
 
 ## Done
+
+- **Search v1 (UX overhaul, workstream 6).** One search box with two
+  independently-populating result sections. Section 1 (scripture reference) is a
+  pure client-side parse — `parseScriptureQuery` in `src/utils/noteParser.ts`
+  reuses the book-alias table (`findBookByAlias`) to turn "mat 2:13" / "john 1" /
+  "1 cor 13:4" into a `{ bookNumber, bookName, chapter, verse }` jump target
+  (chapter clamped to the book's real count; bare book name yields no jump);
+  clicking navigates the Bible view to that book+chapter (App gained a
+  `selectedChapter` and `handleJumpToChapter`; `BookDetailPage` gained an
+  `initialChapter` prop). Section 2 (notes) is an additive `BereanApi.searchNotes`
+  method — case-insensitive substring over note content, implemented in BOTH
+  `memory.ts` (workspace scan) and `berean-api.ts` (SupabaseBereanApi: `ilike`
+  joined notes→sessions→passages, workspace-filtered, newest-first, limit 50);
+  clicking opens the study in context via `handleOpenStudy`. The
+  `GlobalSearch` component (`src/components/GlobalSearch.tsx`) renders as a top-bar
+  popover on desktop (`variant="bar"`) and a dedicated full-screen surface on
+  mobile (`variant="surface"`, opened from a top-bar search button since the
+  desktop box is hidden under 768px). The two sections are decoupled — section 1
+  is a synchronous `useMemo`, section 2 an independently-resolving debounced
+  effect — so neither blocks the other and a future staggered-populate animation
+  can key off each mounting on its own (structure only; no motion yet). Test
+  coverage: `parseScriptureQuery` cases added to `noteParser.test.ts`. No schema
+  change. Scripture verse-text search and a Postgres FTS index for note search are
+  backlogged above.
 
 - **Mobile study layout (UX overhaul, workstream 5).** On mobile (<=768px) the
   scripture pane is now a pinned, collapsible panel at the TOP of the study view
