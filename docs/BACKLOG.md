@@ -55,6 +55,26 @@ prioritized.
   index (the Full-Bible offline prefetch item above) plus a client-side index
   strategy. Deferred deliberately.
 
+- **Multiple study instances over the same verses.** The studies-model milestone
+  settled that notes are verse-anchored and the reading view is cumulative, while
+  a "study" is one effort (a `Passage`). A future step adds a lightweight
+  `study_id` group stamp on notes so a user can deliberately start a *new,
+  distinct* study instance over verses they've already studied (chosen/selected),
+  and so the editor can optionally merge notes from other efforts by anchor
+  overlap. This is the one part of the model that needs a schema touch (a nullable
+  column) — deliberately deferred out of the presentation-only milestone.
+
+- **Margin / span notes.** Render multi-verse notes as bracketed spans: a desktop
+  margin rail alongside scripture, and on mobile a bracket on the verses plus a
+  verse-range chip on the stacked note. High-value for study (marginalia at a
+  glance); the verse-anchored model already carries the span (`anchor_start_verse`
+  /`anchor_end_verse`). Belongs with the dedicated visual pass.
+
+- **Drag-to-select verse ranges (desktop).** Selection is tap-anchor + tap-extend
+  today. Click-drag over verses would be natural, but it collides with native text
+  selection (drag-to-copy verse text), so it needs a modifier or an explicit
+  select mode. Low priority; pairs with the visual pass.
+
 - **Postgres full-text index for note search.** `SupabaseBereanApi.searchNotes`
   is a case-insensitive `ilike '%q%'` scan (v1, acceptable per the plan). For
   larger workspaces, replace with a `tsvector` column + GIN index and

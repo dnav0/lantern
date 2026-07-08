@@ -25,15 +25,17 @@ app is organized around **four destinations** in a single nav bar
 
 - **Bible** (home) — the annotated Bible: a book library → per-book chapter
   reader (`BibleLibrary` → `BookDetailPage`) with notes rendered inline against
-  the verses, plus the saved-passage `ReadingMode`. Tapping verses selects a
-  range and raises a floating action bar ("Start study on {ref}" / "Quick
-  note"). This is the landing view.
-- **Journal** — a browseable index of study sessions grouped by book
-  (`JournalPage`, fed by `BereanApi.getJournalEntries`); tapping a row opens the
-  full study in `SessionEditor`.
-- **+ Study** — the capture surface (`StudyMode`, formerly CaptureMode), reached
-  three convergent ways: blank from the nav, prefilled from the current chapter,
-  or from a verse-range selection in the Bible view.
+  the verses, plus the saved-passage `ReadingMode`. Verse selection is the single
+  in-Bible gesture: tapping a verse (or extending to a range) raises a floating
+  action bar with **Quick note** (emphasised) and **Start study on {ref}**. This
+  is the landing view.
+- **Journal** — a browseable index of studies grouped by book (`JournalPage`,
+  fed by `BereanApi.getJournalEntries`); tapping a row opens the study in
+  `StudyMode`.
+- **+ Study** — the single study surface (`StudyMode`), reached several
+  convergent ways: blank from the nav, prefilled from the current chapter, from a
+  verse-range selection, from a Journal row, or from a note's "Open study". There
+  is **one** editing surface — the former `SessionEditor` card view is retired.
 - **Profile** — display name, Settings, Export, Sign out (`ProfilePage` +
   `SettingsModal`); on desktop this is the top-bar avatar menu.
 
@@ -42,14 +44,18 @@ selector stub** — it renders the personal workspace only, a placeholder so the
 future group switcher (see backlog) drops in without restructuring the bar.
 
 **The note→study bridge.** A note shown in the Bible reading view offers "Edit
-note" (inline quick edit) and "Open study" (`handleOpenStudy(passageId)` → the
-`SessionEditor` under the Journal destination), replacing the old
-find-it-in-the-sidebar edit path.
+note" (inline quick edit — the primary, fast path) and "Open study"
+(`handleOpenStudy(passageId)` → the unified `StudyMode`, always available). This
+is how a quick note graduates into a full study, and it replaces the old
+find-it-in-the-sidebar edit path. `handleOpenStudy` is the single open-study
+entry point shared by the Journal, the bridge, and search results.
 
 **Search** (`src/components/GlobalSearch.tsx`) is one box with two
-independently-populating sections: (1) a scripture-reference jump, parsed
-client-side by `parseScriptureQuery` (reusing the book-alias table) — no verse
-text is searched; and (2) matching notes via the additive
+independently-populating sections: (1) scripture-reference jumps, parsed
+client-side by `parseScriptureQuery` (reusing the book-alias table) — a bare book
+name or prefix yields book-level jumps (ambiguous prefixes return a small ranked
+list), and book+chapter[:verse] jumps to the chapter; no verse text is searched;
+and (2) matching notes via the additive
 `BereanApi.searchNotes` (case-insensitive substring; `ilike` in Supabase, a
 workspace scan in the memory stub). On desktop it's an always-present top-bar
 input rendering a popover; on mobile a dedicated full-screen surface opened from
@@ -57,6 +63,38 @@ a top-bar search button. The two sections are structurally decoupled (a
 synchronous `useMemo` for section 1, a debounced effect for section 2) so
 neither blocks the other. Scripture verse-text search and a Postgres FTS index
 are backlogged.
+
+### Notes & studies model (the mental model behind the IA)
+
+The domain schema (passage → session → note) is unchanged, but the *conceptual*
+model the UI presents is deliberate and worth stating, because it settles several
+otherwise-ambiguous UX questions:
+
+- **Notes belong to verses, not to studies.** A note is anchored to a verse or
+  range and is the durable artifact. The **Bible/reading view is the cumulative
+  surface**: every note anchored in a chapter renders inline there
+  (`getNotesByBook`) regardless of which passage/session created it. "Everything I
+  ever noted on this verse shows up when I read it" — because study is cumulative
+  and verse-centric, not filed-in-folders.
+- **A "study" is one deliberate effort** — a `Passage` (a verse-range span with a
+  `reference_label`). Its heading *is* the range; there are no thematic titles.
+  The **Journal is the index of efforts**, range-labelled and newest-first. It is
+  a librarian, not the front door: you reach a study from its notes in context (or
+  from Journal for browse/recent).
+- **Quick notes are ungrouped verse jottings** — a first-class in-Bible margin
+  note that shows in context but is not itself a Journal-worthy effort; it
+  *graduates* into a study via the note bridge's "Open study".
+- **Editing an existing study never spawns a new Journal entry** (same passage);
+  a new entry appears only when you deliberately start a new study. `StudyMode`'s
+  save is **reconciling** (update changed notes in place / create new / delete
+  removed) precisely so reopening-and-editing preserves note ids and the
+  `created_at`/`updated_at` timestamps the UI renders — it does not rewrite the
+  session.
+
+**Deferred (future milestone), by design, not omission:** a lightweight
+`study_id` group stamp enabling *multiple distinct study instances over the same
+verses* (and cross-effort anchor merging inside the editor); margin/span notes
+(desktop rail + mobile bracket); drag-to-select verse ranges. See the backlog.
 
 ### The `BereanApi` seam
 
