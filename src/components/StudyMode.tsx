@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } fro
 import NoteEditor, { makeLineId } from './NoteEditor'
 import PassagePane from './PassagePane'
 import ReferenceInput from './ReferenceInput'
-import { BiblePassage } from '../types'
+import { BiblePassage, Note } from '../types'
 import { parseNoteLine, parseReferenceLabel } from '../utils/noteParser'
 import { findBookByAlias } from '../utils/bibleBooks'
 import { useApi } from '../api/context'
@@ -11,6 +11,12 @@ interface LineData {
   id: string
   text: string
   indent: number
+  // Set when this line was hydrated from an existing persisted note. The
+  // reconciling save diffs against these ids: carried lines whose content or
+  // indent changed are updated (preserving created_at); lines without an id are
+  // created; notes whose line vanished are deleted. This is what keeps note ids
+  // and the subtle timestamps stable across an edit — no delete-all/recreate.
+  noteId?: string
 }
 
 export interface StudyModeHandle {
@@ -52,6 +58,9 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
   const [hasHighlight, setHasHighlight] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editSessionId, setEditSessionId] = useState<string | null>(null)
+  // The notes this study opened with, keyed by id — the baseline the reconciling
+  // save diffs against (to know what changed and what was removed).
+  const [existingNotes, setExistingNotes] = useState<Map<string, Note>>(new Map())
   const [noteFocusNonce, setNoteFocusNonce] = useState(0)
   // Mobile only: the pinned scripture panel starts collapsed (peek) so the notes
   // get the room; tap the header to expand. Ignored by the desktop side-by-side
@@ -64,20 +73,48 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
     }
   }, [])
 
+  // Opening an existing passage (from the Journal, the reading-view bridge, or
+  // search): hydrate the editor from the passage's notes and load its scripture.
+  // Notes are read across ALL of the passage's sessions in stable created_at
+  // order so nothing is silently dropped when a passage has more than one
+  // session; new notes on save write to the first (oldest) session. Each
+  // hydrated line carries its source note id for the reconciling save.
   useEffect(() => {
     if (!initialPassageId) return
-    async function loadExistingNotes(): Promise<void> {
-      const sessions = await api.getSessionsByPassage(initialPassageId!)
-      if (sessions.length === 0) return
-      const session = sessions[0]
-      setEditSessionId(session.id)
-      const existingNotes = await api.getNotesBySession(session.id)
-      if (existingNotes.length > 0) {
-        setLines(existingNotes.map(n => ({ id: makeLineId(), text: n.content, indent: n.indent_level ?? 0 })))
+    let cancelled = false
+    async function loadExisting(): Promise<void> {
+      const passageRecord = await api.getPassageById(initialPassageId!)
+      if (cancelled) return
+      if (passageRecord) {
+        setReference(passageRecord.reference_label)
+        void loadPassageByReference(passageRecord.reference_label)
+      }
+      const sessionList = await api.getSessionsByPassage(initialPassageId!)
+      if (cancelled || sessionList.length === 0) return
+      // getSessionsByPassage returns newest-first; the write target is the
+      // oldest session, matching the append behaviour elsewhere.
+      const writeSession = sessionList[sessionList.length - 1]
+      setEditSessionId(writeSession.id)
+      const noteLists = await Promise.all(
+        sessionList.map(s => api.getNotesBySession(s.id))
+      )
+      if (cancelled) return
+      const allNotes = noteLists
+        .flat()
+        .sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id))
+      if (allNotes.length > 0) {
+        setExistingNotes(new Map(allNotes.map(n => [n.id, n])))
+        setLines(allNotes.map(n => ({
+          id: makeLineId(),
+          text: n.content,
+          indent: n.indent_level ?? 0,
+          noteId: n.id
+        })))
         setFocusedLineId(null)
       }
     }
-    void loadExistingNotes()
+    void loadExisting()
+    return () => { cancelled = true }
   }, [initialPassageId])
 
   async function loadPassageByReference(ref: string): Promise<void> {
@@ -125,24 +162,57 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
     }
   }, [passage])
 
-  async function saveNotes(sessionId: string): Promise<void> {
-    const nonEmpty = lines.filter(l => l.text.trim())
-    for (const line of nonEmpty) {
+  // Reconciling save: diff the editor lines against the notes this study opened
+  // with (existingNotes) rather than deleting-all-then-recreating. Lines that
+  // carry a noteId are matched to their source note — updated only when content
+  // or indent actually changed (so unchanged notes keep their updated_at, and
+  // the subtle timestamp doesn't reset to "just now"). New lines are created,
+  // notes whose line was removed are deleted. New notes go to writeSessionId.
+  async function reconcileNotes(writeSessionId: string): Promise<void> {
+    const kept = new Set<string>()
+    for (const line of lines) {
+      const text = line.text.trim()
       const parsed = parseNoteLine(line.text)
-      await api.createNote({
-        session_id: sessionId,
-        content: line.text,
-        anchor_start_verse: parsed.anchorStart,
-        anchor_end_verse: parsed.anchorEnd,
-        anchor_book_override: null,
-        anchor_chapter_override: null,
-        category: parsed.category,
-        indent_level: line.indent
-      })
+      if (line.noteId && existingNotes.has(line.noteId)) {
+        const src = existingNotes.get(line.noteId)!
+        if (!text) {
+          // An existing note emptied out → remove it (handled by the deletion
+          // sweep below, since it won't be in `kept`).
+          continue
+        }
+        kept.add(line.noteId)
+        const changed = src.content !== line.text || (src.indent_level ?? 0) !== line.indent
+        if (changed) {
+          await api.updateNote(line.noteId, {
+            content: line.text,
+            anchor_start_verse: parsed.anchorStart,
+            anchor_end_verse: parsed.anchorEnd,
+            category: parsed.category,
+            indent_level: line.indent
+          })
+        }
+      } else if (text) {
+        await api.createNote({
+          session_id: writeSessionId,
+          content: line.text,
+          anchor_start_verse: parsed.anchorStart,
+          anchor_end_verse: parsed.anchorEnd,
+          anchor_book_override: null,
+          anchor_chapter_override: null,
+          category: parsed.category,
+          indent_level: line.indent
+        })
+      }
+    }
+    // Deletion sweep: any note we opened with that no longer has a kept line.
+    for (const id of existingNotes.keys()) {
+      if (!kept.has(id)) await api.deleteNote(id)
     }
   }
 
-  async function ensurePassageAndSession(): Promise<{ passageId: string; sessionId: string } | null> {
+  // Resolve the passage + write session, creating them for a blank study. For an
+  // existing passage we REUSE it (no duplicate passage created on open/save).
+  async function ensureIds(): Promise<{ passageId: string; sessionId: string } | null> {
     if (initialPassageId) {
       let sessionId: string
       if (editSessionId) {
@@ -150,15 +220,11 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
       } else {
         const sessions = await api.getSessionsByPassage(initialPassageId)
         if (sessions.length > 0) {
-          sessionId = sessions[0].id
+          sessionId = sessions[sessions.length - 1].id
         } else {
           const session = await api.createSession(initialPassageId)
           sessionId = session.id
         }
-      }
-      const existingNotes = await api.getNotesBySession(sessionId)
-      for (const note of existingNotes) {
-        await api.deleteNote(note.id)
       }
       return { passageId: initialPassageId, sessionId }
     }
@@ -181,22 +247,39 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
   }
 
   useImperativeHandle(ref, () => ({
-    isDirty: () => lines.some(l => l.text.trim() !== ''),
+    isDirty: () => {
+      // A hydrated study is dirty when any line diverges from its source note,
+      // or a note was removed; a blank study is dirty once any text is entered.
+      if (existingNotes.size > 0) {
+        const kept = new Set<string>()
+        for (const l of lines) {
+          if (l.noteId && existingNotes.has(l.noteId)) {
+            kept.add(l.noteId)
+            const src = existingNotes.get(l.noteId)!
+            if (src.content !== l.text || (src.indent_level ?? 0) !== l.indent) return true
+          } else if (l.text.trim() !== '') {
+            return true
+          }
+        }
+        return kept.size !== existingNotes.size
+      }
+      return lines.some(l => l.text.trim() !== '')
+    },
     save: async () => {
-      const ids = await ensurePassageAndSession()
+      const ids = await ensureIds()
       if (!ids) return null
-      await saveNotes(ids.sessionId)
+      await reconcileNotes(ids.sessionId)
       return ids.passageId
     }
-  }), [lines, reference])
+  }), [lines, reference, existingNotes, editSessionId])
 
   const handleSaveRead = async (): Promise<void> => {
     if (saving) return
     setSaving(true)
     try {
-      const ids = await ensurePassageAndSession()
+      const ids = await ensureIds()
       if (!ids) return
-      await saveNotes(ids.sessionId)
+      await reconcileNotes(ids.sessionId)
       onSaveRead(ids.passageId)
     } finally {
       setSaving(false)
@@ -207,9 +290,9 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
     if (saving) return
     setSaving(true)
     try {
-      const ids = await ensurePassageAndSession()
+      const ids = await ensureIds()
       if (!ids) return
-      await saveNotes(ids.sessionId)
+      await reconcileNotes(ids.sessionId)
       const nextRef = guessNextReference(reference)
       onSaveNext(nextRef)
     } finally {

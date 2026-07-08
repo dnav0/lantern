@@ -6,7 +6,6 @@ import ReadingMode from './components/ReadingMode'
 import BibleLibrary from './components/BibleLibrary'
 import BookDetailPage from './components/BookDetailPage'
 import JournalPage from './components/JournalPage'
-import SessionEditor from './components/SessionEditor'
 import ProfilePage from './components/ProfilePage'
 import ConfirmDialog from './components/ConfirmDialog'
 import SettingsModal from './components/SettingsModal'
@@ -31,9 +30,9 @@ interface AppState {
   selectedPassageId: string | null
   // Chapter to open when drilling into a book (e.g. a search jump). null = 1.
   selectedChapter: number | null
-  // Journal destination drill-down: the study (passage) open in SessionEditor.
-  journalPassageId: string | null
-  // Study destination prefill (set when jumping in from the Bible view).
+  // Study destination prefill (set when jumping in from the Bible view or
+  // opening an existing study). studyReference prefills a blank study;
+  // studyPassageId opens an existing passage in the one StudyMode surface.
   studyReference: string
   studyPassageId: string | null
 }
@@ -49,7 +48,6 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
     selectedBookName: null,
     selectedPassageId: null,
     selectedChapter: null,
-    journalPassageId: null,
     studyReference: '',
     studyPassageId: null
   })
@@ -78,8 +76,6 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
       ...(dest === 'bible'
         ? { selectedBookName: null, selectedPassageId: null, selectedChapter: null }
         : {}),
-      // Tapping "Journal" always lands on the index, not a stale open study.
-      ...(dest === 'journal' ? { journalPassageId: null } : {}),
       // "+ Study" from the nav starts a blank study.
       ...(dest === 'study' ? { studyReference: '', studyPassageId: null } : {})
     }))
@@ -139,14 +135,16 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
     }))
   }
 
-  // The bridge: jump from a note in the Bible reading view (or a Journal row)
-  // into the full study — the SessionEditor under the Journal destination.
+  // The one open-study path: a Journal row, the reading-view note bridge, and
+  // search results all land here — the single StudyMode surface, opened on the
+  // existing passage (studyPassageId). WS2/WS3 should call this to open a study.
   const handleOpenStudy = (passageId: string): void => {
     setSearchOpen(false)
     setState(prev => ({
       ...prev,
-      destination: 'journal',
-      journalPassageId: passageId
+      destination: 'study',
+      studyReference: '',
+      studyPassageId: passageId
     }))
   }
 
@@ -165,7 +163,6 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
     selectedBookName,
     selectedPassageId,
     selectedChapter,
-    journalPassageId,
     studyReference,
     studyPassageId
   } = state
@@ -190,23 +187,6 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
     }
 
     if (destination === 'journal') {
-      const journalPassage = journalPassageId
-        ? passages.find(p => p.id === journalPassageId) || null
-        : null
-      if (journalPassage) {
-        return (
-          <SessionEditor
-            key={journalPassage.id}
-            passage={journalPassage}
-            onBack={() => setState(prev => ({ ...prev, journalPassageId: null }))}
-            onRefresh={refresh}
-            onPassageDeleted={async () => {
-              await refresh()
-              setState(prev => ({ ...prev, journalPassageId: null }))
-            }}
-          />
-        )
-      }
       return <JournalPage onOpenStudy={handleOpenStudy} />
     }
 

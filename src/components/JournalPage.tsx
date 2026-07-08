@@ -5,7 +5,7 @@ import { parseNoteLine } from '../utils/noteParser'
 import { useApi } from '../api/context'
 
 interface JournalPageProps {
-  // Open a study (SessionEditor) for the given passage.
+  // Open a study (StudyMode) for the given passage.
   onOpenStudy: (passageId: string) => void
 }
 

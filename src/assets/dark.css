@@ -355,52 +355,13 @@ body.dark .dialog-btn-ghost:hover {
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* ── Session editor ── */
-body.dark .session-editor-header {
-  border-bottom-color: rgba(255, 255, 255, 0.06);
-}
-body.dark .session-editor-title {
-  color: #eceae4;
-}
-body.dark .session-editor-body::-webkit-scrollbar-thumb {
-  background: #2a2830;
-}
-body.dark .se-note-card {
-  color: #8a8890;
-  background: rgba(255, 255, 255, 0.03);
-}
-body.dark .se-note-card:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-body.dark .se-note-card.highlighted {
-  background: rgba(127, 119, 221, 0.09);
-}
+/* ── Note action icons (shared by reading/book views) ── */
 body.dark .se-icon-btn {
   color: #3a3840;
 }
 body.dark .se-icon-btn:hover {
   background: rgba(255, 255, 255, 0.06);
   color: #8a8890;
-}
-body.dark .se-edit-input {
-  color: #eceae4;
-  border-bottom-color: rgba(127, 119, 221, 0.3);
-}
-body.dark .se-add-input {
-  color: #eceae4;
-  border-bottom-color: rgba(255, 255, 255, 0.08);
-}
-body.dark .se-add-input::placeholder {
-  color: #30303a;
-}
-body.dark .se-delete-passage-btn {
-  color: #3a3840;
-  border-color: rgba(255, 255, 255, 0.08);
-}
-body.dark .se-delete-passage-btn:hover {
-  color: #e83d3d;
-  border-color: #e83d3d;
-  background: rgba(232, 61, 61, 0.06);
 }
 
 /* ── Vault row ── */

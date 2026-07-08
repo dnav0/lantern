@@ -12,7 +12,7 @@ interface ReadingModeProps {
   passage: Passage
   onStudy: (passageId: string) => void
   onRefresh?: () => void
-  // The bridge: jump from a note into the full study (SessionEditor flow).
+  // The bridge: jump from a note into the full study (unified StudyMode flow).
   onOpenStudy?: () => void
   onPassageDeleted?: () => void
 }
