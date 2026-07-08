@@ -59,8 +59,10 @@ export default function GlobalSearch({
   const [notesLoading, setNotesLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Section 1: scripture reference — synchronous, from the query alone.
-  const scripture = useMemo(() => parseScriptureQuery(query), [query])
+  // Section 1: scripture reference(s) — synchronous, from the query alone.
+  // May be zero, one, or (for an ambiguous book prefix) up to a handful of
+  // ranked results; see parseScriptureQuery for the ordering/cap rule.
+  const scriptureResults = useMemo(() => parseScriptureQuery(query), [query])
 
   // Section 2: notes — async, debounced; lands independently of section 1.
   useEffect(() => {
@@ -105,33 +107,40 @@ export default function GlobalSearch({
     [onClose]
   )
 
-  const scriptureRef = scripture
-    ? scripture.verse != null
-      ? `${scripture.bookName} ${scripture.chapter}:${scripture.verse}`
-      : `${scripture.bookName} ${scripture.chapter}`
-    : ''
-
   const hasQuery = query.trim().length > 0
   const showResults = hasQuery
-  const nothing = hasQuery && !scripture && !notesLoading && noteResults.length === 0
+  const nothing = hasQuery && scriptureResults.length === 0 && !notesLoading && noteResults.length === 0
 
   const results = (
     <div className="search-results" role="listbox" aria-label="Search results">
-      {/* Section 1 — scripture reference */}
-      {scripture && (
+      {/* Section 1 — scripture reference(s); may be zero, one, or several
+          (ambiguous book prefix) ranked results. */}
+      {scriptureResults.length > 0 && (
         <div className="search-section" data-section="scripture">
           <div className="search-section-label">Jump to scripture</div>
-          <button
-            className="search-result search-result--scripture"
-            role="option"
-            aria-selected={false}
-            onClick={() =>
-              choose(() => onJumpToChapter(scripture.bookName, scripture.chapter, scripture.verse))
-            }
-          >
-            <span className="search-result-ref">{scriptureRef}</span>
-            <span className="search-result-kind">Open chapter</span>
-          </button>
+          {scriptureResults.map(scripture => {
+            const ref =
+              scripture.verse != null
+                ? `${scripture.bookName} ${scripture.chapter}:${scripture.verse}`
+                : scripture.kind === 'book'
+                  ? scripture.bookName
+                  : `${scripture.bookName} ${scripture.chapter}`
+            const kindLabel = scripture.kind === 'book' ? 'Open book' : 'Open chapter'
+            return (
+              <button
+                key={`${scripture.bookNumber}-${scripture.chapter}-${scripture.verse ?? ''}`}
+                className="search-result search-result--scripture"
+                role="option"
+                aria-selected={false}
+                onClick={() =>
+                  choose(() => onJumpToChapter(scripture.bookName, scripture.chapter, scripture.verse))
+                }
+              >
+                <span className="search-result-ref">{ref}</span>
+                <span className="search-result-kind">{kindLabel}</span>
+              </button>
+            )
+          })}
         </div>
       )}
 

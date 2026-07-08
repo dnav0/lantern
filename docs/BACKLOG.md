@@ -88,6 +88,27 @@ prioritized.
 
 ## Done
 
+- **Search breadth in the scripture section (Studies & Notes model,
+  workstream 3).** `parseScriptureQuery` (`src/utils/noteParser.ts`) now
+  returns `ScriptureQuery[]` instead of a single-or-null result, so early and
+  partial queries surface jump targets instead of nothing: a bare book name or
+  unambiguous prefix ("matthew", "matt", "rom", "1 cor") yields a single
+  book-level result (`kind: 'book'`, chapter 1, verse null); "book + chapter"
+  and "book + chapter:verse" keep returning exactly one result as before
+  (`kind: 'chapter'` / `'verse'`); an ambiguous prefix ("j", "jo") yields up to
+  `MAX_SCRIPTURE_RESULTS` (5) ranked results via a new `rankBookCandidates`
+  helper — exact alias match first, then startsWith, then contains, ties
+  broken by canonical `BIBLE_BOOKS` (USFM) order. No new alias table; reuses
+  `findBookByAlias`/`BIBLE_BOOKS` from `bibleBooks.ts` entirely. `GlobalSearch`
+  (`src/components/GlobalSearch.tsx`) renders the scripture section as a list
+  (0..N results, "Open book" vs "Open chapter" label per kind) instead of a
+  single button; the notes section (independent debounced `searchNotes` call)
+  is untouched and still populates on its own. No schema or `BereanApi`
+  change — pure client-side parsing. Test coverage extended in
+  `noteParser.test.ts` for bare book, unambiguous prefix, ambiguous prefix
+  (ordering + cap), book+chapter, book+chapter:verse, and empty/garbage query.
+  Verse-text search remains out of scope/backlogged (see below).
+
 - **One selection gesture + notes-as-front-door (Studies & Notes model,
   workstream 2).** In `BookDetailPage`'s ChapterView (the Bible home reader),
   the standalone per-verse "+" quick-note button is gone — verse selection is
@@ -120,8 +141,10 @@ prioritized.
   pure client-side parse — `parseScriptureQuery` in `src/utils/noteParser.ts`
   reuses the book-alias table (`findBookByAlias`) to turn "mat 2:13" / "john 1" /
   "1 cor 13:4" into a `{ bookNumber, bookName, chapter, verse }` jump target
-  (chapter clamped to the book's real count; bare book name yields no jump);
-  clicking navigates the Bible view to that book+chapter (App gained a
+  (chapter clamped to the book's real count). Bare book names/prefixes and
+  ambiguous-prefix multi-result ranking were added later in workstream 3 above
+  — see that entry for the current `ScriptureQuery[]` shape.
+  Clicking navigates the Bible view to that book+chapter (App gained a
   `selectedChapter` and `handleJumpToChapter`; `BookDetailPage` gained an
   `initialChapter` prop). Section 2 (notes) is an additive `BereanApi.searchNotes`
   method — case-insensitive substring over note content, implemented in BOTH

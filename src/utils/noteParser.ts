@@ -1,5 +1,5 @@
 import { NoteSegment, NoteSegmentType, NoteCategory, ParsedNote } from '../types'
-import { buildCrossRefRegex, findBookByAlias } from './bibleBooks'
+import { BibleBook, BIBLE_BOOKS, buildCrossRefRegex, findBookByAlias } from './bibleBooks'
 
 const TAG_PATTERN = /@(obs(?:ervation)?|hist(?:orical)?|app(?:lication)?|per(?:sonal)?)\b/gi
 
@@ -146,37 +146,104 @@ export interface ScriptureQuery {
   bookName: string
   chapter: number
   // Optional target verse (e.g. the ":13" in "mat 2:13"); null when only a
-  // book+chapter was typed.
+  // book (chapter defaults to 1) or a book+chapter was typed.
   verse: number | null
+  // 'book' = bare book name/prefix, chapter is always 1 (no chapter typed).
+  // 'chapter' = book + chapter, no verse.
+  // 'verse' = book + chapter:verse.
+  kind: 'book' | 'chapter' | 'verse'
+}
+
+const MAX_SCRIPTURE_RESULTS = 5
+
+// Rank candidate books for a bare (chapterless) book token so ambiguous
+// prefixes ("j", "jo") surface a short, sensibly-ordered list instead of
+// nothing or an arbitrary single pick. Order: exact alias match first, then
+// startsWith matches, then contains matches; ties broken by canonical book
+// order (shorter/earlier books first, matching BIBLE_BOOKS/USFM order).
+function rankBookCandidates(token: string): BibleBook[] {
+  const needle = token.toLowerCase().trim()
+  if (!needle) return []
+
+  const exact: BibleBook[] = []
+  const startsWith: BibleBook[] = []
+  const contains: BibleBook[] = []
+  const seen = new Set<number>()
+
+  for (const book of BIBLE_BOOKS) {
+    if (seen.has(book.number)) continue
+    const candidates = [...book.aliases, book.name.toLowerCase(), book.abbreviation.toLowerCase()]
+    if (candidates.some(a => a === needle)) {
+      exact.push(book)
+      seen.add(book.number)
+    } else if (candidates.some(a => a.startsWith(needle))) {
+      startsWith.push(book)
+      seen.add(book.number)
+    } else if (candidates.some(a => a.includes(needle))) {
+      contains.push(book)
+      seen.add(book.number)
+    }
+  }
+
+  return [...exact, ...startsWith, ...contains].slice(0, MAX_SCRIPTURE_RESULTS)
 }
 
 /**
- * Smart-parse a free-text search query into a scripture reference target
- * (e.g. "mat 2:13", "john 1", "1 cor 13:4"). Reuses the book-alias table so
- * abbreviations resolve exactly as the reference input does. Returns null when
- * the query does not name a known book followed by a chapter.
+ * Smart-parse a free-text search query into scripture reference jump targets
+ * (e.g. "mat 2:13", "john 1", "1 cor 13:4", "matthew", "j"). Reuses the
+ * book-alias table so abbreviations resolve exactly as the reference input
+ * does. Returns an empty array when nothing plausible matches.
+ *
+ * Shapes handled:
+ *   - "<book>"                 -> book jump(s) (kind: 'book', chapter 1).
+ *       An unambiguous alias/prefix yields exactly one result; an ambiguous
+ *       prefix (e.g. "j", "jo") yields a ranked, capped list — see
+ *       rankBookCandidates for the ordering/cap rule.
+ *   - "<book> <chapter>"       -> single chapter jump (kind: 'chapter').
+ *   - "<book> <chapter>:<verse>" -> single verse jump (kind: 'verse').
  *
  * This is reference PARSING only — it never searches verse text (that's a
- * separate, backlogged feature). Clamps chapter to the book's real chapter
- * count so a jump target is always valid.
+ * separate, backlogged feature). Chapter is clamped to the book's real
+ * chapter count so a jump target is always valid. Pure function.
  */
-export function parseScriptureQuery(query: string): ScriptureQuery | null {
+export function parseScriptureQuery(query: string): ScriptureQuery[] {
   const trimmed = query.trim().replace(/\s+/g, ' ')
-  if (!trimmed) return null
+  if (!trimmed) return []
 
-  // Split "<book> <chapter>[:<verse>]" — the trailing chapter[:verse] is
-  // optional so a bare book name yields no jump (needs a chapter to target).
-  const m = /^(.+?)\s+(\d+)(?::(\d+))?\s*$/.exec(trimmed)
-  if (!m) return null
+  // "<book> <chapter>[:<verse>]" — book + a trailing chapter[:verse].
+  const withChapter = /^(.+?)\s+(\d+)(?::(\d+))?\s*$/.exec(trimmed)
+  if (withChapter) {
+    const book = findBookByAlias(withChapter[1])
+    if (book) {
+      let chapter = parseInt(withChapter[2], 10)
+      if (chapter < 1) chapter = 1
+      if (chapter > book.chapters) chapter = book.chapters
 
-  const book = findBookByAlias(m[1])
-  if (!book) return null
+      const verse = withChapter[3] ? parseInt(withChapter[3], 10) : null
 
-  let chapter = parseInt(m[2], 10)
-  if (chapter < 1) return null
-  if (chapter > book.chapters) chapter = book.chapters
+      return [
+        {
+          bookNumber: book.number,
+          bookName: book.name,
+          chapter,
+          verse,
+          kind: verse != null ? 'verse' : 'chapter'
+        }
+      ]
+    }
+    // Falls through to bare-book matching below (e.g. a book name that
+    // happens to be followed by a non-book, non-numeric token won't match
+    // here anyway since the regex requires a trailing number).
+  }
 
-  const verse = m[3] ? parseInt(m[3], 10) : null
-
-  return { bookNumber: book.number, bookName: book.name, chapter, verse }
+  // Bare book name/prefix — no chapter typed. Rank candidates so ambiguous
+  // prefixes surface multiple results.
+  const candidates = rankBookCandidates(trimmed)
+  return candidates.map(book => ({
+    bookNumber: book.number,
+    bookName: book.name,
+    chapter: 1,
+    verse: null,
+    kind: 'book' as const
+  }))
 }
