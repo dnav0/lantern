@@ -1163,6 +1163,12 @@ body.dark .bible-library-greeting {
   padding: 28px 24px;
 }
 
+/* Centered reading measure for the passage column (verse text stays left-aligned). */
+.passage-pane-col {
+  max-width: 620px;
+  margin: 0 auto;
+}
+
 .passage-pane-empty {
   display: flex;
   align-items: center;
@@ -1461,6 +1467,133 @@ body.dark .bible-library-greeting {
   font-size: 10px;
   line-height: 1.7;
   flex-shrink: 0;
+}
+
+/* ─── Margin / span notes (study-Bible layout) ──────────────────────────────────
+   Desktop: a two-column CSS grid — scripture column + a margin rail holding the
+   notes. Each verse row occupies one explicit grid row (row index = verse order,
+   assigned in JS as `gridRow: n`). A rail note anchored to verses [start..end]
+   is placed at `grid-row: startRow / endRow+1`, so its accent bracket spans
+   EXACTLY the rows of the verses it anchors — a single-verse note brackets one
+   row, a v4-15 note brackets that whole span. We use numeric grid-row placement
+   (not DOM offset measurement) because it's declarative and reflow-proof: it
+   survives font-size/zoom/wrap changes with no ResizeObserver and no measurement
+   race. Anchorless (passage-level) notes are NOT placed on the grid — they render
+   in a separate block above it. */
+.scripture-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  column-gap: 28px;
+  align-items: start;
+}
+
+/* Each verse row spans only the scripture (first) column. Its grid-row is set
+   inline in JS (gridRow: n). */
+.scripture-grid > .reading-verse-block {
+  grid-column: 1;
+  margin-bottom: 0;
+}
+
+/* The rail column. A rail note is a grid item in column 2 spanning its verse
+   rows; the bracket is an accent bar down the left of the note. */
+.rail-note {
+  grid-column: 2;
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.rail-bracket {
+  flex-shrink: 0;
+  width: 3px;
+  border-radius: 2px;
+  background: #d8d5f2;
+  transition: background 0.12s;
+  align-self: stretch;
+}
+.rail-bracket.cat-observation { background: #7f77dd; }
+.rail-bracket.cat-historical { background: #1d9e75; }
+.rail-bracket.cat-application { background: #ba7517; }
+.rail-bracket.cat-personal { background: #d4537e; }
+
+.rail-note.highlighted .rail-bracket,
+.rail-note:hover .rail-bracket {
+  filter: brightness(0.9);
+}
+
+.rail-note-body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Rail note card is a slimmer variant of the reading note card. */
+.scripture-grid .rail-note-body .reading-note-card {
+  background: transparent;
+  border-left: none;
+  padding: 4px 6px;
+}
+.scripture-grid .rail-note-body .reading-note-card:hover,
+.scripture-grid .rail-note-body .reading-note-card.highlighted {
+  background: rgba(127, 119, 221, 0.05);
+}
+
+/* Passage-level (anchorless) notes above the grid. */
+.rail-passage-notes {
+  margin-bottom: 20px;
+}
+.rail-passage-notes-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #bbb;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+/* Mobile: no rail. Instead a bracket/accent indicator sits on the verse rows a
+   note spans, and the note renders in a stacked list below carrying a verse-range
+   chip. Tapping either the bracket or the chip scrolls to/reveals the counterpart.
+   The desktop grid collapses to a single column (handled in the media query). */
+.verse-span-bracket {
+  position: absolute;
+  left: -6px;
+  top: 2px;
+  bottom: 2px;
+  width: 3px;
+  border-radius: 2px;
+  background: #d8d5f2;
+  cursor: pointer;
+}
+.verse-span-bracket.cat-observation { background: #7f77dd; }
+.verse-span-bracket.cat-historical { background: #1d9e75; }
+.verse-span-bracket.cat-application { background: #ba7517; }
+.verse-span-bracket.cat-personal { background: #d4537e; }
+
+.note-range-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #7f77dd;
+  background: rgba(127, 119, 221, 0.1);
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.note-range-chip:hover {
+  background: rgba(127, 119, 221, 0.18);
+}
+
+/* The mobile stacked note list is hidden on desktop (the rail is used instead). */
+.mobile-note-stack {
+  display: none;
 }
 
 /* Inline add note row in reading mode */
@@ -2076,8 +2209,18 @@ body.dark .bible-library-greeting {
   border-radius: 3px;
 }
 
+/* Center the passage column as a block (verse text stays left-aligned). When a
+   margin rail is present the composition is scripture-measure + rail; widen the
+   centered container to fit both. */
 .book-chapter-content {
   max-width: 640px;
+  margin: 0 auto;
+}
+.book-chapter-content:has(.scripture-grid) {
+  max-width: 940px;
+}
+.reading-content:has(.scripture-grid) {
+  max-width: 980px;
 }
 
 .btn-study-chapter {
@@ -3343,6 +3486,28 @@ body.dark .upd-popover-btn-ghost:hover {
   .book-chapter-content {
     max-width: none;
   }
+
+  /* Mobile: collapse the study-Bible grid to a single column — verse rows and
+     stacked notes flow normally; the rail becomes an inline stacked list. */
+  .scripture-grid {
+    display: block;
+  }
+  .scripture-grid > .reading-verse-block {
+    grid-row: auto !important;
+    margin-bottom: 4px;
+  }
+  .rail-note {
+    display: none; /* rail notes are re-rendered as a stacked mobile list */
+  }
+  .mobile-note-stack {
+    display: block;
+    padding-left: 0;
+    margin-top: 16px;
+  }
+  .verse-span-bracket {
+    left: -2px;
+  }
+
   .chapter-selector-wrap {
     padding: 8px 12px;
   }

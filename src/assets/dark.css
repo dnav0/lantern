@@ -142,6 +142,34 @@ body.dark .reading-note-card:hover {
 body.dark .reading-note-card.highlighted {
   background: rgba(127, 119, 221, 0.09);
 }
+
+/* ── Margin / span notes ── */
+body.dark .rail-bracket,
+body.dark .verse-span-bracket {
+  background: #3a3654;
+}
+body.dark .rail-bracket.cat-observation,
+body.dark .verse-span-bracket.cat-observation { background: #8b83e6; }
+body.dark .rail-bracket.cat-historical,
+body.dark .verse-span-bracket.cat-historical { background: #1d9e75; }
+body.dark .rail-bracket.cat-application,
+body.dark .verse-span-bracket.cat-application { background: #ba7517; }
+body.dark .rail-bracket.cat-personal,
+body.dark .verse-span-bracket.cat-personal { background: #d4537e; }
+body.dark .rail-passage-notes-label {
+  color: #3a3840;
+}
+body.dark .scripture-grid .rail-note-body .reading-note-card:hover,
+body.dark .scripture-grid .rail-note-body .reading-note-card.highlighted {
+  background: rgba(127, 119, 221, 0.1);
+}
+body.dark .note-range-chip {
+  color: #8b83e6;
+  background: rgba(127, 119, 221, 0.16);
+}
+body.dark .note-range-chip:hover {
+  background: rgba(127, 119, 221, 0.26);
+}
 body.dark .verse-add-btn {
   background: #1e1c28;
 }

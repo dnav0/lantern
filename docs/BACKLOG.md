@@ -64,12 +64,6 @@ prioritized.
   overlap. This is the one part of the model that needs a schema touch (a nullable
   column) — deliberately deferred out of the presentation-only milestone.
 
-- **Margin / span notes.** Render multi-verse notes as bracketed spans: a desktop
-  margin rail alongside scripture, and on mobile a bracket on the verses plus a
-  verse-range chip on the stacked note. High-value for study (marginalia at a
-  glance); the verse-anchored model already carries the span (`anchor_start_verse`
-  /`anchor_end_verse`). Belongs with the dedicated visual pass.
-
 - **Drag-to-select verse ranges (desktop).** Selection is tap-anchor + tap-extend
   today. Click-drag over verses would be natural, but it collides with native text
   selection (drag-to-copy verse text), so it needs a modifier or an explicit
@@ -107,6 +101,47 @@ prioritized.
   surfaces named above.
 
 ## Done
+
+- **Margin / span notes.** Both reading surfaces — `ReadingMode` (saved-passage
+  reader) and `BookDetailPage`'s ChapterView (Bible-home chapter reader) — now
+  render verse-anchored notes as a study-Bible layout. **Desktop (>768px):** a
+  two-column CSS grid (`.scripture-grid`) — scripture in column 1, a 260px margin
+  rail in column 2. Each verse row is placed on an explicit numeric grid row
+  (`gridRow: index+1`, assigned in JSX); a rail note anchored to `[start..end]` is
+  placed at `grid-row: startRow / endRow+1`, so its accent bracket (`.rail-bracket`,
+  category-coloured) spans EXACTLY the anchored verse rows — a single-verse note
+  brackets one row, a v4-15 note brackets that whole span. **Numeric grid-row
+  placement was chosen over DOM-offset measurement** because it is declarative and
+  reflow-proof: it survives font-size/zoom/wrap changes with no ResizeObserver and
+  no measurement race (commented at the `.scripture-grid` CSS block and at both
+  components' row-map). **Mobile (<=768px):** the grid collapses to a single column
+  (`display:block`); each spanned verse row carries a `.verse-span-bracket` accent
+  indicator, and anchored notes render in a stacked list (`.mobile-note-stack`,
+  desktop-hidden) each with a `.note-range-chip` ("v4" / "vv.4-15") that scrolls to
+  the anchored verse row (ref-map linkage). **Anchorless notes** (`anchor_start_verse
+  === null`) are handled as passage-level notes: rendered in a `.rail-passage-notes`
+  block above the grid (a "Passage notes" label), never bracketed. Highlight linkage
+  is preserved and bidirectional: hovering/clicking a rail note highlights its verses
+  (`onMouseEnter`/`handleNoteClick` → `highlightVersesForNote`) and clicking a verse
+  highlights its notes. **Centered passage column:** the scripture column is centered
+  as a block with a comfortable reading measure while verse *text* stays left-aligned
+  — `.reading-content`/`.book-chapter-content` get `margin: 0 auto` (widened via
+  `:has(.scripture-grid)` when a rail is present), and `PassagePane` gained a
+  `.passage-pane-col` centered wrapper for the StudyMode passage pane; mobile stays
+  full-width. All existing behaviours preserved: the note→study bridge (Edit note
+  primary / Open study / Delete), quick-note creation, category pills/colours, subtle
+  timestamps, verse-range selection + floating action bar, cross-ref pills, dark mode
+  (rail brackets/chips themed in `dark.css`). Pure re-presentation — no schema,
+  `BereanApi`, or note-data change; reused the existing anchors. Verified with
+  puppeteer at 1280px and 390px, light + dark: desktop rail with a correctly
+  3-row-spanning v2-4 bracket, mobile bracket + "vv.2-4" chip, centered column,
+  bidirectional hover/click highlight, and the bridge actions intact on both
+  surfaces. NOTE for the drag-to-select workstream: the desktop grid changed the
+  verse-row DOM (rows are now `.scripture-grid > .reading-verse-block` grid items
+  with an inline `gridRow` style, and each row registers a `verseRowRefs` entry and
+  may contain a `.verse-span-bracket` child) — verse-selection creation logic
+  (`handleVerseClick`/`selAnchor`/`selFocus`) was left untouched, but any drag
+  handler must account for the new grid wrapper and the bracket child element.
 
 - **Search breadth in the scripture section (Studies & Notes model,
   workstream 3).** `parseScriptureQuery` (`src/utils/noteParser.ts`) now
