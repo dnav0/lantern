@@ -1208,6 +1208,20 @@ body.dark .bible-library-greeting {
   line-height: 1.8;
   min-width: 18px;
   flex-shrink: 0;
+  transition: color 0.12s;
+}
+
+/* Verse selection is a single tap gesture on the whole row; the number itself
+   reads as the tappable affordance (subtle hover on desktop, active-press on
+   touch) so it's clear the row responds. */
+.reading-verse-row:hover .verse-number {
+  color: #7f77dd;
+}
+.reading-verse-row:active .verse-number {
+  color: #6f66d4;
+}
+.reading-verse-row.selected .verse-number {
+  color: #7f77dd;
 }
 
 .verse-text {
@@ -2275,6 +2289,15 @@ body.dark .bible-library-greeting {
 .se-icon-btn.se-icon-danger:hover {
   background: rgba(232, 61, 61, 0.08);
   color: #e83d3d;
+}
+/* Inline quick-edit is the primary/default note action; give it a resting
+   tint (not just on hover) so it reads as the emphasised choice. */
+.se-icon-btn.se-icon-primary {
+  color: #7f77dd;
+}
+.se-icon-btn.se-icon-primary:hover {
+  background: rgba(127, 119, 221, 0.1);
+  color: #6f66d4;
 }
 
 .note-edit-textarea {

@@ -77,13 +77,43 @@ prioritized.
   free vs paid, billing, quota enforcement. Design the free single-user
   experience so it never feels crippled.
 
-- **Note→study bridge in the chapter reading view.** Workstream 2 added "Open
-  study" on notes in `ReadingMode` (saved-passage view), where the passage is
-  known. Notes rendered inside `BookDetailPage`'s ChapterView carry no passage
-  id (`NoteWithPassageInfo` has only `reference_label`), so the same bridge
-  there needs a note→passage resolution step first.
+- **Note→study bridge in the chapter reading view.** `ReadingMode` (saved-passage
+  view) now always shows "Open study" on its notes, wired through the WS1
+  unified `handleOpenStudy` path (Studies & Notes model, workstream 2). Notes
+  rendered inside `BookDetailPage`'s ChapterView (the Bible home reader) still
+  carry no passage id (`NoteWithPassageInfo` has only `reference_label`), so the
+  same bridge there still needs a note→passage resolution step first — out of
+  scope for workstream 2, which only touched the gesture/bridge in the two
+  surfaces named above.
 
 ## Done
+
+- **One selection gesture + notes-as-front-door (Studies & Notes model,
+  workstream 2).** In `BookDetailPage`'s ChapterView (the Bible home reader),
+  the standalone per-verse "+" quick-note button is gone — verse selection is
+  now the single gesture. Tapping a verse selects it and the floating action
+  bar (already existing from the UX-overhaul verse-range work) appears
+  immediately, even for a single verse, since `selAnchor`/`selFocus` are both
+  set on the first tap. The bar's button order/emphasis flipped: **Quick note**
+  is now the primary (`.verse-action-btn.primary`, filled accent) button and
+  **"Start study on {ref}"** is secondary — same underlying handlers
+  (`handleQuickNoteFromSelection` / `handleStartStudyOnSelection`), only the
+  visual weight and DOM order changed. Verse numbers (`.verse-number`) gained a
+  tappable affordance: an accent tint on `.reading-verse-row:hover`/`:active`/
+  `.selected`, in both `main.css` and `dark.css` — CSS-only, no new state. In
+  `ReadingMode` (the saved-passage bridge), the note action row reordered/
+  re-emphasised: **inline quick-edit (pencil) is now visually primary**
+  (`.se-icon-btn.se-icon-primary`, accent-tinted at rest, not just on hover) and
+  listed first; **"Open study" is now unconditional** (`onOpenStudy` changed
+  from optional to a required prop — `ReadingMode` is only ever rendered from
+  `App.tsx` where it's always supplied via `handleOpenStudy`, so this is a type
+  tightening, not a behavior change) and always shown between Edit and Delete.
+  No schema or `BereanApi` change; reused all existing methods and the WS1
+  `handleOpenStudy` path. Verified with puppeteer at 390px/1280px, light+dark:
+  single-verse tap shows the bar with Quick note emphasised, range-extend
+  updates the {ref} label live, Quick note creates a verse-anchored note,
+  Start study opens `StudyMode` on the exact range, and the reading-view bridge
+  correctly opens the existing passage (no duplicate) via Open study.
 
 - **Search v1 (UX overhaul, workstream 6).** One search box with two
   independently-populating result sections. Section 1 (scripture reference) is a

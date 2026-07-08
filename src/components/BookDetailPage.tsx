@@ -392,11 +392,6 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
             >
               <span className="verse-number">{v.verse}</span>
               <span className="verse-text">{v.text}</span>
-              <span
-                className="verse-add-btn"
-                onClick={e => { e.stopPropagation(); setInlineVerse(v.verse); setInlineText(`v${v.verse} `) }}
-                title="Add note"
-              >+</span>
             </div>
 
             {showInline && (
@@ -437,11 +432,11 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
         <div className="verse-action-bar" role="toolbar" aria-label="Selection actions">
           <span className="verse-action-ref">{selReference}</span>
           <div className="verse-action-btns">
-            <button className="verse-action-btn primary" onClick={handleStartStudyOnSelection}>
-              Start study on {selReference}
-            </button>
-            <button className="verse-action-btn" onClick={handleQuickNoteFromSelection}>
+            <button className="verse-action-btn primary" onClick={handleQuickNoteFromSelection}>
               Quick note
+            </button>
+            <button className="verse-action-btn" onClick={handleStartStudyOnSelection}>
+              Start study on {selReference}
             </button>
           </div>
           <button

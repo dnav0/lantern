@@ -96,6 +96,15 @@ body.dark .verse-text {
 body.dark .verse-number {
   color: #3a3840;
 }
+body.dark .reading-verse-row:hover .verse-number {
+  color: #8b83e6;
+}
+body.dark .reading-verse-row:active .verse-number {
+  color: #8b83e6;
+}
+body.dark .reading-verse-row.selected .verse-number {
+  color: #8b83e6;
+}
 body.dark .passage-verse.highlighted {
   background: rgba(127, 119, 221, 0.12);
 }
@@ -362,6 +371,13 @@ body.dark .se-icon-btn {
 body.dark .se-icon-btn:hover {
   background: rgba(255, 255, 255, 0.06);
   color: #8a8890;
+}
+body.dark .se-icon-btn.se-icon-primary {
+  color: #8b83e6;
+}
+body.dark .se-icon-btn.se-icon-primary:hover {
+  background: rgba(127, 119, 221, 0.15);
+  color: #a39bf0;
 }
 
 /* ── Vault row ── */
