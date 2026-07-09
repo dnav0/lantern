@@ -7,7 +7,7 @@ import InlineTagInput from './InlineTagInput'
 import RichEditInput from './RichEditInput'
 import ConfirmDialog from './ConfirmDialog'
 import CrossRefPill from './CrossRefPill'
-import { useVerseDragSelect } from '../utils/useVerseDragSelect'
+import { useVerseMarquee } from '../utils/useVerseMarquee'
 
 // ─── tiny helpers ────────────────────────────────────────────────────────────
 
@@ -87,8 +87,10 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<NoteWithPassageInfo | null>(null)
-  // Ref map for the chip → verse-row scroll linkage (mobile).
-  const verseRowRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+  // Ref map for the chip → verse-row scroll linkage (mobile) and marquee hit-test.
+  const verseRowRefs = useRef<Map<number, HTMLElement>>(new Map())
+  // The scripture container the marquee is scoped to.
+  const scriptureRef = useRef<HTMLDivElement>(null)
 
   const chapterNotes = localNotes.filter(n =>
     n.chapter_start <= chapter && chapter <= n.chapter_end
@@ -97,6 +99,26 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
   const groups = groupNotes(chapterNotes)
   const anchoredGroups = groups.filter(g => g.main.anchor_start_verse !== null)
   const passageGroups = groups.filter(g => g.main.anchor_start_verse === null)
+  // Split anchored notes by span width: single-verse notes render INLINE beneath
+  // their verse row; only multi-verse range notes go into the right-hand rail.
+  const isRangeGroup = (g: NoteGroup): boolean => {
+    const s = g.main.anchor_start_verse!
+    const e = g.main.anchor_end_verse ?? s
+    return e > s
+  }
+  const rangeGroups = anchoredGroups.filter(isRangeGroup)
+  const inlineGroups = anchoredGroups.filter(g => !isRangeGroup(g))
+  // Inline notes indexed by their anchor start verse (single-verse only).
+  const inlineGroupsByVerse = new Map<number, NoteGroup[]>()
+  for (const g of inlineGroups) {
+    const v = g.main.anchor_start_verse!
+    const list = inlineGroupsByVerse.get(v)
+    if (list) list.push(g)
+    else inlineGroupsByVerse.set(v, [g])
+  }
+  // The rail (margin column) only appears when there is at least one range note
+  // or a passage-level note; otherwise the scripture column centers as a block.
+  const hasRail = rangeGroups.length > 0 || passageGroups.length > 0
 
   useEffect(() => {
     setLoading(true)
@@ -160,11 +182,14 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
     }
   }
 
-  // Desktop click-drag over the verse-number gutter selects a range in one
-  // gesture; a plain click (no movement) falls through to handleVerseClick so
-  // tap-anchor/tap-extend keeps working unchanged. See useVerseDragSelect for
-  // why the drag only starts from the gutter (native text-copy stays intact).
-  const { gutterPointerDown, rowPointerEnter, suppressNextClick } = useVerseDragSelect(
+  // Desktop marquee (box) selection over the scripture area: click-drag draws a
+  // selection box and selects every verse its row intersects, driving the same
+  // selAnchor/selFocus state as the tap gesture. A plain click (no movement)
+  // falls through to handleVerseClick so tap-anchor/tap-extend keeps working.
+  // See useVerseMarquee for the native-text-copy tradeoff and stale-state guards.
+  const { marquee, containerPointerDown, suppressNextClick } = useVerseMarquee(
+    scriptureRef,
+    verseRowRefs,
     (start, end) => {
       setSelAnchor(start)
       setSelFocus(end)
@@ -415,9 +440,10 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
   verses.forEach((v, i) => rowByVerse.set(v.verse, i + 1))
   const clampRow = (verse: number): number =>
     rowByVerse.has(verse) ? rowByVerse.get(verse)! : verse < verses[0]?.verse ? 1 : verses.length
-  // Which verse rows carry a span bracket (mobile accent indicator).
+  // Which verse rows carry a span bracket (mobile accent indicator) — range
+  // notes only; single-verse notes render inline, not bracketed.
   const bracketByVerse = new Map<number, NoteCategory | null>()
-  for (const g of anchoredGroups) {
+  for (const g of rangeGroups) {
     const s = g.main.anchor_start_verse!
     const e = g.main.anchor_end_verse ?? s
     for (let v = s; v <= e; v++) {
@@ -452,9 +478,27 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
         </div>
       )}
 
-      {/* Study-Bible grid: scripture in column 1, rail notes in column 2 spanning
-          their anchor range. Collapses to a single column on mobile (see CSS). */}
-      <div className={`scripture-grid${anchoredGroups.length === 0 ? ' no-rail' : ''}`}>
+      {/* Study-Bible grid: scripture in column 1, rail notes (range notes only) in
+          column 2 spanning their anchor range. The rail collapses when there are no
+          range/passage notes. Collapses to a single column on mobile (see CSS).
+          onPointerDown starts a marquee box selection over the scripture area. */}
+      <div
+        ref={scriptureRef}
+        className={`scripture-grid${hasRail ? '' : ' no-rail'}`}
+        onPointerDown={containerPointerDown}
+      >
+        {marquee && (
+          <div
+            className="verse-marquee"
+            aria-hidden="true"
+            style={{
+              left: marquee.left,
+              top: marquee.top,
+              width: marquee.width,
+              height: marquee.height
+            }}
+          />
+        )}
         {verses.map((v, i) => {
           const isSelected = selRange !== null && v.verse >= selRange[0] && v.verse <= selRange[1]
           const isHighlighted = highlightedVerses.has(v.verse)
@@ -464,13 +508,14 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
           const showInline = inlineVerse === v.verse
           const bracketCat = bracketByVerse.get(v.verse)
 
+          const inlineHere = inlineGroupsByVerse.get(v.verse)
+
           return (
             <div key={v.verse} className="reading-verse-block" style={{ gridRow: i + 1 }}>
               <div
                 ref={el => { if (el) verseRowRefs.current.set(v.verse, el); else verseRowRefs.current.delete(v.verse) }}
                 className={`reading-verse-row${isHighlighted ? ' highlighted' : ''}${isSelected ? ' selected' : ''}`}
                 onClick={() => handleVerseClick(v.verse)}
-                onPointerEnter={rowPointerEnter(v.verse)}
                 style={isDimmed ? { opacity: 0.35 } : undefined}
               >
                 {bracketByVerse.has(v.verse) && (
@@ -480,14 +525,16 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
                     aria-hidden="true"
                   />
                 )}
-                <span
-                  className="verse-number"
-                  onPointerDown={gutterPointerDown(v.verse)}
-                >
-                  {v.verse}
-                </span>
+                <span className="verse-number">{v.verse}</span>
                 <span className="verse-text">{v.text}</span>
               </div>
+
+              {/* Single-verse notes render inline beneath their verse row. */}
+              {inlineHere && inlineHere.length > 0 && (
+                <div className="reading-notes-group inline-verse-notes">
+                  {inlineHere.map(group => renderNoteGroup(group))}
+                </div>
+              )}
 
               {showInline && (
                 <div className="inline-note-row">
@@ -508,8 +555,9 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
           )
         })}
 
-        {/* Desktop rail notes — each spans its anchor range via grid-row. */}
-        {anchoredGroups.map(group => {
+        {/* Desktop rail notes — range notes only, each spanning its anchor range
+            via grid-row. Single-verse notes render inline above. */}
+        {rangeGroups.map(group => {
           const s = group.main.anchor_start_verse!
           const e = group.main.anchor_end_verse ?? s
           const isHl = highlightedNoteIds.has(group.main.id)
@@ -528,11 +576,11 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
         })}
       </div>
 
-      {/* Mobile stacked list — anchored notes with a verse-range chip. Hidden on
-          desktop (rail is used instead). */}
-      {anchoredGroups.length > 0 && (
+      {/* Mobile stacked list — range notes with a verse-range chip. Hidden on
+          desktop (rail is used instead). Single-verse notes stay inline. */}
+      {rangeGroups.length > 0 && (
         <div className="reading-notes-group mobile-note-stack">
-          {anchoredGroups.map(group => renderNoteGroup(group, { chip: true }))}
+          {rangeGroups.map(group => renderNoteGroup(group, { chip: true }))}
         </div>
       )}
 

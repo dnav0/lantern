@@ -181,6 +181,12 @@ body.dark .inline-note-hint {
   color: #30303a;
 }
 
+/* ── Marquee (box) selection overlay ── */
+body.dark .verse-marquee {
+  background: rgba(139, 131, 230, 0.14);
+  border-color: rgba(139, 131, 230, 0.55);
+}
+
 /* ── Verse-range floating action bar ── */
 body.dark .verse-action-bar {
   background: #17151d;

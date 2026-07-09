@@ -10,6 +10,16 @@ prioritized.
 
 ## Deferred
 
+- **Modifier-to-copy verse text (marquee escape hatch).** Desktop verse
+  selection is now a Windows-style marquee (click-drag draws a box that selects
+  the verses it covers), which deliberately takes over click-drag from native
+  browser text selection over verse text — the user chose selection over copy.
+  A future refinement: hold a modifier (e.g. Alt or Ctrl) on pointerdown to
+  suppress the marquee for that gesture and let native text selection/copy
+  happen. The hook (`src/utils/useVerseMarquee.ts`) already branches on
+  pointerdown, so this is a guard on `containerPointerDown` plus a visible hint,
+  no state-model change.
+
 - **Offline write outbox.** Queue failed mutations locally and replay them on
   reconnect. The `BereanApi` seam is the single place this slots in — phase-1
   behavior (catch a failed write, show a friendly message) is the stub it
@@ -97,48 +107,70 @@ prioritized.
 
 ## Done
 
-- **Drag-to-select verse ranges (desktop).** `useVerseDragSelect`
-  (`src/utils/useVerseDragSelect.ts`) adds a click-drag gesture layered on top
-  of the existing tap-anchor/tap-extend selection in both `ReadingMode` and
-  `BookDetailPage`'s ChapterView, without touching `selAnchor`/`selFocus`
-  state ownership (the hook only calls back into it). The native-text-copy
-  collision is resolved by scoping the drag origin to the `.verse-number`
-  gutter only — `pointerdown` there starts tracking, `pointerenter` on
-  `.reading-verse-row` extends the range live, and the final range also
-  commits eagerly on `pointerup` (not only from `pointerenter`) so a fast drag
-  that outruns enter events still lands correctly. Verse *text* was never a
-  drag origin, so native browser text selection/copy over verse text is
-  unaffected. Root cause of the "selection drops to 0" bug the gesture
-  shipped with: after a genuine cross-row drag, the browser's trailing
-  `click` fires on the nearest common ancestor of pointerdown/pointerup
-  (typically `.scripture-grid`, not a verse row), so a `justDragged`
-  suppression flag set only from inside a row's `onClick` could go stale and
-  wrongly swallow the user's *next*, unrelated tap — or a click landing back
-  on the row could hit the tap-toggle branch and clear the range the drag had
-  just made. Fixed by resetting `justDragged` at the start of every new
-  `pointerdown` (so it can never leak across gestures), adding a small
-  movement threshold so an accidental micro-move isn't misread as a drag, and
-  making `suppressNextClick()` a one-shot consume that swallows exactly the
-  first click after a real drag regardless of what element it lands on.
-  Touch (`pointerType === 'touch'`) is ignored by the hook entirely — the
-  original tap gesture is untouched there. Drag also bails out of starting on
-  interactive children (`button, a, [data-no-drag]`) so note-pill/button
-  clicks inside a row keep their own handling. Verified with a real
-  OS-level mouse drag (not synthetic dispatched events) via the Chrome
-  extension's `computer` tool against a manually-started
-  `vite --port 5237 --strictPort` (with `.env` moved aside per the memory-stub
-  verification convention) at 1280px, light and dark: dragging v2→v5 selects
-  `John 1:2-5` and raises the action bar; the selection survives the trailing
-  `click` landing on `.scripture-grid`; a following plain tap on v9 correctly
-  extends the range to `2-9` (no stale suppression); a drag started inside
-  verse *text* performs native text selection instead. Chapter 2 (no notes)
-  confirmed `.scripture-grid.no-rail` collapsing the rail column so scripture
-  centers as a single 640px column; chapter 1's rail/bracket/rail-bracket
-  still render. No schema or `BereanApi` change.
+- **Marquee (box) verse selection (desktop).** Replaces the earlier
+  gutter-only click-drag (retired `useVerseDragSelect`) with a Windows-style
+  marquee: `useVerseMarquee` (`src/utils/useVerseMarquee.ts`), used by both
+  `ReadingMode` and `BookDetailPage`'s ChapterView, without touching
+  `selAnchor`/`selFocus` ownership (the hook only calls back into it).
+  `onPointerDown` on the `.scripture-grid` container begins a drag *unless* it
+  lands on an interactive child (`button, a, input, textarea, [contenteditable],
+  [data-no-drag]`); it tracks a rectangle from the start point to the current
+  pointer, renders a subtle accent-tinted overlay (`.verse-marquee`, dark-mode
+  variant in `dark.css`), and hit-tests every registered verse row via
+  `verseRowRefs` — any row whose `getBoundingClientRect` overlaps the box
+  vertically is selected, and `min..max` of those verse numbers drives the same
+  selection state as the tap gesture, so the floating action bar ("Quick note"
+  primary / "Start study on {ref}") appears and works unchanged. On `pointerup`
+  the overlay is removed and the range is committed. **Tradeoff (user-chosen):**
+  click-drag over verse text now marquee-selects instead of doing native
+  text-copy; native selection is suppressed for the duration of a drag
+  (`document.body` `user-select: none`, restored on release) and the initiating
+  `pointerdown` is `preventDefault`ed. A modifier-to-copy escape hatch is
+  backlogged (see Deferred). **Stale-state guards** (learned from the prior
+  gutter-drag "selection drops to 0" bug): per-gesture refs
+  (`dragMoved`/`justDragged`/rects) reset at the START of every `pointerdown` so
+  nothing leaks across gestures; a small `DRAG_THRESHOLD` keeps an accidental
+  micro-move from being read as a drag (so a plain click still falls through to
+  tap-anchor/tap-extend); `suppressNextClick()` is a one-shot consume that
+  swallows exactly the one trailing `click` a real drag emits (whichever element
+  it lands on) so a stray post-drag click can never clear the just-made range.
+  Touch (`pointerType === 'touch'`) and non-primary buttons are ignored — the
+  tap gesture is untouched. Listeners are window-scoped and cleaned up on
+  unmount; `pointercancel` ends the drag like `pointerup`. Verified against a
+  manually-started `vite --port 5238 --strictPort` (with `.env` moved aside per
+  the memory-stub convention) at 1280px (light + dark) and 390px, driving a real
+  pointer sequence through the actual verse elements on BOTH surfaces: a visible
+  box appears, the covered verses select, the action bar shows the correct
+  `{ref}` (e.g. `John 3:1-4`, `John 3:3-5`), a plain tap immediately after a
+  marquee correctly extends the range (no stale suppression), and a
+  single-verse-only chapter shows `.scripture-grid.no-rail` (centered column,
+  no rail). No schema or `BereanApi` change.
+
+- **Note placement by anchor width (inline vs rail).** Refinement of the margin/
+  span-notes layout below, from live user testing: verse-anchored notes are now
+  split by how many verses they span. **Single-verse notes** (`anchor_start_verse
+  === anchor_end_verse`, or `anchor_end_verse` null) render **inline beneath their
+  verse row** (an `.inline-verse-notes` group in the scripture column), with their
+  indented sub-notes inline too — the way inline notes read before the
+  margin-rail change. **Multi-verse range notes** (`anchor_end_verse >
+  anchor_start_verse`) keep the right-hand rail with the category bracket spanning
+  the anchored rows (the grid-row mechanism below). **Anchorless notes** stay
+  passage-level (top block, never bracketed). The **rail only appears when there
+  is at least one range or passage-level note** (`hasRail`); if every note is
+  single-verse (or there are none) the `.scripture-grid.no-rail` path collapses
+  the margin column and the scripture column centers as a block. On mobile,
+  single-verse notes stay inline under the verse and only range notes appear in
+  the stacked list (bracket + `vv.x-y` chip). Applied to BOTH ChapterView and
+  ReadingMode; all prior behaviours (category pills/labels, timestamps, the
+  note→study bridge, quick-note creation, cross-ref pills, bidirectional
+  hover/click highlight, dark mode) preserved. Verified with a real pointer drive
+  at 1280px + 390px, light + dark. No schema or `BereanApi` change.
 
 - **Margin / span notes.** Both reading surfaces — `ReadingMode` (saved-passage
   reader) and `BookDetailPage`'s ChapterView (Bible-home chapter reader) — now
-  render verse-anchored notes as a study-Bible layout. **Desktop (>768px):** a
+  render verse-anchored notes as a study-Bible layout. (Superseded in part by the
+  inline-vs-rail split above: single-verse notes moved back inline; the rail is
+  range/passage notes only.) **Desktop (>768px):** a
   two-column CSS grid (`.scripture-grid`) — scripture in column 1, a 260px margin
   rail in column 2. Each verse row is placed on an explicit numeric grid row
   (`gridRow: index+1`, assigned in JSX); a rail note anchored to `[start..end]` is
