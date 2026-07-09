@@ -64,11 +64,6 @@ prioritized.
   overlap. This is the one part of the model that needs a schema touch (a nullable
   column) — deliberately deferred out of the presentation-only milestone.
 
-- **Drag-to-select verse ranges (desktop).** Selection is tap-anchor + tap-extend
-  today. Click-drag over verses would be natural, but it collides with native text
-  selection (drag-to-copy verse text), so it needs a modifier or an explicit
-  select mode. Low priority; pairs with the visual pass.
-
 - **Postgres full-text index for note search.** `SupabaseBereanApi.searchNotes`
   is a case-insensitive `ilike '%q%'` scan (v1, acceptable per the plan). For
   larger workspaces, replace with a `tsvector` column + GIN index and
@@ -101,6 +96,45 @@ prioritized.
   surfaces named above.
 
 ## Done
+
+- **Drag-to-select verse ranges (desktop).** `useVerseDragSelect`
+  (`src/utils/useVerseDragSelect.ts`) adds a click-drag gesture layered on top
+  of the existing tap-anchor/tap-extend selection in both `ReadingMode` and
+  `BookDetailPage`'s ChapterView, without touching `selAnchor`/`selFocus`
+  state ownership (the hook only calls back into it). The native-text-copy
+  collision is resolved by scoping the drag origin to the `.verse-number`
+  gutter only — `pointerdown` there starts tracking, `pointerenter` on
+  `.reading-verse-row` extends the range live, and the final range also
+  commits eagerly on `pointerup` (not only from `pointerenter`) so a fast drag
+  that outruns enter events still lands correctly. Verse *text* was never a
+  drag origin, so native browser text selection/copy over verse text is
+  unaffected. Root cause of the "selection drops to 0" bug the gesture
+  shipped with: after a genuine cross-row drag, the browser's trailing
+  `click` fires on the nearest common ancestor of pointerdown/pointerup
+  (typically `.scripture-grid`, not a verse row), so a `justDragged`
+  suppression flag set only from inside a row's `onClick` could go stale and
+  wrongly swallow the user's *next*, unrelated tap — or a click landing back
+  on the row could hit the tap-toggle branch and clear the range the drag had
+  just made. Fixed by resetting `justDragged` at the start of every new
+  `pointerdown` (so it can never leak across gestures), adding a small
+  movement threshold so an accidental micro-move isn't misread as a drag, and
+  making `suppressNextClick()` a one-shot consume that swallows exactly the
+  first click after a real drag regardless of what element it lands on.
+  Touch (`pointerType === 'touch'`) is ignored by the hook entirely — the
+  original tap gesture is untouched there. Drag also bails out of starting on
+  interactive children (`button, a, [data-no-drag]`) so note-pill/button
+  clicks inside a row keep their own handling. Verified with a real
+  OS-level mouse drag (not synthetic dispatched events) via the Chrome
+  extension's `computer` tool against a manually-started
+  `vite --port 5237 --strictPort` (with `.env` moved aside per the memory-stub
+  verification convention) at 1280px, light and dark: dragging v2→v5 selects
+  `John 1:2-5` and raises the action bar; the selection survives the trailing
+  `click` landing on `.scripture-grid`; a following plain tap on v9 correctly
+  extends the range to `2-9` (no stale suppression); a drag started inside
+  verse *text* performs native text selection instead. Chapter 2 (no notes)
+  confirmed `.scripture-grid.no-rail` collapsing the rail column so scripture
+  centers as a single 640px column; chapter 1's rail/bracket/rail-bracket
+  still render. No schema or `BereanApi` change.
 
 - **Margin / span notes.** Both reading surfaces — `ReadingMode` (saved-passage
   reader) and `BookDetailPage`'s ChapterView (Bible-home chapter reader) — now

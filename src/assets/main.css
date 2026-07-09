@@ -1487,6 +1487,16 @@ body.dark .bible-library-greeting {
   align-items: start;
 }
 
+/* When a chapter/passage has no rail (anchored) notes to show, collapse the
+   reserved 260px margin column entirely so the scripture column centers as a
+   full block instead of sitting left-of-center next to empty rail space. The
+   `.reading-content`/`.book-chapter-content` :has() rules below narrow their
+   max-width back down to the single-column measure in this case. */
+.scripture-grid.no-rail {
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 0;
+}
+
 /* Each verse row spans only the scripture (first) column. Its grid-row is set
    inline in JS (gridRow: n). */
 .scripture-grid > .reading-verse-block {
@@ -2216,10 +2226,10 @@ body.dark .bible-library-greeting {
   max-width: 640px;
   margin: 0 auto;
 }
-.book-chapter-content:has(.scripture-grid) {
+.book-chapter-content:has(.scripture-grid:not(.no-rail)) {
   max-width: 940px;
 }
-.reading-content:has(.scripture-grid) {
+.reading-content:has(.scripture-grid:not(.no-rail)) {
   max-width: 980px;
 }
 

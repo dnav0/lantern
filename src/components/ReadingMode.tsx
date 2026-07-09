@@ -7,6 +7,8 @@ import RichEditInput from './RichEditInput'
 import ConfirmDialog from './ConfirmDialog'
 import CrossRefPill from './CrossRefPill'
 import { formatRelativeTime } from '../utils/relativeTime'
+import { useVerseDragSelect } from '../utils/useVerseDragSelect'
+import { bookByNumber } from '../utils/bibleBooks'
 
 interface ReadingModeProps {
   passage: Passage
@@ -87,6 +89,10 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<Note | null>(null)
+  // Verse-range selection for the floating action bar: tap a verse to start,
+  // tap another to extend (same gesture as ChapterView's Bible-home reader).
+  const [selAnchor, setSelAnchor] = useState<number | null>(null)
+  const [selFocus, setSelFocus] = useState<number | null>(null)
   // Ref map for the chip → verse-row scroll linkage (mobile).
   const verseRowRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 
@@ -127,7 +133,17 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
     verseRowRefs.current.get(verse)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
+  const clearSelection = (): void => {
+    setSelAnchor(null)
+    setSelFocus(null)
+  }
+
   const handleVerseClick = (verseNum: number): void => {
+    // A drag that just ended (possibly folding back onto its own start verse)
+    // already committed the range via onRangeSelected — don't let the click
+    // event mouseup produces re-run tap logic and clobber it.
+    if (suppressNextClick()) return
+    if (editingNoteId !== null) return
     const anchored = notes.filter(n =>
       n.anchor_start_verse !== null &&
       verseNum >= n.anchor_start_verse &&
@@ -137,6 +153,59 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
       setHighlightedNoteIds(new Set(anchored.map(n => n.id)))
       setHighlightedVerses(new Set())
     }
+    // Drive the range selection (same tap-anchor/tap-extend gesture as
+    // ChapterView's Bible-home reader).
+    if (selAnchor === null) {
+      setSelAnchor(verseNum)
+      setSelFocus(verseNum)
+    } else if (selFocus === verseNum && selAnchor === verseNum) {
+      clearSelection()
+    } else {
+      setSelFocus(verseNum)
+    }
+  }
+
+  // Desktop click-drag over the verse-number gutter selects a range in one
+  // gesture; a plain click (no movement) falls through to handleVerseClick so
+  // tap-anchor/tap-extend keeps working unchanged. See useVerseDragSelect for
+  // why the drag only starts from the gutter (native text-copy stays intact).
+  const { gutterPointerDown, rowPointerEnter, suppressNextClick } = useVerseDragSelect(
+    (start, end) => {
+      setSelAnchor(start)
+      setSelFocus(end)
+    }
+  )
+
+  // Current selection as an inclusive [start, end] range, or null.
+  const selRange: [number, number] | null =
+    selAnchor === null || selFocus === null
+      ? null
+      : [Math.min(selAnchor, selFocus), Math.max(selAnchor, selFocus)]
+
+  const bookAndChapter = `${bookByNumber(passage.book_number)?.name ?? ''} ${passage.chapter_start}`.trim()
+  const selReference = selRange
+    ? selRange[0] === selRange[1]
+      ? `${bookAndChapter}:${selRange[0]}`
+      : `${bookAndChapter}:${selRange[0]}-${selRange[1]}`
+    : ''
+
+  const selVerseTag = selRange
+    ? selRange[0] === selRange[1]
+      ? `v${selRange[0]} `
+      : `v${selRange[0]}-${selRange[1]} `
+    : ''
+
+  const handleQuickNoteFromSelection = (): void => {
+    if (selRange === null) return
+    setInlineVerse(selRange[0])
+    setInlineText(selVerseTag)
+    clearSelection()
+  }
+
+  const handleStartStudyOnSelection = (): void => {
+    if (selRange === null) return
+    clearSelection()
+    onOpenStudy()
   }
 
   const handleAddInline = (verseNum: number): void => {
@@ -389,10 +458,13 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
             {/* Study-Bible grid: scripture rows in column 1, rail notes in column 2
                 spanning their anchor range. On mobile CSS collapses this to a single
                 column and the rail notes are hidden in favour of the stacked list. */}
-            <div className="scripture-grid">
+            <div className={`scripture-grid${anchoredGroups.length === 0 ? ' no-rail' : ''}`}>
               {verses.map((v, i) => {
+                const isSelected = selRange !== null && v.verse >= selRange[0] && v.verse <= selRange[1]
                 const isHighlighted = highlightedVerses.has(v.verse)
-                const isDimmed = hasAnyHighlightedVerse && !isHighlighted
+                const isDimmed =
+                  (hasAnyHighlightedVerse && !isHighlighted) ||
+                  (selRange !== null && !isSelected)
                 const showInline = inlineVerse === v.verse
                 const bracketCat = bracketByVerse.get(v.verse)
 
@@ -404,8 +476,9 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
                   >
                     <div
                       ref={el => { if (el) verseRowRefs.current.set(v.verse, el); else verseRowRefs.current.delete(v.verse) }}
-                      className={`reading-verse-row${isHighlighted ? ' highlighted' : ''}`}
+                      className={`reading-verse-row${isHighlighted ? ' highlighted' : ''}${isSelected ? ' selected' : ''}`}
                       onClick={() => handleVerseClick(v.verse)}
+                      onPointerEnter={rowPointerEnter(v.verse)}
                       style={isDimmed ? { opacity: 0.35 } : undefined}
                     >
                       {bracketByVerse.has(v.verse) && (
@@ -415,10 +488,16 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
                           aria-hidden="true"
                         />
                       )}
-                      <span className="verse-number">{v.verse}</span>
+                      <span
+                        className="verse-number"
+                        onPointerDown={gutterPointerDown(v.verse)}
+                      >
+                        {v.verse}
+                      </span>
                       <span className="verse-text">{v.text}</span>
                       <span
                         className="verse-add-btn"
+                        data-no-drag
                         onClick={e => { e.stopPropagation(); handleAddInline(v.verse) }}
                         title="Add note"
                       >
@@ -477,6 +556,29 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
           <div style={{ color: '#CCC', fontSize: 13 }}>Verse text not available.</div>
         )}
       </div>
+
+      {selRange !== null && inlineVerse === null && (
+        <div className="verse-action-bar" role="toolbar" aria-label="Selection actions">
+          <span className="verse-action-ref">{selReference}</span>
+          <div className="verse-action-btns">
+            <button className="verse-action-btn primary" onClick={handleQuickNoteFromSelection}>
+              Quick note
+            </button>
+            <button className="verse-action-btn" onClick={handleStartStudyOnSelection}>
+              Start study on {selReference}
+            </button>
+          </div>
+          <button
+            className="verse-action-clear"
+            onClick={clearSelection}
+            aria-label="Clear selection"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      )}
 
       <ConfirmDialog
         isOpen={confirmDelete !== null}

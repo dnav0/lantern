@@ -7,6 +7,7 @@ import InlineTagInput from './InlineTagInput'
 import RichEditInput from './RichEditInput'
 import ConfirmDialog from './ConfirmDialog'
 import CrossRefPill from './CrossRefPill'
+import { useVerseDragSelect } from '../utils/useVerseDragSelect'
 
 // ─── tiny helpers ────────────────────────────────────────────────────────────
 
@@ -132,6 +133,10 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
 
   const handleVerseClick = (v: number): void => {
     if (editingNoteId !== null) return
+    // A drag that just ended (possibly folding back onto its own start verse)
+    // already committed the range via onRangeSelected — don't let the click
+    // event mouseup produces re-run tap logic and clobber it.
+    if (suppressNextClick()) return
     // Highlight notes anchored to this verse, as before.
     const anchored = chapterNotes.filter(n =>
       n.anchor_start_verse !== null &&
@@ -154,6 +159,17 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
       setSelFocus(v)
     }
   }
+
+  // Desktop click-drag over the verse-number gutter selects a range in one
+  // gesture; a plain click (no movement) falls through to handleVerseClick so
+  // tap-anchor/tap-extend keeps working unchanged. See useVerseDragSelect for
+  // why the drag only starts from the gutter (native text-copy stays intact).
+  const { gutterPointerDown, rowPointerEnter, suppressNextClick } = useVerseDragSelect(
+    (start, end) => {
+      setSelAnchor(start)
+      setSelFocus(end)
+    }
+  )
 
   const handleStartStudyOnSelection = (): void => {
     if (!selReference) return
@@ -438,7 +454,7 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
 
       {/* Study-Bible grid: scripture in column 1, rail notes in column 2 spanning
           their anchor range. Collapses to a single column on mobile (see CSS). */}
-      <div className="scripture-grid">
+      <div className={`scripture-grid${anchoredGroups.length === 0 ? ' no-rail' : ''}`}>
         {verses.map((v, i) => {
           const isSelected = selRange !== null && v.verse >= selRange[0] && v.verse <= selRange[1]
           const isHighlighted = highlightedVerses.has(v.verse)
@@ -454,6 +470,7 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
                 ref={el => { if (el) verseRowRefs.current.set(v.verse, el); else verseRowRefs.current.delete(v.verse) }}
                 className={`reading-verse-row${isHighlighted ? ' highlighted' : ''}${isSelected ? ' selected' : ''}`}
                 onClick={() => handleVerseClick(v.verse)}
+                onPointerEnter={rowPointerEnter(v.verse)}
                 style={isDimmed ? { opacity: 0.35 } : undefined}
               >
                 {bracketByVerse.has(v.verse) && (
@@ -463,7 +480,12 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
                     aria-hidden="true"
                   />
                 )}
-                <span className="verse-number">{v.verse}</span>
+                <span
+                  className="verse-number"
+                  onPointerDown={gutterPointerDown(v.verse)}
+                >
+                  {v.verse}
+                </span>
                 <span className="verse-text">{v.text}</span>
               </div>
 
