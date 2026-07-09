@@ -1260,6 +1260,9 @@ body.dark .bible-library-greeting {
   max-width: 680px;
   margin: 0 auto;
   padding: 0 40px;
+  /* Positioning context for the marquee overlay + marquee drag origin, so a
+     click-drag beginning in the side whitespace still starts a selection. */
+  position: relative;
 }
 
 .reading-heading {
@@ -1532,8 +1535,16 @@ body.dark .bible-library-greeting {
   display: flex;
   gap: 8px;
   align-items: stretch;
+  /* Fill the full row span the note anchors to (the grid itself is
+     align-items: start, which would otherwise shrink this item to its content
+     height and leave the bracket covering only the note text). The bracket then
+     runs alongside every verse the note spans; the body text stays at the top. */
+  align-self: stretch;
   min-height: 0;
   padding: 2px 0;
+}
+.rail-note-body {
+  align-self: flex-start;
 }
 
 .rail-bracket {
@@ -2246,6 +2257,9 @@ body.dark .bible-library-greeting {
 .book-chapter-content {
   max-width: 640px;
   margin: 0 auto;
+  /* Positioning context for the marquee overlay + marquee drag origin, so a
+     click-drag beginning in the side whitespace still starts a selection. */
+  position: relative;
 }
 .book-chapter-content:has(.scripture-grid:not(.no-rail)) {
   max-width: 940px;

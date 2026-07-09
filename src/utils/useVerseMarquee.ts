@@ -157,9 +157,17 @@ export function useVerseMarquee(
     if (e.pointerType === 'touch') return
     // Only a primary-button press starts a marquee.
     if (e.button !== 0) return
-    // Never start on interactive children — those keep their own handling.
+    // Never start on interactive children or note surfaces — those keep their
+    // own handling (a click on a note highlights; a drag from a note is not a
+    // marquee). The origin is the full-width reading container, so drags that
+    // begin in the side whitespace still start a selection.
     const target = e.target as HTMLElement
-    if (target.closest('button, a, input, textarea, [contenteditable], [data-no-drag]')) return
+    if (
+      target.closest(
+        'button, a, input, textarea, [contenteditable], [data-no-drag], .rail-note, .reading-note-card, .inline-verse-notes'
+      )
+    )
+      return
 
     // A fresh press always clears any stale suppression flag from a prior gesture.
     justDragged.current = false

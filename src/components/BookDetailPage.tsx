@@ -44,6 +44,36 @@ function verseRangeLabel(start: number, end: number): string {
   return start === end ? `v${start}` : `vv.${start}-${end}`
 }
 
+// Horizontal step (px) between overlapping rail-note lanes.
+const LANE_STEP = 14
+
+// Greedy interval coloring: overlapping range notes get distinct "lanes" so their
+// brackets sit side-by-side (each still spanning its own verses) instead of
+// collapsing onto one another. Sort by start verse; place each note in the first
+// lane whose last end-verse is below this note's start, else open a new lane.
+function assignRailLanes(groups: NoteGroup[]): Map<string, number> {
+  const sorted = [...groups].sort((a, b) => {
+    const sa = a.main.anchor_start_verse!
+    const sb = b.main.anchor_start_verse!
+    return sa - sb || (a.main.anchor_end_verse ?? sa) - (b.main.anchor_end_verse ?? sb)
+  })
+  const laneEnds: number[] = []
+  const laneOf = new Map<string, number>()
+  for (const g of sorted) {
+    const s = g.main.anchor_start_verse!
+    const e = g.main.anchor_end_verse ?? s
+    let lane = laneEnds.findIndex(end => end < s)
+    if (lane === -1) {
+      lane = laneEnds.length
+      laneEnds.push(e)
+    } else {
+      laneEnds[lane] = e
+    }
+    laneOf.set(g.main.id, lane)
+  }
+  return laneOf
+}
+
 function RenderedNoteContent({ content }: { content: string }): React.ReactElement {
   const { segments } = parseNoteLine(content)
   return (
@@ -89,8 +119,9 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
   const [confirmDelete, setConfirmDelete] = useState<NoteWithPassageInfo | null>(null)
   // Ref map for the chip → verse-row scroll linkage (mobile) and marquee hit-test.
   const verseRowRefs = useRef<Map<number, HTMLElement>>(new Map())
-  // The scripture container the marquee is scoped to.
-  const scriptureRef = useRef<HTMLDivElement>(null)
+  // The full-width reading container the marquee is scoped to, so a drag starting
+  // in the side whitespace (not just over the verse grid) begins a selection.
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const chapterNotes = localNotes.filter(n =>
     n.chapter_start <= chapter && chapter <= n.chapter_end
@@ -107,6 +138,8 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
     return e > s
   }
   const rangeGroups = anchoredGroups.filter(isRangeGroup)
+  // Lane per range note so overlapping brackets sit side-by-side in the rail.
+  const railLanes = assignRailLanes(rangeGroups)
   const inlineGroups = anchoredGroups.filter(g => !isRangeGroup(g))
   // Inline notes indexed by their anchor start verse (single-verse only).
   const inlineGroupsByVerse = new Map<number, NoteGroup[]>()
@@ -129,6 +162,25 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
   }, [bookName, chapter])
 
   useEffect(() => { setLocalNotes(notes) }, [notes])
+
+  // Note-highlight and range-selection are mutually exclusive dimming systems.
+  // Entering either fully clears the other so a verse is never in a stacked,
+  // half-dimmed limbo — its end state is binary.
+  const clearAll = (): void => {
+    setSelAnchor(null)
+    setSelFocus(null)
+    setHighlightedVerses(new Set())
+    setHighlightedNoteIds(new Set())
+  }
+
+  // Escape clears every highlight/selection everywhere.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') clearAll()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   // Current selection as an inclusive [start, end] range, or null.
   const selRange: [number, number] | null =
@@ -188,13 +240,31 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
   // falls through to handleVerseClick so tap-anchor/tap-extend keeps working.
   // See useVerseMarquee for the native-text-copy tradeoff and stale-state guards.
   const { marquee, containerPointerDown, suppressNextClick } = useVerseMarquee(
-    scriptureRef,
+    containerRef,
     verseRowRefs,
     (start, end) => {
+      // Selecting verses clears any note highlight (mutually exclusive).
+      setHighlightedVerses(new Set())
+      setHighlightedNoteIds(new Set())
       setSelAnchor(start)
       setSelFocus(end)
     }
   )
+
+  // A plain click on empty scripture whitespace (not a verse row, note, or
+  // control) clears every highlight/selection. A trailing click synthesised by a
+  // just-completed marquee drag is swallowed so it can't wipe the fresh range.
+  const handleBackgroundClick = (e: React.MouseEvent): void => {
+    const target = e.target as HTMLElement
+    if (
+      target.closest(
+        '.reading-verse-row, .rail-note, .reading-note-card, .inline-verse-notes, .verse-action-bar, .inline-note-row, button, a, input, textarea, [contenteditable]'
+      )
+    )
+      return
+    if (suppressNextClick()) return
+    clearAll()
+  }
 
   const handleStartStudyOnSelection = (): void => {
     if (!selReference) return
@@ -217,6 +287,9 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
     for (let i = s; i <= e; i++) vs.add(i)
     setHighlightedVerses(vs)
     setHighlightedNoteIds(new Set())
+    // Highlighting a note's verses clears any active range selection.
+    setSelAnchor(null)
+    setSelFocus(null)
   }
 
   const handleNoteClick = (n: NoteWithPassageInfo): void => {
@@ -344,7 +417,6 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
       <div
         key={main.id}
         className={`reading-note-card cat-${main.category || 'none'}${isHighlighted ? ' highlighted' : ''}`}
-        onMouseEnter={() => !isEditing && highlightVersesForNote(main)}
       >
         {(main.category || (opts?.chip && hasAnchor)) && (
           <div className="reading-note-metarow">
@@ -452,7 +524,24 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
   }
 
   return (
-    <div className="book-chapter-content fade-in">
+    <div
+      ref={containerRef}
+      className="book-chapter-content fade-in"
+      onPointerDown={containerPointerDown}
+      onClick={handleBackgroundClick}
+    >
+      {marquee && (
+        <div
+          className="verse-marquee"
+          aria-hidden="true"
+          style={{
+            left: marquee.left,
+            top: marquee.top,
+            width: marquee.width,
+            height: marquee.height
+          }}
+        />
+      )}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: '#BBB', letterSpacing: '0.04em' }}>
           CHAPTER {chapter}
@@ -482,23 +571,7 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
           column 2 spanning their anchor range. The rail collapses when there are no
           range/passage notes. Collapses to a single column on mobile (see CSS).
           onPointerDown starts a marquee box selection over the scripture area. */}
-      <div
-        ref={scriptureRef}
-        className={`scripture-grid${hasRail ? '' : ' no-rail'}`}
-        onPointerDown={containerPointerDown}
-      >
-        {marquee && (
-          <div
-            className="verse-marquee"
-            aria-hidden="true"
-            style={{
-              left: marquee.left,
-              top: marquee.top,
-              width: marquee.width,
-              height: marquee.height
-            }}
-          />
-        )}
+      <div className={`scripture-grid${hasRail ? '' : ' no-rail'}`}>
         {verses.map((v, i) => {
           const isSelected = selRange !== null && v.verse >= selRange[0] && v.verse <= selRange[1]
           const isHighlighted = highlightedVerses.has(v.verse)
@@ -561,11 +634,12 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
           const s = group.main.anchor_start_verse!
           const e = group.main.anchor_end_verse ?? s
           const isHl = highlightedNoteIds.has(group.main.id)
+          const lane = railLanes.get(group.main.id) ?? 0
           return (
             <div
               key={group.main.id}
               className={`rail-note${isHl ? ' highlighted' : ''}`}
-              style={{ gridRow: `${clampRow(s)} / ${clampRow(e) + 1}` }}
+              style={{ gridRow: `${clampRow(s)} / ${clampRow(e) + 1}`, marginLeft: lane * LANE_STEP }}
             >
               <span className={`rail-bracket cat-${group.main.category || 'none'}`} aria-hidden="true" />
               <div className="rail-note-body">
