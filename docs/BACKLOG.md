@@ -111,20 +111,37 @@ prioritized.
 
 ## Done
 
-- **Reading-view interaction hardening.** Three fixes to the study-Bible reading
-  layout (`BookDetailPage` ChapterView + `ReadingMode`), from live testing
-  (commit `30854f2`): (1) range-note rail brackets now span their full verse range
-  — the `.rail-note` grid item fills its `grid-row` span via `align-self: stretch`
-  (the grid's `align-items: start` had shrunk it to content height, so the bracket
-  only covered the note text); (2) overlapping range notes get side-by-side lanes
-  via greedy interval coloring (`assignRailLanes`, `LANE_STEP`); (3) note-highlight
-  (`highlightedVerses`/`highlightedNoteIds`) and range selection
-  (`selAnchor`/`selFocus`) are now mutually exclusive and fully clearable — a plain
-  click on empty scripture whitespace and Escape both clear everything, and the
-  stale `onMouseEnter` hover-highlight was removed; and the marquee origin moved
-  from `.scripture-grid` to the full-width reading container (with note surfaces
-  excluded) so a drag can start in the side whitespace. Build/test/lint clean; a
-  live real-interaction verification pass is still recommended.
+- **Reading-view interaction hardening.** Five fixes to the study-Bible reading
+  layout (`BookDetailPage` ChapterView + `ReadingMode`), from live testing across
+  three commits (`30854f2`, `18573dc`, `de054fd`):
+  1. Range-note rail brackets now span their full verse range — the `.rail-note`
+     grid item fills its `grid-row` span via `align-self: stretch` (the grid's
+     `align-items: start` had shrunk it to content height, so the bracket only
+     covered the note text).
+  2. Overlapping range notes get side-by-side lanes via greedy interval coloring
+     (`assignRailLanes`, `LANE_STEP`).
+  3. Note-highlight (`highlightedVerses`/`highlightedNoteIds`) and range
+     selection (`selAnchor`/`selFocus`) are mutually exclusive and fully
+     clearable — a plain click on empty scripture whitespace and Escape both
+     clear everything, and the stale `onMouseEnter` hover-highlight was removed.
+  4. The marquee drag origin moved twice: first from `.scripture-grid` to the
+     centered reading column (`30854f2`), then to the full-width surface around
+     it — `.reading-layout` in `ReadingMode`, a new `.chapter-marquee-surface`
+     wrapper in `ChapterView` (`18573dc`) — so a drag can start in the side
+     margins outside the centered column, not just inside it.
+  5. The marquee hit-test now requires the drag box to overlap a verse row on
+     BOTH axes, not just vertically (`de054fd`) — previously a box drawn
+     entirely in the side whitespace, at the same height as some verses but
+     never crossing their text, still selected them, because verses were
+     effectively treated as spanning the full width. `hitTest` now also checks
+     horizontal overlap and clears the selection when the box hits no rows.
+  Also (`de054fd`): mobile range notes (no rail there) now render inline right
+  after their LAST anchored verse instead of stacking at the bottom of the whole
+  chapter — `.mobile-range-notes` replaces the old bottom `.mobile-note-stack`,
+  keyed per-verse via `mobileRangeByVerse`, styled light + dark. Build/test/lint
+  clean; verified live in a real browser (puppeteer-driven pointer sequences,
+  not synthetic `dispatchEvent` alone) at both desktop and 390px, light + dark,
+  on both surfaces.
 
 - **Marquee (box) verse selection (desktop).** Replaces the earlier
   gutter-only click-drag (retired `useVerseDragSelect`) with a Windows-style

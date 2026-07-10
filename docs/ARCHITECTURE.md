@@ -95,18 +95,23 @@ otherwise-ambiguous UX questions:
 (`ReadingMode` and `BookDetailPage`'s `ChapterView`) verse-anchored notes are
 laid out by span width: **single-verse notes render inline** beneath their verse
 row; **multi-verse range notes** sit in a right-hand **margin rail**
-(`.scripture-grid` column 2) with a category-coloured bracket meant to span the
-anchored verse rows; **anchorless notes** are passage-level. The rail collapses
+(`.scripture-grid` column 2) on desktop, with a category-coloured bracket that
+spans exactly the anchored verse rows (the rail note fills its grid-row span via
+`align-self: stretch`); **anchorless notes** are passage-level. The rail collapses
 and the scripture column centers (`.scripture-grid.no-rail`) when there are no
-range/passage notes. Range-note brackets span their full verse range (the rail note fills its grid-row
-span via `align-self: stretch`), and overlapping range notes are laid out in
-side-by-side **lanes** (greedy interval coloring). Desktop verse selection is a
-**marquee/box drag** (`useVerseMarquee`, initiated from the full-width reading
-container so it can start in the side whitespace) plus tap-anchor/tap-extend; both
-drive the same `selAnchor`/`selFocus` state and the floating action bar.
-Note-highlight and range-selection are mutually exclusive and fully clearable — a
-click on empty scripture whitespace or Escape clears everything (pending a live
-interaction verification pass).
+range/passage notes. Overlapping range notes are laid out in side-by-side
+**lanes** (greedy interval coloring). On mobile (no rail), range notes render
+inline right after their *last* anchored verse rather than stacking at the
+chapter's end. Desktop verse selection is a **marquee/box drag**
+(`useVerseMarquee`) plus tap-anchor/tap-extend; both drive the same
+`selAnchor`/`selFocus` state and the floating action bar. The marquee's drag
+origin is the full-width reading container (not the centered column), so a drag
+can start in the side margins, and its hit-test requires the box to overlap a
+verse row on both axes — a box drawn purely in side whitespace, without ever
+crossing verse text, selects nothing. Note-highlight and range-selection are
+mutually exclusive and fully clearable — a click on empty scripture whitespace or
+Escape clears everything. Verified live in a real browser across desktop and
+mobile widths, light and dark.
 
 **Deferred (future milestone), by design, not omission:** a lightweight
 `study_id` group stamp enabling *multiple distinct study instances over the same
