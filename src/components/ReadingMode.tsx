@@ -520,25 +520,25 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
   }
 
   return (
-    <div className="reading-layout">
-      <div
-        ref={containerRef}
-        className="reading-content fade-in"
-        onPointerDown={containerPointerDown}
-        onClick={handleBackgroundClick}
-      >
-        {marquee && (
-          <div
-            className="verse-marquee"
-            aria-hidden="true"
-            style={{
-              left: marquee.left,
-              top: marquee.top,
-              width: marquee.width,
-              height: marquee.height
-            }}
-          />
-        )}
+    <div
+      ref={containerRef}
+      className="reading-layout"
+      onPointerDown={containerPointerDown}
+      onClick={handleBackgroundClick}
+    >
+      {marquee && (
+        <div
+          className="verse-marquee"
+          aria-hidden="true"
+          style={{
+            left: marquee.left,
+            top: marquee.top,
+            width: marquee.width,
+            height: marquee.height
+          }}
+        />
+      )}
+      <div className="reading-content fade-in">
         {/* Heading */}
         <div className="reading-heading">
           <h1>{passage.reference_label}</h1>

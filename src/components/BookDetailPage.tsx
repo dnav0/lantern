@@ -526,7 +526,7 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
   return (
     <div
       ref={containerRef}
-      className="book-chapter-content fade-in"
+      className="chapter-marquee-surface"
       onPointerDown={containerPointerDown}
       onClick={handleBackgroundClick}
     >
@@ -542,6 +542,7 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
           }}
         />
       )}
+      <div className="book-chapter-content fade-in">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: '#BBB', letterSpacing: '0.04em' }}>
           CHAPTER {chapter}
@@ -657,6 +658,7 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
           {rangeGroups.map(group => renderNoteGroup(group, { chip: true }))}
         </div>
       )}
+      </div>
 
       {selRange !== null && inlineVerse === null && (
         <div className="verse-action-bar" role="toolbar" aria-label="Selection actions">
