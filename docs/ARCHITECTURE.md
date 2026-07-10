@@ -98,12 +98,15 @@ row; **multi-verse range notes** sit in a right-hand **margin rail**
 (`.scripture-grid` column 2) with a category-coloured bracket meant to span the
 anchored verse rows; **anchorless notes** are passage-level. The rail collapses
 and the scripture column centers (`.scripture-grid.no-rail`) when there are no
-range/passage notes. Desktop verse selection is a **marquee/box drag**
-(`useVerseMarquee`) plus tap-anchor/tap-extend; both drive the same
-`selAnchor`/`selFocus` state and the floating action bar. Known rough edges being
-worked (see backlog): range-note brackets don't yet fully span their verses,
-overlapping range notes need lane layout, the highlight/selection state needs
-hardening, and the marquee should initiate from the side whitespace.
+range/passage notes. Range-note brackets span their full verse range (the rail note fills its grid-row
+span via `align-self: stretch`), and overlapping range notes are laid out in
+side-by-side **lanes** (greedy interval coloring). Desktop verse selection is a
+**marquee/box drag** (`useVerseMarquee`, initiated from the full-width reading
+container so it can start in the side whitespace) plus tap-anchor/tap-extend; both
+drive the same `selAnchor`/`selFocus` state and the floating action bar.
+Note-highlight and range-selection are mutually exclusive and fully clearable — a
+click on empty scripture whitespace or Escape clears everything (pending a live
+interaction verification pass).
 
 **Deferred (future milestone), by design, not omission:** a lightweight
 `study_id` group stamp enabling *multiple distinct study instances over the same

@@ -105,31 +105,26 @@ prioritized.
   scope for workstream 2, which only touched the gesture/bridge in the two
   surfaces named above.
 
-- **Reading-view interaction hardening (known issues).** Three rough edges in the
-  study-Bible reading layout (`BookDetailPage` ChapterView + `ReadingMode`),
-  found in live testing, not yet fixed:
-  1. **Range-note brackets don't span their verses.** A `.rail-note` grid item
-     spans `grid-row: startRow / endRow+1`, but `.scripture-grid` uses
-     `align-items: start`, so the item shrinks to content height and the
-     `.rail-bracket` only covers the note text. Fix: make the rail note fill its
-     row span (`align-self: stretch`) so the bracket runs alongside every anchored
-     verse.
-  2. **Overlapping range notes collide** in the single rail column — need lane
-     assignment (greedy interval coloring) so their brackets render in parallel.
-  3. **Highlight/selection state can enter a "semi-highlighted" limbo.**
-     Note-highlight (`highlightedVerses`/`highlightedNoteIds`) and range selection
-     (`selAnchor`/`selFocus`) coexist and never clear each other, and there's no
-     clear-on-outside. Make them mutually exclusive; clear all on empty-space click
-     and Escape; keep per-verse state binary.
-  4. **Marquee only starts on/near verses**, not the side whitespace — move the
-     pointerdown origin to the full-width reading container and exclude note
-     elements from initiating a drag.
-
 - **Modifier to restore verse-text copy under the marquee.** The desktop marquee
   suppresses native text selection over verse text (drag = box-select). Add a
   modifier (or an explicit select mode) so users can still drag-copy verse text.
 
 ## Done
+
+- **Reading-view interaction hardening.** Three fixes to the study-Bible reading
+  layout (`BookDetailPage` ChapterView + `ReadingMode`), from live testing
+  (commit `30854f2`): (1) range-note rail brackets now span their full verse range
+  — the `.rail-note` grid item fills its `grid-row` span via `align-self: stretch`
+  (the grid's `align-items: start` had shrunk it to content height, so the bracket
+  only covered the note text); (2) overlapping range notes get side-by-side lanes
+  via greedy interval coloring (`assignRailLanes`, `LANE_STEP`); (3) note-highlight
+  (`highlightedVerses`/`highlightedNoteIds`) and range selection
+  (`selAnchor`/`selFocus`) are now mutually exclusive and fully clearable — a plain
+  click on empty scripture whitespace and Escape both clear everything, and the
+  stale `onMouseEnter` hover-highlight was removed; and the marquee origin moved
+  from `.scripture-grid` to the full-width reading container (with note surfaces
+  excluded) so a drag can start in the side whitespace. Build/test/lint clean; a
+  live real-interaction verification pass is still recommended.
 
 - **Marquee (box) verse selection (desktop).** Replaces the earlier
   gutter-only click-drag (retired `useVerseDragSelect`) with a Windows-style
