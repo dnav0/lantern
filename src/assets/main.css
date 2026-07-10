@@ -1634,8 +1634,9 @@ body.dark .bible-library-greeting {
   background: rgba(127, 119, 221, 0.18);
 }
 
-/* The mobile stacked note list is hidden on desktop (the rail is used instead). */
-.mobile-note-stack {
+/* Mobile-only range notes render inline after their last anchored verse; the
+   desktop rail is used instead, so they are hidden here. */
+.mobile-range-notes {
   display: none;
 }
 
@@ -3548,12 +3549,16 @@ body.dark .upd-popover-btn-ghost:hover {
     margin-bottom: 4px;
   }
   .rail-note {
-    display: none; /* rail notes are re-rendered as a stacked mobile list */
+    display: none; /* rail notes re-render inline after their last anchored verse */
   }
-  .mobile-note-stack {
+  /* Range notes sit under the last verse they cover, indented like inline notes
+     and set off with a top hairline so they read as belonging to that span. */
+  .mobile-range-notes {
     display: block;
-    padding-left: 0;
-    margin-top: 16px;
+    padding-left: 24px;
+    margin: 4px 0 8px;
+    border-top: 0.5px solid #edebe6;
+    padding-top: 6px;
   }
   .verse-span-bracket {
     left: -2px;

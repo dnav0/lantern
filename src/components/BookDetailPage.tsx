@@ -522,6 +522,19 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
       if (!bracketByVerse.has(v)) bracketByVerse.set(v, g.main.category)
     }
   }
+  // Mobile: range notes render inline right after their LAST anchored verse (the
+  // rail is desktop-only), so a note about vv.2-6 sits under v6 — with the verses
+  // it covers — rather than being dumped at the bottom of the whole chapter.
+  const lastVerse = verses[verses.length - 1]?.verse
+  const mobileRangeByVerse = new Map<number, NoteGroup[]>()
+  for (const g of rangeGroups) {
+    const s = g.main.anchor_start_verse!
+    const e = g.main.anchor_end_verse ?? s
+    const key = rowByVerse.has(e) ? e : lastVerse
+    const list = mobileRangeByVerse.get(key)
+    if (list) list.push(g)
+    else mobileRangeByVerse.set(key, [g])
+  }
 
   return (
     <div
@@ -583,6 +596,7 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
           const bracketCat = bracketByVerse.get(v.verse)
 
           const inlineHere = inlineGroupsByVerse.get(v.verse)
+          const mobileRangeHere = mobileRangeByVerse.get(v.verse)
 
           return (
             <div key={v.verse} className="reading-verse-block" style={{ gridRow: i + 1 }}>
@@ -607,6 +621,14 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
               {inlineHere && inlineHere.length > 0 && (
                 <div className="reading-notes-group inline-verse-notes">
                   {inlineHere.map(group => renderNoteGroup(group))}
+                </div>
+              )}
+
+              {/* Mobile only: range notes render after their last anchored verse
+                  (desktop uses the rail; this is display:none there). */}
+              {mobileRangeHere && mobileRangeHere.length > 0 && (
+                <div className="reading-notes-group mobile-range-notes">
+                  {mobileRangeHere.map(group => renderNoteGroup(group, { chip: true }))}
                 </div>
               )}
 
@@ -651,13 +673,6 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
         })}
       </div>
 
-      {/* Mobile stacked list — range notes with a verse-range chip. Hidden on
-          desktop (rail is used instead). Single-verse notes stay inline. */}
-      {rangeGroups.length > 0 && (
-        <div className="reading-notes-group mobile-note-stack">
-          {rangeGroups.map(group => renderNoteGroup(group, { chip: true }))}
-        </div>
-      )}
       </div>
 
       {selRange !== null && inlineVerse === null && (

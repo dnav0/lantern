@@ -40,7 +40,7 @@ export interface MarqueeRect {
 export function useVerseMarquee(
   containerRef: React.RefObject<HTMLElement>,
   verseRowRefs: React.MutableRefObject<Map<number, HTMLElement>>,
-  onRangeSelected: (start: number, end: number) => void
+  onRangeSelected: (start: number | null, end: number | null) => void
 ): {
   isDragging: boolean
   marquee: MarqueeRect | null
@@ -68,24 +68,27 @@ export function useVerseMarquee(
   const onRangeSelectedRef = useRef(onRangeSelected)
   onRangeSelectedRef.current = onRangeSelected
 
-  // Hit-test: select every verse whose row intersects the box vertically. Uses
+  // Hit-test: select every verse whose row the box actually overlaps — on BOTH
+  // axes. Vertical-only would mean a box drawn purely in the side whitespace (at
+  // the same height as verses, but never crossing the verse rows) still selected
+  // them; requiring horizontal overlap too means the box must genuinely cover the
+  // verse text. If the box intersects no rows, the selection is cleared. Uses
   // viewport-space rects (getBoundingClientRect) so it survives scroll/zoom with
   // no measurement bookkeeping.
   const hitTest = useCallback(
-    (topClientY: number, bottomClientY: number): void => {
+    (leftClientX: number, rightClientX: number, topClientY: number, bottomClientY: number): void => {
       let min: number | null = null
       let max: number | null = null
       for (const [verse, el] of verseRowRefs.current) {
         const r = el.getBoundingClientRect()
-        // Vertical overlap between the box and the row.
-        if (r.bottom >= topClientY && r.top <= bottomClientY) {
+        const overlapsVert = r.bottom >= topClientY && r.top <= bottomClientY
+        const overlapsHoriz = r.right >= leftClientX && r.left <= rightClientX
+        if (overlapsVert && overlapsHoriz) {
           if (min === null || verse < min) min = verse
           if (max === null || verse > max) max = verse
         }
       }
-      if (min !== null && max !== null) {
-        onRangeSelectedRef.current(min, max)
-      }
+      onRangeSelectedRef.current(min, max)
     },
     [verseRowRefs]
   )
@@ -127,7 +130,7 @@ export function useVerseMarquee(
         height: bottomClientY - topClientY
       })
 
-      hitTest(topClientY, bottomClientY)
+      hitTest(leftClientX, rightClientX, topClientY, bottomClientY)
     }
 
     const handleUp = (): void => endDrag()

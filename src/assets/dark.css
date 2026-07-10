@@ -71,6 +71,9 @@ body.dark .note-bullet {
 body.dark .study-actions {
   border-top-color: rgba(255, 255, 255, 0.06);
 }
+body.dark .mobile-range-notes {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
 body.dark .btn-save-read {
   background: #6b64c0;
 }
