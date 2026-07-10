@@ -91,10 +91,24 @@ otherwise-ambiguous UX questions:
   `created_at`/`updated_at` timestamps the UI renders — it does not rewrite the
   session.
 
+**Reading-view presentation (study-Bible layout).** In both reading surfaces
+(`ReadingMode` and `BookDetailPage`'s `ChapterView`) verse-anchored notes are
+laid out by span width: **single-verse notes render inline** beneath their verse
+row; **multi-verse range notes** sit in a right-hand **margin rail**
+(`.scripture-grid` column 2) with a category-coloured bracket meant to span the
+anchored verse rows; **anchorless notes** are passage-level. The rail collapses
+and the scripture column centers (`.scripture-grid.no-rail`) when there are no
+range/passage notes. Desktop verse selection is a **marquee/box drag**
+(`useVerseMarquee`) plus tap-anchor/tap-extend; both drive the same
+`selAnchor`/`selFocus` state and the floating action bar. Known rough edges being
+worked (see backlog): range-note brackets don't yet fully span their verses,
+overlapping range notes need lane layout, the highlight/selection state needs
+hardening, and the marquee should initiate from the side whitespace.
+
 **Deferred (future milestone), by design, not omission:** a lightweight
 `study_id` group stamp enabling *multiple distinct study instances over the same
-verses* (and cross-effort anchor merging inside the editor); margin/span notes
-(desktop rail + mobile bracket); drag-to-select verse ranges. See the backlog.
+verses* (and cross-effort anchor merging inside the editor); a modifier to
+restore native verse-text copy under the marquee. See the backlog.
 
 ### The `BereanApi` seam
 
