@@ -25,7 +25,15 @@ function TestamentSection({
 }): React.ReactElement {
   return (
     <div className="bible-testament-section">
-      <div className="bible-testament-label">{label}</div>
+      {/* Centered heading with flanking rules — a section break, not a
+          left-flush label — so it centers correctly regardless of the grid's
+          own (content-sized) width instead of needing to match it pixel for
+          pixel. Also just reads nicely for a Bible app. */}
+      <div className="bible-testament-label">
+        <span className="bible-testament-rule" aria-hidden="true" />
+        <span className="bible-testament-text">{label}</span>
+        <span className="bible-testament-rule" aria-hidden="true" />
+      </div>
       <div className="bible-books-grid">
         {bibleBooks.map(book => {
           const passageCount = countByBook.get(book.number) ?? 0

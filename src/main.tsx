@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import Root from './Root'
+import './assets/tokens.css'
 import './assets/main.css'
 import './assets/dark.css'
 

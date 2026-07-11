@@ -10,6 +10,31 @@ prioritized.
 
 ## Deferred
 
+- **Design sweep — remaining after the static pass (F1→F3 landed).** The
+  visual/structural polish is done (see Done: token layer, serif typography,
+  contrast, warm dark, UX). What's left:
+  - **F4 — motion layer.** Entrance/press/spring micro-interactions using the
+    `--ease-*`/`--dur-*` and `--elev-*` tokens, all behind `prefers-reduced-motion`
+    (see `design/mockup.html` for the target feel). Deferred by design — to be
+    discussed/scoped as its own pass. Candidate for this pass: a command-palette-
+    style expand-on-focus for the desktop top-bar search (subtle at rest, more
+    prominent/centered while actively focused — the "/" shortcut trigger and
+    resting `--elev-1` shadow already ship; the focused-state expansion is the
+    motion-heavy part deliberately left for here).
+  - **Self-host the scripture fonts.** `index.html` currently loads Source Serif 4
+    + Newsreader from Google Fonts (Georgia fallback keeps reading graceful
+    offline). For full offline/privacy, self-host the woff2s (e.g.
+    `@fontsource/source-serif-4`, `@fontsource/newsreader`) and drop the external
+    `<link>`; add to the SW precache.
+  - **dark.css redundancy prune (cosmetic).** `dark.css` is now fully token-driven
+    and consistent, but many of its `body.dark …` rules only restate a value the
+    `tokens.css` `body.dark` reassignment already produces. They're harmless but
+    could be deleted to shrink the file. Low priority.
+  - **Elevation-over-borders + cross-surface max-width polish.** Optional refinement:
+    apply the `--elev-*` scale to reader/journal/study cards (currently border-led)
+    and reconcile the library (full-width) vs journal (centered) max-widths for a
+    consistent measure. Rolls naturally into the motion pass.
+
 - **Modifier-to-copy verse text (marquee escape hatch).** Desktop verse
   selection is now a Windows-style marquee (click-drag draws a box that selects
   the verses it covers), which deliberately takes over click-drag from native
@@ -100,16 +125,339 @@ prioritized.
   view) now always shows "Open study" on its notes, wired through the WS1
   unified `handleOpenStudy` path (Studies & Notes model, workstream 2). Notes
   rendered inside `BookDetailPage`'s ChapterView (the Bible home reader) still
-  carry no passage id (`NoteWithPassageInfo` has only `reference_label`), so the
-  same bridge there still needs a note→passage resolution step first — out of
-  scope for workstream 2, which only touched the gesture/bridge in the two
-  surfaces named above.
+  don't have an "Open study" button — out of scope for workstream 2, which only
+  touched the gesture/bridge in the two surfaces named above. The main blocker
+  is gone, though: `ChapterView` now loads the book's `Passage[]`
+  (`bookPassages`, added for the overlap-matching fix below) alongside its
+  notes, so resolving a given note to its passage id is now a straightforward
+  lookup rather than a missing-data problem — adding the button itself is what's
+  left.
 
 - **Modifier to restore verse-text copy under the marquee.** The desktop marquee
   suppresses native text selection over verse text (drag = box-select). Add a
   modifier (or an explicit select mode) so users can still drag-copy verse text.
 
 ## Done
+
+- **Library spacing correction, mobile nav priority reverted, mobile study
+  empty-state.**
+  - **Library grid was still cramped** after the max-content column fix — the
+    real culprit turned out to be `row-gap: 1px` (rows nearly touching) plus
+    tight `.bible-book-row` padding, not just the column gap. Row-gap raised to
+    4px, row padding 5px/8px → 7px/10px, column gap 64px → 88px (a second, larger
+    pass after 64px still read as tight).
+  - **Mobile nav priority (opacity de-emphasis on Journal/Profile) reverted.**
+    Didn't land as a good strategy on review — removed the `nav-tab-low` class
+    and its CSS entirely. The underlying priority question (Bible = home,
+    Journal = rare, Study = action) is unresolved and left for a fresh pass
+    later rather than iterating further on this mechanism now.
+  - **Mobile Study empty-state scripture panel.** Before any reference was
+    committed, the pinned panel still reserved its full ~34vh peek height to
+    show placeholder copy ("Type a reference...") that sat in a spot the user
+    isn't actually meant to interact with — the real input is the reference
+    field below. It now collapses to just the header bar
+    (`.study-right--empty`, keyed off `!passage && !loadingPassage`) with the
+    "Tap to expand" hint/chevron hidden (nothing to expand yet) and the
+    toggle inert; it grows to the normal peek at the exact moment a reference
+    loads, which is a direct, expected result of the user's own Enter press,
+    not a surprise pop-in.
+  - **"Press Enter or Tab..." hint is desktop-only copy now** — "or Tab" only
+    makes sense with a physical keyboard. Split via `.hint-text-desktop`/
+    `.hint-text-mobile` at the existing mobile breakpoint, mirroring how the
+    rest of the app splits responsive copy (no UA sniffing).
+  Verified live at 2000px and 390px: library spacing looks open rather than
+  cramped, mobile nav is back to uniform weight across all four tabs, the
+  empty scripture panel collapses correctly and expands the moment a valid
+  reference loads. Build clean.
+
+- **Mobile study editor, blank-save guard, existing-note timestamps, mobile
+  nav priority.**
+  - **Note editor's chip row no longer causes "moving dead space."** It was
+    `position: sticky` inside `.notes-list`'s own scroll box — sticky only
+    holds an element at an edge once scrolling would carry it past that edge,
+    so with just a couple of short lines it sat in normal flow right after
+    them, and the gap before the Save buttons changed size as you typed.
+    Restructured `NoteEditor` to return the chip row as a true flex sibling of
+    `.notes-list` (not its last scrolled child) — it now has a fixed position
+    directly above `.study-actions`; the notes list scrolls independently in
+    whatever space remains above it.
+  - **Blank-study save guard.** Saving a brand-new study with a reference typed
+    but zero real note lines silently created an empty `Passage`+`Session` — a
+    dead Journal entry with nothing in it. Both Save buttons are now disabled
+    (with an explanatory `title`) when there's no note content AND no
+    `initialPassageId` — editing an *existing* study down to zero notes is left
+    alone, since that's a legitimate delete-the-study action that should
+    correctly cascade-delete the now-empty session/passage.
+  - **Existing-note timestamps in the editor.** At scale, it's easy to lose
+    track of what you just typed this session vs. what was already there. A
+    note line now shows a subtle "saved Xh ago" (reusing the established
+    `formatRelativeTime`/`.note-timestamp` pattern from `ReadingMode`'s note
+    cards) — but ONLY while its content still exactly matches what's actually
+    persisted; the moment you edit it, the stamp disappears, since showing
+    "saved" on since-changed content would be misleading. Its *absence* is
+    itself the "new or changed this session" signal. `NoteEditor` gained an
+    `existingNotes` prop (the same `Map<string, Note>` `StudyMode` already
+    hydrates from).
+  - **Library grid gap widened** (40px → 64px) — tighter, content-hugging
+    columns (from the earlier max-content fix) needed more breathing room
+    between them or adjacent names read as cramped.
+  - **Mobile nav: reverted the Study icon to a plain line icon**, matching
+    Bible/Journal/Profile's style. Two prior special treatments (accent color,
+    then a filled badge) both still read as "off" — an odd-one-out among
+    otherwise-consistent icons draws the eye for the wrong reason, and kept
+    causing more issues than it solved. Priority is now communicated by
+    opacity alone: Bible stays full weight (the "does everything" home); Journal
+    joins Profile at `opacity: 0.72` at rest (both visited rarely, per
+    discussion), returning to full weight when actually active — same
+    established mechanism, no new visual language.
+  Build (`tsc --noEmit` + vite) clean throughout; verified live at 2000px and
+  390px, light + dark — including the overlap-matched existing-note timestamp
+  showing correctly and disappearing on edit, and the disabled Save state.
+
+- **Start-study overlap matching + a round of mobile/library follow-up fixes.**
+  - **"Start study on {ref}" / "Study chapter" now reopen an existing passage**
+    when one overlaps the selected verses, instead of always starting blank.
+    `BookDetailPage` now loads `getPassagesByBook` alongside notes
+    (`bookPassages`, threaded into `ChapterView`); a new
+    `findOverlappingPassage` (interval overlap, not exact-range match — a note
+    anchored anywhere inside the selection should surface, per discussion) finds
+    a match, and its own `reference_label` (not the freshly-dragged selection)
+    is passed alongside `passageId` so `StudyMode` — which only ever reads the
+    reference from the passage-id fetch once one is set — doesn't race between
+    two different scripture ranges. Verified live: selecting verses inside the
+    seeded "John 1:1-5" passage reopens it with its existing note loaded;
+    selecting outside it still starts blank. `onStudy`/`onStudyChapter` signatures
+    threaded an optional `passageId` from `ChapterView` → `BookDetailPage` →
+    `App.tsx`'s existing `handleStudyFromReading(reference, passageId?)`. Also
+    unblocks most of the "Note→study bridge in ChapterView" deferred item (see
+    Deferred) — the passage data it needed is now loaded.
+  - **Library grid: content-hugging columns.** Fixed-width columns
+    (`minmax(0, 230px)`) were still wider than most book names, so the
+    left-aligned text's per-column trailing whitespace dragged the grid's visual
+    center left of its geometric one (~120px off on a wide screen). Switched to
+    `minmax(0, max-content)` so each column shrinks to its own longest name;
+    measured text-mass center is now within 6px of true center (was ~120px).
+  - **Mobile top-bar search icon was rendering dead-center**, not right-aligned.
+    Root cause: `.topnav-tabs` is `display:none` on mobile, and CSS Grid removes
+    `display:none` items from the grid entirely — auto-placement then packed the
+    remaining visible children (`.topnav-lead`, `.topnav-right`) into columns 1
+    and 2 of the `1fr auto 1fr` template instead of 1 and 3. Fixed by giving each
+    child an explicit `grid-column`, confirmed via `getBoundingClientRect` (the
+    middle "auto" track measured exactly 34px — the button's own width — before
+    the fix).
+  - **Mobile "+ Study" tab redesigned.** The badge was accent-colored, which is
+    also this app's "active/selected" language everywhere else, so it looked
+    permanently "selected" regardless of which tab was actually active — a
+    second correction after the first pass (which only fixed a doubled "+" and
+    moved the color from label to icon, not the underlying color-reuse problem).
+    Now differentiated by SHAPE (a filled neutral-ink circle, fixed colors not
+    `currentColor`) instead of color, so "this is the compose action" and "this
+    is the current page" stay two independent signals; the label follows the
+    exact same muted/accent active-state rule as its siblings. Mobile label
+    changed to plain "Study" (the badge already carries the "+"); desktop's
+    text-only "+ Study" pill is unaffected. Profile — the lowest-priority of the
+    four mobile tabs (an occasional account destination, not primary content or
+    the primary action) — now sits at `opacity: 0.72` at rest, full weight when
+    actually active.
+  - **StudyMode passage-pane empty-state copy** said "Type a reference above,"
+    which was directionally wrong on desktop (the field is beside the pane, not
+    above it) and backwards on mobile (the pinned scripture panel sits ABOVE the
+    reference field). Reworded to drop the directional claim.
+  - **Mobile note editor had an oversized reserved bottom padding** (180px) on
+    `.notes-list`, inherited from before the app had dynamic keyboard-aware
+    scrolling (`scrollLineIntoView`'s `keyboardAware` mode, `NoteEditor.tsx`,
+    already handles actual keyboard-open clearance via `visualViewport`) — with
+    only a line or two of notes typed, that static reservation read as "the
+    note box is tiny" above a large dead gap. Trimmed to 64px.
+  - **Verse-tag auto-scroll in the passage pane.** Tagging `vN` in a note now
+    scrolls that verse into view within the (often bounded/collapsed-on-mobile)
+    scripture panel if it's out of view — `data-verse` attributes on
+    `PassagePane`'s rows, `scrollIntoView({block:'nearest'})` scoped to the
+    panel's own scroll container (never scrolls the whole page), triggered from
+    `StudyMode`'s existing `handleCursorLine`.
+  Build (`tsc --noEmit` + vite) clean throughout; verified live at 2000px and
+  390px, light + dark.
+
+- **Top-bar true centering + search/mobile-nav polish.** Fixed a real
+  centering bug: `.topnav-tabs` used `flex:1; justify-content:center`, which
+  centers tabs in the *leftover space* between the logo (left) and
+  search-box+avatar (right) — correct only if both sides are equal width.
+  They weren't (search box + avatar > logo), so the tabs sat visibly left of
+  the true viewport center, exactly as flagged from a live screenshot. Fixed
+  by switching `.topnav` to `display:grid; grid-template-columns: 1fr auto
+  1fr` and grouping the search box/button + avatar into one `.topnav-right`
+  wrapper (new, in `NavBar.tsx`) so the two outer columns are forced equal —
+  tabs now land within 0.01px of true center (verified via
+  `getBoundingClientRect`), independent of the two sides' own content width.
+  Alongside that:
+  - **"/" search shortcut** (desktop top-bar only): `GlobalSearch` listens for
+    `/` on `window` and focuses its input, ignoring it while already inside an
+    editable field (input/textarea/select/contenteditable) or with a modifier
+    held. A `/` `<kbd>` hint renders in the box at rest (hidden once there's a
+    query) signaling the shortcut, Notion/Linear/GitHub-style. The always-on
+    desktop search box also got a touch more visual weight (`--elev-1`
+    resting shadow) — deliberately NOT promoted to a hero/landing element
+    (see discussion: a study app's front door should invite reading, not
+    priming lookup-and-leave search-engine behavior — the Bible library stays
+    the deliberate landing surface).
+  - **Mobile search button visibility.** It was `background: transparent`
+    sitting on the header's own `--surface-2` background, so it visually
+    disappeared into its own container — the literal cause of "hard to
+    notice." Given a distinct `--surface` fill, hairline border, and resting
+    shadow so it reads as a real tappable chip.
+  - **Mobile "+ Study" tab.** The `nav-tab-action` class was already applied
+    (shared `navTab()` helper) but had no bottom-nav-scoped styling. Added a
+    light-touch treatment — permanently accent-tinted icon/label + slightly
+    bolder label — at the *same* size/shape/position as the other three tabs
+    (still one of four equal `flex:1` columns, no pill or badge), so it
+    signals "this one's an action" without breaking the bottom bar's visual
+    rhythm the way the desktop pill treatment would have.
+  - **Font-size bump.** Top-bar nav tabs 13→14px, library/book-detail page
+    titles 22→24px, library book names 14→15px, per a legibility pass against
+    a real desktop screenshot.
+  Verified live at 2000px and 390px, light + dark. Build clean. No
+  schema/`BereanApi` change.
+
+- **Page-shell centering on wide viewports (two passes).** The Bible Library and
+  the book/chapter view (`BookDetailPage`) had no max-width, so on wide monitors
+  their content pinned to the left edge with a large dead right margin. First
+  pass added a shared `--shell-max` token (`tokens.css`) and centered
+  (`max-width` + `margin: 0 auto`) the library header/testament sections and
+  `BookDetailPage`'s header + chapter-pill row (new `.book-detail-header-inner` /
+  `.chapter-selector-wrap-inner` wrapper elements so section-divider borders
+  stay full-bleed while their content centers) — initially at 1180px, on the
+  theory of a wide "masthead" over a narrower reading column. **Live feedback
+  correction:** that still looked off — a left-aligned block (page title, a
+  pill row, a grid) inside an *overly wide* centered box still reads as
+  left-anchored, because the eye tracks the ragged content edge, not the
+  invisible box; centering the container without the content filling it just
+  relocates the dead space rather than removing the asymmetry. Fixed by
+  shrinking `--shell-max` to 920px (a snug column, Notion/Basecamp-style,
+  rather than a separate wide masthead width) and adding
+  `justify-content: center` to the chapter-pill row specifically, since a short
+  pill cluster (e.g. a 21-chapter book) is much narrower than even a 920px box
+  and otherwise clusters left within it — verified this doesn't break the
+  horizontal-scroll case for long books (Psalms, 150 chapters). The with-rail
+  reading-column widths (`.book-chapter-content`, `.reading-content` when a
+  margin rail is present) were also pulled in from 980px/1020px to 940px so
+  they don't exceed the shell. Also tokenized two inline-style color literals
+  found in `BookDetailPage.tsx` (`#7F77DD`→`var(--accent)`,
+  `#BBB`→`var(--text-faint)`) missed by the earlier CSS-only migration since
+  they lived in TSX, not a stylesheet. **Third correction:** the library grid
+  itself still read left-skewed after the shell fix, because
+  `.bible-books-grid` used `repeat(3, 1fr)` — equal-fraction columns much wider
+  than the (short, left-aligned) book names, so each column's visual "ink"
+  clustered toward its own left edge with a large empty trailing gap, worst in
+  the rightmost column. The section box was centered, but its content wasn't,
+  so the block still read left-heavy. Fixed by sizing columns to content
+  (`repeat(3, minmax(0, 230px))`) and centering the column group itself
+  (`justify-content: center`) — the "OLD/NEW TESTAMENT" divider stays at the
+  shared shell width above it, while the names now form a tighter, genuinely
+  centered block within it. No wrapping on the longest names (Song of Solomon,
+  1/2 Thessalonians) at this column width. **Fourth correction:** that still
+  left the "OLD/NEW TESTAMENT" label (and its divider rule) at the wider shell
+  width while the grid beneath had become narrower, so the label no longer
+  lined up with "Genesis" underneath it — the same mismatch one layer up.
+  Rather than keep two different widths in play, gave the library page its own
+  snug content width computed directly from the grid's own sizing
+  (`--library-content-w: calc(3 * --library-col-w + 2 * --library-col-gap)`,
+  scoped as CSS custom properties on `.bible-library`) and applied it to the
+  header, testament label, and grid alike — one consistent, aligned column, not
+  the shared (wider) `--shell-max` used by `BookDetailPage`. Verified live at
+  2000px, light + dark: "OLD TESTAMENT" and "Genesis" now share the same left
+  edge, the divider matches the grid's width exactly.
+
+- **Theme picker in Settings.** Users can now choose a visual theme independent of
+  light/dark mode: **Berean** (default, warm cream + indigo), **Scholarly Serif**
+  (paper-white, quiet), **Warm Paper** (cream + amber, Newsreader scripture), and
+  **Quiet Modern** (cool near-white, sans-serif scripture — the one direction that
+  deliberately doesn't use a serif reading face). `src/utils/useTheme.ts` (mirrors
+  `useDarkMode.ts`'s pattern) sets `data-theme` on `<html>` and persists to
+  localStorage (`berean-visual-theme`, independent of the existing `berean-theme`
+  light/dark key). `tokens.css` gained `[data-theme="…"]` light blocks plus dark
+  variants scoped as `html[data-theme="x"] body.dark` — a descendant selector that
+  out-specifies the generic Berean-dark `body.dark` block with no `!important`, so
+  light/dark and theme compose correctly in all 8 combinations. `SettingsModal`
+  renders a 4-row swatch picker (each row previews its *own* theme's canvas/accent
+  colors so all four are comparable regardless of which is active), threaded through
+  `App.tsx` alongside the existing dark-mode toggle. Newsreader font added to
+  `index.html` alongside Source Serif 4 (Warm Paper needs it). Verified live:
+  switching themes re-themes the whole app instantly, persists across reload, and
+  each theme × dark mode renders correctly with no cross-theme color bleed. Build
+  clean. No schema/`BereanApi` change.
+
+- **Design-token layer (F1 — foundation of the visual polish pass).** Introduced
+  `src/assets/tokens.css` (imported first in `main.tsx`, before `main.css`/`dark.css`)
+  as the single source of truth for color, elevation, spacing, radii, motion, and
+  scripture type. `:root` holds the research-backed **"Berean"** default — a warm
+  cream reading canvas (`--bg #f4f0e8`), near-white surfaces, indigo accent
+  (`--accent #6b62d6`, decoupled from the warm canvas because amber reads as
+  "warning" as a primary UI accent), the four note-category hues, a soft layered
+  `--elev-*` scale, and `--ease-*`/`--dur-*` motion tokens. `main.css`'s raw color
+  literals for the **unambiguous** families were rewired to `var()`: accent + tints,
+  category colors, page backgrounds (`#fafafa`/`#f7f6f3`→`--bg`), subtle fills
+  (→`--surface-2`), borders (→`--border`), and primary ink (`#1a1a1a`→`--text`).
+  Deliberately **left as literals for later** (see Deferred): `#fff` (contextual) and
+  the gray-text ramp, plus the legacy `.welcome-*` navy (frozen desktop screen).
+  `body.dark` reassigns the tokens to values **matching the app's existing cool dark
+  palette**, so dark mode is unchanged by F1 while light mode adopts the cream+indigo
+  canvas; the warm-tinted Berean dark + `dark.css` collapse is the deferred F1b step.
+  A `[data-theme]` seam is documented in `tokens.css` for the future Settings theme
+  picker. Direction chosen from `design/mockup.html` (a throwaway token-swap artifact
+  comparing four directions), backed by reading-UX/color-psychology research. Build
+  (`tsc --noEmit` + vite) clean; verified live in a real browser at 1280px, light +
+  dark, on the reader/library/study surfaces — `--bg` resolves to `#f4f0e8`, accent
+  to `#6b62d6`, dark mode visually identical to pre-F1. No schema/`BereanApi`/
+  component change — CSS-only.
+
+- **Post-sweep fixes: action-bar contrast bug + wider reading column.** Live
+  testing caught a migration bug: `.verse-action-btn` ("Start study on {ref}")
+  had `color: var(--surface-2)` — text mistakenly mapped to a background token,
+  rendering it near-invisible (light-on-light) in the verse-selection floating
+  bar. Fixed to `var(--text)` on a `var(--surface-2)` fill, plus tokenized the
+  bar's remaining literals (`--border`, `--elev-3`). Swept `main.css`/`dark.css`
+  for the same `color: var(--surface*)` pattern — no other instances. Also
+  widened the desktop reading column (`.reading-content` 680→760px,
+  `.book-chapter-content` 640→720px, their no-rail-widened variants +40px each)
+  per feedback that scripture felt narrow on desktop. Verified live, light +
+  dark; build clean.
+
+- **Design polish sweep (F2/F3/#4/#6/F1b — static pass on the F1 token layer).**
+  The visual/interaction quality pass on top of the token layer, everything up to
+  (but not including) the F4 motion pass:
+  1. **F2 reading typography.** Scripture is now the hero: `.verse-text` (shared by
+     `ChapterView`, `ReadingMode`, and the StudyMode passage pane) renders in the
+     serif reading voice (`--scripture-font` Source Serif 4, ~19px, `--scripture-lh`
+     1.72) in **primary ink** — previously it was 13px sans in `--text-muted`, dimmer
+     and smaller than the UI chrome. Verse numbers baseline-align as small print-style
+     markers. Passage pane dialed to 16.5px. Font loaded in `index.html` (Georgia
+     fallback; self-host backlogged).
+  2. **Note-card weight (#4).** Inline notes went from a filled gray box to a
+     transparent, category-ruled **annotation** (left border + label + verse chip),
+     so notes read as marginalia against the Word. Reader column centering (`.no-rail`)
+     was already correct.
+  3. **Full color tokenization (F3 groundwork).** `main.css` + `dark.css` raw hex
+     migrated to `var()` — including the `#fff` (contextual surface vs on-accent) and
+     gray-ramp cases F1 had deferred. Every `var()` resolves to a `tokens.css` token;
+     build + undefined-token checks clean.
+  4. **F3 contrast.** `--text-muted` darkened to ~4.8:1 on cream (was ~3.8:1, below
+     AA); **library book names** promoted from `--text-muted` to primary `--text`
+     (they were ghosted). Added a UI **type scale** (`--text-xs…2xl`) to `tokens.css`.
+  5. **UX (#6).** `+ Study` is now a distinct accent **action pill** (via a
+     `nav-tab-action` class) rather than looking like a third destination tab; the
+     `?` top-right is the account-menu avatar (placeholder initial in the stub), left
+     as-is.
+  6. **F1b warm dark.** `body.dark` tokens flipped to the warm-tinted Berean dark;
+     the remaining legacy cool dark literals in `main.css` `body.dark` chrome blocks
+     (nav menu, settings modal, toasts) tokenized so dark mode is cohesively warm with
+     no cool/warm clash. `dark.css` was already fully token-driven.
+  Frozen `.welcome-*` navy and the danger/amber-alert schemes left as literals
+  (no semantic token yet). Build (`tsc --noEmit` + vite) clean throughout; verified
+  live at 1280px on reader/library/study/settings, **light + dark**. CSS/token +
+  one NavBar class + `index.html` font link; no schema/`BereanApi`/data change.
+  Direction from `design/mockup.html` (throwaway compare-artifact) + reading-UX/
+  color research. Remaining design work (F4 motion, font self-host, theme picker)
+  is in Deferred.
 
 - **Reading-view interaction hardening.** Five fixes to the study-Bible reading
   layout (`BookDetailPage` ChapterView + `ReadingMode`), from live testing across

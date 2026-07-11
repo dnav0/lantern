@@ -25,7 +25,10 @@ export default function PassagePane({
   if (!passage) {
     return (
       <div className="passage-pane-empty">
-        <div>Type a reference above<br />and press Enter to load verse text.</div>
+        {/* Was "...reference above" — wrong on desktop (the reference field is
+            beside this pane, not above it) and actively backwards on mobile,
+            where the scripture panel is pinned ABOVE the reference field. */}
+        <div>Type a reference<br />and press Enter to load verse text.</div>
       </div>
     )
   }
@@ -42,6 +45,7 @@ export default function PassagePane({
           return (
             <div
               key={v.verse}
+              data-verse={v.verse}
               className={`passage-verse${isHighlighted ? ' highlighted' : ''}${isDimmed ? ' dimmed' : ''}`}
             >
               <span className="verse-number">{v.verse}</span>

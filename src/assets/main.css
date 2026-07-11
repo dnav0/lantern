@@ -18,8 +18,8 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   line-height: 1.6;
-  color: #1a1a1a;
-  background: #fafafa;
+  color: var(--text);
+  background: var(--bg);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -157,11 +157,11 @@ body {
 }
 
 body.dark .welcome-screen {
-  background: #1a1a1e;
+  background: var(--surface);
 }
 body.dark .welcome-card {
-  background: #242428;
-  border-color: #333;
+  background: var(--surface-2);
+  border-color: var(--border);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 body.dark .welcome-title {
@@ -171,8 +171,8 @@ body.dark .welcome-body {
   color: #aaa;
 }
 body.dark .welcome-path-box {
-  background: #1e1e22;
-  border-color: #333;
+  background: var(--surface);
+  border-color: var(--border);
   color: #aaa;
 }
 body.dark .welcome-btn-secondary {
@@ -186,7 +186,7 @@ body.dark .welcome-btn-secondary {
   background: #f7f6f3;
 }
 body.dark .app-boot {
-  background: #1a1a1e;
+  background: var(--surface);
 }
 
 .auth-form {
@@ -201,15 +201,15 @@ body.dark .app-boot {
   box-sizing: border-box;
   padding: 11px 14px;
   font-size: 16px; /* >=16px keeps iOS from zooming on focus */
-  color: #1a1a1a;
-  background: #ffffff;
-  border: 1px solid #ddd;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 9px;
   outline: none;
   transition: border-color 0.15s;
 }
 .auth-input:focus {
-  border-color: #7f77dd;
+  border-color: var(--accent);
 }
 
 .auth-input--code {
@@ -232,12 +232,12 @@ body.dark .app-boot {
   margin-top: 18px;
   background: none;
   border: none;
-  color: #999;
+  color: var(--text-muted);
   font-size: 12.5px;
   cursor: pointer;
 }
 .onboarding-skip:hover {
-  color: #666;
+  color: var(--text-muted);
 }
 .onboarding-skip:disabled {
   opacity: 0.5;
@@ -246,43 +246,52 @@ body.dark .app-boot {
 
 .bible-library-greeting {
   font-size: 13px;
-  color: #7f77dd;
+  color: var(--accent);
   margin: 0 0 6px;
   font-weight: 500;
 }
 
 body.dark .auth-input {
-  background: #1e1e22;
-  border-color: #333;
-  color: #f0ede8;
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
 }
 body.dark .auth-input:focus {
-  border-color: #7f77dd;
+  border-color: var(--accent);
 }
 body.dark .auth-error {
   color: #e08a82;
 }
 body.dark .onboarding-skip {
-  color: #888;
+  color: var(--text-muted);
 }
 body.dark .onboarding-skip:hover {
-  color: #aaa;
+  color: var(--text-muted);
 }
 body.dark .bible-library-greeting {
-  color: #9d95e5;
+  color: var(--accent);
 }
 
 /* ─── Navigation bar ────────────────────────────────────────────────────────── */
 /* Top bar: full nav on desktop; on mobile only the leading slot shows and the
    bottom tab bar takes over the destinations. */
+/* Grid, not flex, with two equal 1fr outer columns: this is what makes
+   .topnav-tabs land on the TRUE viewport center. A flex row with
+   `.topnav-tabs { flex:1; justify-content:center }` centers tabs in the
+   *leftover* space between the two side groups — which only matches the real
+   center when both sides are equal width. Here they aren't (the search box +
+   avatar on the right are wider than the logo on the left), so tabs sat
+   visibly left of center. Forcing both outer tracks to the same 1fr fixes
+   this regardless of the two groups' own content width. */
 .topnav {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 16px;
   height: 52px;
   padding: 0 16px;
-  background: #f5f4f1;
-  border-bottom: 0.5px solid #e0ddd8;
+  background: var(--surface-2);
+  border-bottom: 0.5px solid var(--border);
   flex-shrink: 0;
   user-select: none;
 }
@@ -292,12 +301,21 @@ body.dark .bible-library-greeting {
   align-items: center;
   gap: 9px;
   min-width: 0;
+  /* Explicit column (not relying on source-order auto-placement): on mobile
+     .topnav-tabs is display:none, and a display:none grid item is removed
+     from the grid entirely — auto-placement then packs the remaining visible
+     children into columns 1 and 2 instead of 1 and 3, which is what put the
+     mobile search button in the dead center of the header. Pinning each
+     child to its intended column keeps them correct regardless of which
+     siblings are hidden. */
+  grid-column: 1;
+  justify-self: start;
 }
 
 .topnav-appname {
   font-size: 15px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text);
   letter-spacing: -0.2px;
 }
 
@@ -316,7 +334,7 @@ body.dark .bible-library-greeting {
   border-radius: 6px;
   font-size: 12px;
   font-family: inherit;
-  color: #888;
+  color: var(--text-muted);
   cursor: pointer;
   transition:
     background 0.12s,
@@ -324,24 +342,24 @@ body.dark .bible-library-greeting {
 }
 .workspace-btn:hover {
   background: rgba(0, 0, 0, 0.05);
-  color: #444;
+  color: var(--text-muted);
 }
 
 .workspace-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #7f77dd;
+  background: var(--accent);
   flex-shrink: 0;
 }
 
-/* Center tabs */
+/* Center tabs — sits in the grid's middle ("auto") column, which is what
+   actually centers it; no flex self-centering needed here anymore. */
 .topnav-tabs {
   display: flex;
   align-items: center;
   gap: 4px;
-  flex: 1;
-  justify-content: center;
+  grid-column: 2;
 }
 
 .topnav-tabs .nav-tab {
@@ -352,9 +370,9 @@ body.dark .bible-library-greeting {
   border: none;
   background: transparent;
   border-radius: 7px;
-  font-size: 13px;
+  font-size: 14px;
   font-family: inherit;
-  color: #777;
+  color: var(--text-muted);
   cursor: pointer;
   transition:
     background 0.12s,
@@ -366,18 +384,45 @@ body.dark .bible-library-greeting {
 }
 .topnav-tabs .nav-tab:hover {
   background: rgba(0, 0, 0, 0.05);
-  color: #333;
+  color: var(--text);
 }
 .topnav-tabs .nav-tab.active {
-  background: rgba(127, 119, 221, 0.1);
-  color: #7f77dd;
+  background: var(--accent-weak);
+  color: var(--accent);
   font-weight: 500;
+}
+
+/* + Study is an action (compose), not a destination — give it a distinct
+   accent-outlined pill so it reads as the primary create affordance. */
+.topnav-tabs .nav-tab-action {
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--accent-soft);
+}
+.topnav-tabs .nav-tab-action:hover {
+  background: var(--accent-weak);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.topnav-tabs .nav-tab-action.active {
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: none;
+}
+
+/* Right grid column — groups the search box/button + avatar so its total
+   width is what balances against .topnav-lead (see .topnav's grid). */
+.topnav-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  grid-column: 3;
+  justify-self: end;
 }
 
 .topnav-trail {
   display: flex;
   align-items: center;
-  margin-left: auto;
 }
 
 /* Avatar + dropdown menus */
@@ -393,8 +438,8 @@ body.dark .bible-library-greeting {
   height: 30px;
   border-radius: 50%;
   border: none;
-  background: #7f77dd;
-  color: #fff;
+  background: var(--accent);
+  color: var(--on-accent);
   font-size: 13px;
   font-weight: 600;
   font-family: inherit;
@@ -409,7 +454,7 @@ body.dark .bible-library-greeting {
   position: absolute;
   top: calc(100% + 6px);
   min-width: 180px;
-  background: #ffffff;
+  background: var(--surface);
   border: 1px solid #e4e1dc;
   border-radius: 10px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
@@ -427,7 +472,7 @@ body.dark .bible-library-greeting {
   padding: 8px 10px 6px;
   font-size: 13px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -444,7 +489,7 @@ body.dark .bible-library-greeting {
   border-radius: 6px;
   font-size: 13px;
   font-family: inherit;
-  color: #444;
+  color: var(--text-muted);
   text-align: left;
   cursor: pointer;
   transition: background 0.1s;
@@ -457,20 +502,20 @@ body.dark .bible-library-greeting {
   cursor: default;
 }
 .nav-menu-item.active {
-  color: #7f77dd;
+  color: var(--accent);
   font-weight: 500;
 }
 
 .nav-menu-divider {
   height: 1px;
-  background: #eeece7;
+  background: var(--surface-2);
   margin: 4px 6px;
 }
 
 .nav-menu-hint {
   padding: 6px 10px 7px;
   font-size: 11px;
-  color: #aaa;
+  color: var(--text-muted);
   line-height: 1.5;
 }
 
@@ -481,7 +526,7 @@ body.dark .bible-library-greeting {
 
 .topnav-search {
   width: 260px;
-  margin-right: 12px;
+  /* gap between this and the avatar now comes from .topnav-right's own gap */
   flex-shrink: 0;
 }
 /* The mobile-only search trigger button lives in the top bar; hidden on desktop. */
@@ -502,31 +547,61 @@ body.dark .bible-library-greeting {
 .search-input-icon {
   position: absolute;
   left: 9px;
-  color: #aaa;
+  color: var(--text-muted);
   pointer-events: none;
 }
 
 .search-input {
   width: 100%;
-  height: 30px;
+  height: 32px;
   padding: 0 10px 0 30px;
-  border: 1px solid #e0ddd8;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--surface);
   font-family: inherit;
   font-size: 13px;
-  color: #1a1a1a;
+  color: var(--text);
   outline: none;
   transition:
     border-color 0.12s,
     box-shadow 0.12s;
 }
+/* The top-bar instance gets a touch more visual weight (a resting shadow) so
+   it reads as a capable, first-class tool rather than a decorative
+   afterthought — without becoming the loudest thing in the header. Room on
+   the right is reserved for the "/" shortcut hint (kbd, below). */
+.global-search--bar .search-input {
+  box-shadow: var(--elev-1);
+  padding-right: 26px;
+}
 .search-input::placeholder {
-  color: #aaa;
+  color: var(--text-muted);
 }
 .search-input:focus {
-  border-color: #7f77dd;
-  box-shadow: 0 0 0 3px rgba(127, 119, 221, 0.12);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-weak);
+}
+
+.search-input-kbd {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-2);
+  color: var(--text-faint);
+  font-family: var(--ui-font);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1;
+  pointer-events: none;
 }
 /* Kill the native search-field clear affordance for a consistent look. */
 .search-input::-webkit-search-decoration,
@@ -543,7 +618,7 @@ body.dark .bible-library-greeting {
   width: 340px;
   max-height: 70vh;
   overflow-y: auto;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid #e4e1dc;
   border-radius: 10px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
@@ -554,7 +629,7 @@ body.dark .bible-library-greeting {
 .search-section + .search-section {
   margin-top: 6px;
   padding-top: 6px;
-  border-top: 1px solid #eeece7;
+  border-top: 1px solid var(--surface-2);
 }
 
 .search-section-label {
@@ -563,7 +638,7 @@ body.dark .bible-library-greeting {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #aaa;
+  color: var(--text-muted);
 }
 
 .search-result {
@@ -592,12 +667,12 @@ body.dark .bible-library-greeting {
 .search-result-ref {
   font-size: 13px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text);
 }
 
 .search-result-kind {
   font-size: 11px;
-  color: #7f77dd;
+  color: var(--accent);
   flex-shrink: 0;
 }
 
@@ -613,7 +688,7 @@ body.dark .bible-library-greeting {
 .search-result-note-preview {
   margin-top: 2px;
   font-size: 12.5px;
-  color: #666;
+  color: var(--text-muted);
   line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -624,7 +699,7 @@ body.dark .bible-library-greeting {
 .search-empty {
   padding: 8px;
   font-size: 12px;
-  color: #999;
+  color: var(--text-muted);
 }
 
 /* Mobile search surface (overlay). Shown only when opened; the component is
@@ -655,14 +730,14 @@ body.dark .bible-library-greeting {
 .journal-page-title {
   font-size: 20px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text);
   letter-spacing: -0.3px;
   margin-bottom: 8px;
 }
 
 .journal-page-hint {
   font-size: 13px;
-  color: #999;
+  color: var(--text-muted);
   line-height: 1.65;
 }
 
@@ -675,14 +750,14 @@ body.dark .bible-library-greeting {
 .journal-heading {
   font-size: 22px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text);
   letter-spacing: -0.3px;
   margin: 0 0 4px;
 }
 
 .journal-sub {
   font-size: 12px;
-  color: #999;
+  color: var(--text-muted);
   margin-bottom: 24px;
 }
 
@@ -693,7 +768,7 @@ body.dark .bible-library-greeting {
 .journal-book-header {
   font-size: 11px;
   font-weight: 700;
-  color: #bbb;
+  color: var(--text-faint);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-bottom: 8px;
@@ -703,8 +778,8 @@ body.dark .bible-library-greeting {
   display: block;
   width: 100%;
   text-align: left;
-  background: #fff;
-  border: 0.5px solid #edebe6;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
   border-radius: 8px;
   padding: 12px 14px;
   margin-bottom: 8px;
@@ -728,12 +803,12 @@ body.dark .bible-library-greeting {
 .journal-entry-ref {
   font-size: 14px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text);
 }
 
 .journal-entry-date {
   font-size: 11px;
-  color: #aaa;
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
@@ -747,13 +822,13 @@ body.dark .bible-library-greeting {
 .journal-entry-count {
   font-size: 11px;
   font-weight: 600;
-  color: #7f77dd;
+  color: var(--accent);
   flex-shrink: 0;
 }
 
 .journal-entry-preview {
   font-size: 12px;
-  color: #999;
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -775,8 +850,8 @@ body.dark .bible-library-greeting {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #7f77dd;
-  color: #fff;
+  background: var(--accent);
+  color: var(--on-accent);
   font-size: 22px;
   font-weight: 600;
   margin-bottom: 8px;
@@ -785,12 +860,12 @@ body.dark .bible-library-greeting {
 .profile-page-name {
   font-size: 16px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text);
 }
 
 .profile-page-workspace {
   font-size: 12px;
-  color: #999;
+  color: var(--text-muted);
 }
 
 .profile-page-actions {
@@ -804,20 +879,20 @@ body.dark .bible-library-greeting {
 .profile-page-btn {
   width: 100%;
   padding: 11px 14px;
-  background: #ffffff;
-  border: 1px solid #e0ddd8;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 9px;
   font-size: 13px;
   font-weight: 500;
   font-family: inherit;
-  color: #444;
+  color: var(--text-muted);
   cursor: pointer;
   transition:
     background 0.12s,
     border-color 0.12s;
 }
 .profile-page-btn:hover:not(:disabled) {
-  background: #f5f4f1;
+  background: var(--surface-2);
 }
 .profile-page-btn:disabled {
   opacity: 0.6;
@@ -879,21 +954,21 @@ body.dark .bible-library-greeting {
   background: transparent;
 }
 .study-right::-webkit-scrollbar-thumb {
-  background: #ddd;
+  background: var(--border);
   border-radius: 2px;
 }
 
 /* Passage heading input */
 .passage-heading-wrap {
   padding: 28px 32px 16px;
-  border-bottom: 0.5px solid #edebe6;
+  border-bottom: 0.5px solid var(--border);
 }
 
 .passage-heading-input {
   width: 100%;
   font-size: 20px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text);
   border: none;
   background: transparent;
   outline: none;
@@ -902,13 +977,18 @@ body.dark .bible-library-greeting {
 }
 
 .passage-heading-input::placeholder {
-  color: #ccc;
+  color: var(--text-faint);
 }
 
 .passage-heading-hint {
   font-size: 11px;
-  color: #bbb;
+  color: var(--text-faint);
   margin-top: 4px;
+}
+/* Default (desktop): show the keyboard-appropriate copy, hide the mobile
+   variant. Flipped under the mobile breakpoint below. */
+.hint-text-mobile {
+  display: none;
 }
 
 /* Notes list */
@@ -922,7 +1002,7 @@ body.dark .bible-library-greeting {
   width: 4px;
 }
 .notes-list::-webkit-scrollbar-thumb {
-  background: #ddd;
+  background: var(--border);
   border-radius: 2px;
 }
 
@@ -934,8 +1014,24 @@ body.dark .bible-library-greeting {
   min-height: 28px;
 }
 
+/* "Saved Xh ago" — shown only for a line whose content still matches what
+   was actually persisted (see NoteEditor.tsx); its absence is the signal
+   that a line is new or edited this session, so at scale it stays clear what
+   you just touched vs. what's already safely saved. Mirrors .note-timestamp
+   (ReadingMode's note cards) at the same quiet weight. */
+.note-line-timestamp {
+  margin-left: auto;
+  padding-top: 5px;
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  user-select: none;
+}
+
 .note-bullet {
-  color: #ccc;
+  color: var(--text-faint);
   font-size: 16px;
   line-height: 28px;
   flex-shrink: 0;
@@ -953,7 +1049,7 @@ body.dark .bible-library-greeting {
   outline: none;
   font-size: 14px;
   font-family: inherit;
-  color: #1a1a1a;
+  color: var(--text);
   line-height: 1.6;
   padding: 4px 0;
   resize: none;
@@ -961,7 +1057,7 @@ body.dark .bible-library-greeting {
 }
 
 .note-input::placeholder {
-  color: #ccc;
+  color: var(--text-faint);
 }
 
 /* Contenteditable note line (focused state) */
@@ -972,7 +1068,7 @@ body.dark .bible-library-greeting {
   outline: none;
   font-size: 14px;
   font-family: inherit;
-  color: #1a1a1a;
+  color: var(--text);
   line-height: 1.6;
   padding: 4px 0;
   min-height: 28px;
@@ -985,7 +1081,7 @@ body.dark .bible-library-greeting {
 
 .note-richtext:empty::before {
   content: attr(data-placeholder);
-  color: #ccc;
+  color: var(--text-faint);
   pointer-events: none;
 }
 
@@ -1009,8 +1105,8 @@ body.dark .bible-library-greeting {
 .pill-verse {
   display: inline-flex;
   align-items: center;
-  background: rgba(127, 119, 221, 0.12);
-  color: #7f77dd;
+  background: var(--accent-weak);
+  color: var(--accent);
   border-radius: 4px;
   padding: 1px 6px;
   font-size: 12px;
@@ -1022,8 +1118,8 @@ body.dark .bible-library-greeting {
 .pill-crossref {
   display: inline-flex;
   align-items: center;
-  background: rgba(29, 158, 117, 0.1);
-  color: #1d9e75;
+  background: var(--cat-historical-weak);
+  color: var(--cat-historical);
   border-radius: 4px;
   padding: 1px 6px;
   font-size: 12px;
@@ -1039,8 +1135,8 @@ body.dark .bible-library-greeting {
 }
 
 .pill-tag-observation {
-  background: rgba(127, 119, 221, 0.12);
-  color: #7f77dd;
+  background: var(--accent-weak);
+  color: var(--accent);
   border-radius: 4px;
   padding: 1px 6px;
   font-size: 12px;
@@ -1050,8 +1146,8 @@ body.dark .bible-library-greeting {
   align-items: center;
 }
 .pill-tag-historical {
-  background: rgba(29, 158, 117, 0.1);
-  color: #1d9e75;
+  background: var(--cat-historical-weak);
+  color: var(--cat-historical);
   border-radius: 4px;
   padding: 1px 6px;
   font-size: 12px;
@@ -1061,8 +1157,8 @@ body.dark .bible-library-greeting {
   align-items: center;
 }
 .pill-tag-application {
-  background: rgba(186, 117, 23, 0.1);
-  color: #ba7517;
+  background: var(--cat-application-weak);
+  color: var(--cat-application);
   border-radius: 4px;
   padding: 1px 6px;
   font-size: 12px;
@@ -1072,8 +1168,8 @@ body.dark .bible-library-greeting {
   align-items: center;
 }
 .pill-tag-personal {
-  background: rgba(212, 83, 126, 0.1);
-  color: #d4537e;
+  background: var(--cat-personal-weak);
+  color: var(--cat-personal);
   border-radius: 4px;
   padding: 1px 6px;
   font-size: 12px;
@@ -1088,14 +1184,14 @@ body.dark .bible-library-greeting {
   position: absolute;
   bottom: calc(100% + 6px);
   left: 0;
-  background: #fff;
-  border: 0.5px solid #e0ddd8;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
   border-radius: 8px;
   padding: 10px 12px;
   min-width: 220px;
   max-width: 320px;
   font-size: 12px;
-  color: #444;
+  color: var(--text-muted);
   line-height: 1.5;
   z-index: 100;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
@@ -1104,7 +1200,7 @@ body.dark .bible-library-greeting {
 
 .crossref-hover-card .ref-label {
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text);
   margin-bottom: 4px;
   font-size: 11px;
 }
@@ -1112,7 +1208,7 @@ body.dark .bible-library-greeting {
 /* Study actions */
 .study-actions {
   padding: 14px 32px;
-  border-top: 0.5px solid #edebe6;
+  border-top: 0.5px solid var(--border);
   display: flex;
   gap: 8px;
   flex-shrink: 0;
@@ -1138,8 +1234,8 @@ body.dark .bible-library-greeting {
 }
 
 .btn-save-read {
-  background: #7f77dd;
-  color: #fff;
+  background: var(--accent);
+  color: var(--on-accent);
   border: none;
 }
 
@@ -1149,13 +1245,13 @@ body.dark .bible-library-greeting {
 
 .btn-save-next {
   background: transparent;
-  color: #7f77dd;
-  border: 0.5px solid #c4c0f0;
+  color: var(--accent);
+  border: 0.5px solid var(--accent-weak);
 }
 
 .btn-save-next:hover:not(:disabled) {
-  background: rgba(127, 119, 221, 0.07);
-  border-color: #7f77dd;
+  background: var(--accent-weaker);
+  border-color: var(--accent);
 }
 
 /* ─── Passage pane (right) ──────────────────────────────────────────────────── */
@@ -1174,7 +1270,7 @@ body.dark .bible-library-greeting {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #ccc;
+  color: var(--text-faint);
   font-size: 13px;
   text-align: center;
   padding: 24px;
@@ -1183,7 +1279,7 @@ body.dark .bible-library-greeting {
 .passage-pane-reference {
   font-size: 11px;
   font-weight: 600;
-  color: #bbb;
+  color: var(--text-faint);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   margin-bottom: 16px;
@@ -1191,7 +1287,8 @@ body.dark .bible-library-greeting {
 
 .passage-verse {
   display: flex;
-  gap: 6px;
+  align-items: baseline;
+  gap: 9px;
   margin-bottom: 8px;
   transition: background 0.12s;
   border-radius: 5px;
@@ -1200,7 +1297,7 @@ body.dark .bible-library-greeting {
 }
 
 .passage-verse.highlighted {
-  background: rgba(127, 119, 221, 0.1);
+  background: var(--accent-weak);
 }
 
 .passage-verse.dimmed {
@@ -1208,37 +1305,50 @@ body.dark .bible-library-greeting {
 }
 
 .verse-number {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  color: #bbb;
-  line-height: 1.8;
+  color: var(--text-faint);
+  line-height: 1;
   min-width: 18px;
   flex-shrink: 0;
   transition: color 0.12s;
+  /* nudge onto the serif text's first-line baseline */
+  position: relative;
+  top: 0.15em;
 }
 
 /* Verse selection is a single tap gesture on the whole row; the number itself
    reads as the tappable affordance (subtle hover on desktop, active-press on
    touch) so it's clear the row responds. */
 .reading-verse-row:hover .verse-number {
-  color: #7f77dd;
+  color: var(--accent);
 }
 .reading-verse-row:active .verse-number {
-  color: #6f66d4;
+  color: var(--accent-hover);
 }
 .reading-verse-row.selected .verse-number {
-  color: #7f77dd;
+  color: var(--accent);
 }
 
+/* Scripture is the hero: serif reading voice, primary ink, generous size — set
+   here so ChapterView, ReadingMode, and the StudyMode passage pane all inherit it
+   (all three render verse text as .verse-text). Notes stay in the UI sans. */
 .verse-text {
-  font-size: 13px;
-  color: #444;
-  line-height: 1.7;
+  font-family: var(--scripture-font);
+  font-size: var(--scripture-size);
+  color: var(--text);
+  line-height: var(--scripture-lh);
   flex: 1;
 }
 
+/* The passage pane is a narrower side column in StudyMode — dial the reading
+   size down a touch so the measure stays comfortable. */
+.passage-pane .verse-text {
+  font-size: 16.5px;
+}
+
 .passage-verse.highlighted .verse-text {
-  color: #1a1a1a;
+  color: var(--text);
 }
 
 /* ─── Reading mode ──────────────────────────────────────────────────────────── */
@@ -1256,12 +1366,12 @@ body.dark .bible-library-greeting {
   width: 6px;
 }
 .reading-layout::-webkit-scrollbar-thumb {
-  background: #ddd;
+  background: var(--border);
   border-radius: 3px;
 }
 
 .reading-content {
-  max-width: 680px;
+  max-width: 760px;
   margin: 0 auto;
   padding: 0 40px;
 }
@@ -1274,13 +1384,13 @@ body.dark .bible-library-greeting {
   font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.5px;
-  color: #1a1a1a;
+  color: var(--text);
   margin-bottom: 8px;
 }
 
 .reading-meta {
   font-size: 12px;
-  color: #aaa;
+  color: var(--text-muted);
   display: flex;
   gap: 16px;
 }
@@ -1291,7 +1401,8 @@ body.dark .bible-library-greeting {
 
 .reading-verse-row {
   display: flex;
-  gap: 6px;
+  align-items: baseline;
+  gap: 9px;
   border-radius: 5px;
   padding: 3px 5px;
   margin-left: -5px;
@@ -1301,17 +1412,17 @@ body.dark .bible-library-greeting {
 }
 
 .reading-verse-row:hover {
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--surface-2);
 }
 .reading-verse-row:hover .verse-add-btn {
   opacity: 1;
 }
 .reading-verse-row.highlighted {
-  background: rgba(127, 119, 221, 0.1);
+  background: var(--accent-weak);
 }
 .reading-verse-row.selected {
-  background: rgba(127, 119, 221, 0.16);
-  box-shadow: inset 2px 0 0 #7f77dd;
+  background: var(--accent-soft);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 .verse-add-btn {
@@ -1322,15 +1433,15 @@ body.dark .bible-library-greeting {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  border: 0.5px solid #7f77dd;
-  color: #7f77dd;
+  border: 0.5px solid var(--accent);
+  color: var(--accent);
   font-size: 13px;
   line-height: 16px;
   text-align: center;
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.15s;
-  background: #fff;
+  background: var(--surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1343,37 +1454,40 @@ body.dark .bible-library-greeting {
   margin-top: 2px;
 }
 
+/* Notes read as annotations in the margin of the Word, not filled boxes: no
+   canvas fill at rest, just a category-colored rule and indent. Hover/active
+   lift with a subtle category-neutral wash. */
 .reading-note-card {
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin-bottom: 4px;
-  font-size: 13px;
+  padding: 5px 12px 6px 14px;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 2px;
+  font-size: 13.5px;
   line-height: 1.6;
-  color: #333;
+  color: var(--text);
   cursor: pointer;
   transition: background 0.12s;
-  border-left: 2.5px solid transparent;
-  background: rgba(0, 0, 0, 0.015);
+  border-left: 2px solid transparent;
+  background: transparent;
 }
 
 .reading-note-card:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--surface-2);
 }
 .reading-note-card.highlighted {
-  background: rgba(127, 119, 221, 0.06);
+  background: var(--accent-weak);
 }
 
 .reading-note-card.cat-observation {
-  border-left-color: #7f77dd;
+  border-left-color: var(--accent);
 }
 .reading-note-card.cat-historical {
-  border-left-color: #1d9e75;
+  border-left-color: var(--cat-historical);
 }
 .reading-note-card.cat-application {
-  border-left-color: #ba7517;
+  border-left-color: var(--cat-application);
 }
 .reading-note-card.cat-personal {
-  border-left-color: #d4537e;
+  border-left-color: var(--cat-personal);
 }
 
 .reading-note-metarow {
@@ -1407,19 +1521,19 @@ body.dark .bible-library-greeting {
 }
 
 .reading-note-meta.cat-observation {
-  color: #7f77dd;
+  color: var(--accent);
 }
 .reading-note-meta.cat-historical {
-  color: #1d9e75;
+  color: var(--cat-historical);
 }
 .reading-note-meta.cat-application {
-  color: #ba7517;
+  color: var(--cat-application);
 }
 .reading-note-meta.cat-personal {
-  color: #d4537e;
+  color: var(--cat-personal);
 }
 .reading-note-meta.cat-none {
-  color: #bbb;
+  color: var(--text-faint);
 }
 
 .reading-subnote-meta {
@@ -1430,16 +1544,16 @@ body.dark .bible-library-greeting {
   margin-bottom: 2px;
 }
 .reading-subnote-meta.cat-observation {
-  color: #7f77dd;
+  color: var(--accent);
 }
 .reading-subnote-meta.cat-historical {
-  color: #1d9e75;
+  color: var(--cat-historical);
 }
 .reading-subnote-meta.cat-application {
-  color: #ba7517;
+  color: var(--cat-application);
 }
 .reading-subnote-meta.cat-personal {
-  color: #d4537e;
+  color: var(--cat-personal);
 }
 
 /* Sub-notes nested inside a note card */
@@ -1454,7 +1568,7 @@ body.dark .bible-library-greeting {
   padding: 1px 0 1px 16px;
   margin-top: 3px;
   font-size: 13px;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .reading-subnote:first-child {
@@ -1467,7 +1581,7 @@ body.dark .bible-library-greeting {
 }
 
 .reading-subnote-bullet {
-  color: #bbb;
+  color: var(--text-faint);
   font-size: 10px;
   line-height: 1.7;
   flex-shrink: 0;
@@ -1499,7 +1613,7 @@ body.dark .bible-library-greeting {
   position: absolute;
   z-index: 5;
   pointer-events: none;
-  background: rgba(127, 119, 221, 0.1);
+  background: var(--accent-weak);
   border: 1px solid rgba(127, 119, 221, 0.5);
   border-radius: 3px;
 }
@@ -1556,10 +1670,10 @@ body.dark .bible-library-greeting {
   transition: background 0.12s;
   align-self: stretch;
 }
-.rail-bracket.cat-observation { background: #7f77dd; }
-.rail-bracket.cat-historical { background: #1d9e75; }
-.rail-bracket.cat-application { background: #ba7517; }
-.rail-bracket.cat-personal { background: #d4537e; }
+.rail-bracket.cat-observation { background: var(--accent); }
+.rail-bracket.cat-historical { background: var(--cat-historical); }
+.rail-bracket.cat-application { background: var(--cat-application); }
+.rail-bracket.cat-personal { background: var(--cat-personal); }
 
 .rail-note.highlighted .rail-bracket,
 .rail-note:hover .rail-bracket {
@@ -1589,7 +1703,7 @@ body.dark .bible-library-greeting {
 .rail-passage-notes-label {
   font-size: 11px;
   font-weight: 600;
-  color: #bbb;
+  color: var(--text-faint);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   margin-bottom: 8px;
@@ -1609,10 +1723,10 @@ body.dark .bible-library-greeting {
   background: #d8d5f2;
   cursor: pointer;
 }
-.verse-span-bracket.cat-observation { background: #7f77dd; }
-.verse-span-bracket.cat-historical { background: #1d9e75; }
-.verse-span-bracket.cat-application { background: #ba7517; }
-.verse-span-bracket.cat-personal { background: #d4537e; }
+.verse-span-bracket.cat-observation { background: var(--accent); }
+.verse-span-bracket.cat-historical { background: var(--cat-historical); }
+.verse-span-bracket.cat-application { background: var(--cat-application); }
+.verse-span-bracket.cat-personal { background: var(--cat-personal); }
 
 .note-range-chip {
   display: inline-flex;
@@ -1623,15 +1737,15 @@ body.dark .bible-library-greeting {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: #7f77dd;
-  background: rgba(127, 119, 221, 0.1);
+  color: var(--accent);
+  background: var(--accent-weak);
   cursor: pointer;
   border: none;
   font-family: inherit;
   white-space: nowrap;
 }
 .note-range-chip:hover {
-  background: rgba(127, 119, 221, 0.18);
+  background: var(--accent-soft);
 }
 
 /* Mobile-only range notes render inline after their last anchored verse; the
@@ -1652,18 +1766,18 @@ body.dark .bible-library-greeting {
 .inline-note-input {
   flex: 1;
   border: none;
-  border-bottom: 0.5px solid #ddd;
+  border-bottom: 0.5px solid var(--border);
   background: transparent;
   font-size: 13px;
   font-family: inherit;
   outline: none;
   padding: 2px 0;
-  color: #1a1a1a;
+  color: var(--text);
 }
 
 .inline-note-hint {
   font-size: 11px;
-  color: #bbb;
+  color: var(--text-faint);
   padding-top: 2px;
 }
 
@@ -1679,25 +1793,28 @@ body.dark .bible-library-greeting {
   gap: 14px;
   max-width: calc(100vw - 32px);
   padding: 10px 12px 10px 18px;
-  background: #ffffff;
-  border: 0.5px solid #e6e3dd;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
   border-radius: 14px;
-  box-shadow: 0 8px 28px rgba(30, 26, 60, 0.18);
+  box-shadow: var(--elev-3);
 }
 .verse-action-ref {
   font-size: 13px;
   font-weight: 600;
-  color: #6b6470;
+  color: var(--text-muted);
   white-space: nowrap;
 }
 .verse-action-btns {
   display: flex;
   gap: 8px;
 }
+/* Secondary action ("Start study on…") — was accidentally set to
+   color: var(--surface-2) during the token migration, making it near-invisible
+   (light text on light bg). Text tokens for text, surface tokens for fills. */
 .verse-action-btn {
-  border: 0.5px solid #e0ddd6;
-  background: #f6f5f2;
-  color: #2a2730;
+  border: 0.5px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
@@ -1707,15 +1824,15 @@ body.dark .bible-library-greeting {
   white-space: nowrap;
 }
 .verse-action-btn:hover {
-  background: #eeece7;
+  background: var(--border);
 }
 .verse-action-btn.primary {
-  background: #7f77dd;
-  border-color: #7f77dd;
-  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
 }
 .verse-action-btn.primary:hover {
-  background: #6f66d4;
+  background: var(--accent-hover);
 }
 .verse-action-clear {
   display: inline-flex;
@@ -1742,18 +1859,18 @@ body.dark .bible-library-greeting {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #ccc;
+  color: var(--text-faint);
   gap: 8px;
 }
 
 .empty-state-title {
   font-size: 15px;
   font-weight: 500;
-  color: #bbb;
+  color: var(--text-faint);
 }
 .empty-state-sub {
   font-size: 13px;
-  color: #ccc;
+  color: var(--text-faint);
 }
 
 /* ─── Loading spinner ───────────────────────────────────────────────────────── */
@@ -1763,14 +1880,14 @@ body.dark .bible-library-greeting {
   align-items: center;
   justify-content: center;
   padding: 16px;
-  color: #ccc;
+  color: var(--text-faint);
   font-size: 12px;
 }
 
 /* ─── Scrollbar globals ─────────────────────────────────────────────────────── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #ddd transparent;
+  scrollbar-color: var(--border) transparent;
 }
 
 /* ─── Reference autocomplete ────────────────────────────────────────────────── */
@@ -1778,8 +1895,8 @@ body.dark .bible-library-greeting {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  background: #fff;
-  border: 0.5px solid #e0ddd8;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
   border-radius: 9px;
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.09),
@@ -1802,18 +1919,18 @@ body.dark .bible-library-greeting {
 
 .ref-autocomplete-item:hover,
 .ref-autocomplete-item.active {
-  background: #f5f3ff;
+  background: var(--accent-weak);
 }
 
 .ref-ac-name {
   font-size: 14px;
-  color: #1a1a1a;
+  color: var(--text);
   font-weight: 500;
 }
 
 .ref-ac-abbr {
   font-size: 11px;
-  color: #bbb;
+  color: var(--text-faint);
   font-weight: 400;
 }
 
@@ -1822,13 +1939,45 @@ body.dark .bible-library-greeting {
   height: 100%;
   overflow-y: auto;
   padding: 36px 40px 48px;
+  /* Column sizing for .bible-books-grid — see there. */
+  --library-col-w: 230px;
+  /* Wider now that columns hug their own content (max-content, not a fixed
+     230px) — tighter columns need more breathing room between them or
+     adjacent names read as cramped together. Bumped again after 64px still
+     read as cramped — combined with the row-gap/row-padding fix below, this
+     is a second, larger pass at it. */
+  --library-col-gap: 88px;
+}
+
+/* Center the page-shell width on wide viewports instead of pinning content to
+   the left edge with a large dead right margin (padding above still applies,
+   so this is a max-width cap + auto-centering on top of it). Header, the
+   testament label + its divider, and the grid all share this exact width so
+   their left edges align. */
+/* Both the header (centered TEXT) and each testament section (a centered
+   heading + a content-sized, independently centered grid — see
+   .bible-testament-label / .bible-books-grid) center themselves against this
+   same width using their own alignment (text-align / justify-content), rather
+   than the two being forced to share one exactly-computed pixel width. That
+   was fragile — any small change to either side's sizing put them a few
+   pixels out of sync again. This way both always land on the true center of
+   the same box, however each one is internally laid out. */
+.bible-library-header,
+.bible-testament-section {
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.bible-library-header {
+  text-align: center;
 }
 
 .bible-library::-webkit-scrollbar {
   width: 6px;
 }
 .bible-library::-webkit-scrollbar-thumb {
-  background: #ddd;
+  background: var(--border);
   border-radius: 3px;
 }
 
@@ -1837,37 +1986,74 @@ body.dark .bible-library-greeting {
 }
 
 .bible-library-title {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text);
   letter-spacing: -0.4px;
   margin-bottom: 4px;
 }
 
 .bible-library-sub {
   font-size: 13px;
-  color: #aaa;
+  color: var(--text-muted);
 }
 
 .bible-testament-section {
   margin-bottom: 32px;
 }
 
+/* Centered heading + flanking rules, not a left-flush label with a full-bleed
+   underline — this is what lets it center correctly independent of the
+   grid's own (narrower, content-sized) width below it, and reads like a
+   section break rather than a form-field-style label. */
 .bible-testament-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #bbb;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 0.5px solid #edebe6;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
 }
 
+.bible-testament-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.bible-testament-text {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* Content-sized columns — NOT 1fr stretch. Equal-fraction columns made each
+   cell far wider than a book name, and since names left-align within their
+   cell, the visual "ink" clustered toward the left of each column with a
+   large empty trailing gap (worst in the last column) — the grid box was
+   centered, but its content wasn't, so the block read as left-heavy. The
+   parent (.bible-testament-section) is now sized to exactly this grid's
+   content width (--library-content-w, computed from the same two variables),
+   so the grid fills it with no leftover slack — no justify-content needed,
+   and the testament label + divider above share the identical left/right
+   edges as "Genesis" below. */
+/* Content-hugging (max-content), not a fixed width: even with fixed columns
+   sized for the longest name, most names are shorter than that width, and
+   since they left-align (kept intentionally — center-aligned list text hurts
+   scanability), each column's own trailing whitespace still dragged the
+   grid's visual "ink" left of its true geometric center. Each column now
+   shrinks to exactly its own longest name, minimizing that slack to what's
+   structurally unavoidable, while justify-content still centers the group. */
 .bible-books-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px 0;
+  grid-template-columns: repeat(3, minmax(0, max-content));
+  column-gap: var(--library-col-gap);
+  /* Was 1px — rows were nearly touching. Combined with the row's own tight
+     padding below, that's very likely the real source of "cramped," more
+     than the column gap. */
+  row-gap: 4px;
+  justify-content: center;
 }
 
 .bible-book-item {
@@ -1878,24 +2064,24 @@ body.dark .bible-library-greeting {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 8px;
+  padding: 7px 10px;
   border-radius: 5px;
   cursor: pointer;
   transition: background 0.1s;
 }
 
 .bible-book-row:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--surface-2);
 }
 .bible-book-row.studied:hover {
-  background: rgba(127, 119, 221, 0.06);
+  background: var(--accent-weak);
 }
 
 .bible-book-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #7f77dd;
+  background: var(--accent);
   flex-shrink: 0;
   opacity: 0;
   transition: opacity 0.15s;
@@ -1906,8 +2092,8 @@ body.dark .bible-library-greeting {
 }
 
 .bible-book-name {
-  font-size: 13px;
-  color: #aaa;
+  font-size: 15px;
+  color: var(--text);
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
@@ -1916,14 +2102,14 @@ body.dark .bible-library-greeting {
 }
 
 .bible-book-row.studied .bible-book-name {
-  color: #1a1a1a;
-  font-weight: 500;
+  color: var(--text);
+  font-weight: 600;
 }
 
 .bible-book-count {
   font-size: 11px;
-  color: #7f77dd;
-  background: rgba(127, 119, 221, 0.1);
+  color: var(--accent);
+  background: var(--accent-weak);
   border-radius: 10px;
   padding: 1px 6px;
   font-weight: 600;
@@ -1942,19 +2128,19 @@ body.dark .bible-library-greeting {
   padding: 4px 8px;
   border-radius: 5px;
   font-size: 12px;
-  color: #555;
+  color: var(--text-muted);
   cursor: pointer;
   transition: background 0.1s;
 }
 
 .bible-passage-item:hover {
-  background: rgba(127, 119, 221, 0.07);
-  color: #7f77dd;
+  background: var(--accent-weaker);
+  color: var(--accent);
 }
 
 .bible-passage-sessions {
   font-size: 10px;
-  color: #bbb;
+  color: var(--text-faint);
   white-space: nowrap;
 }
 
@@ -1963,8 +2149,8 @@ body.dark .bible-library-greeting {
   position: absolute;
   top: calc(100% + 2px);
   left: 18px;
-  background: #fff;
-  border: 0.5px solid #e0ddd8;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
   border-radius: 9px;
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.1),
@@ -1983,12 +2169,12 @@ body.dark .bible-library-greeting {
   cursor: pointer;
   transition: background 0.08s;
   font-size: 13px;
-  color: #333;
+  color: var(--text);
 }
 
 .tag-dropdown-item:hover,
 .tag-dropdown-item.active {
-  background: #f5f3ff;
+  background: var(--accent-weak);
 }
 
 .tag-dropdown-swatch {
@@ -1999,16 +2185,16 @@ body.dark .bible-library-greeting {
 }
 
 .swatch-observation {
-  background: #7f77dd;
+  background: var(--accent);
 }
 .swatch-historical {
-  background: #1d9e75;
+  background: var(--cat-historical);
 }
 .swatch-application {
-  background: #ba7517;
+  background: var(--cat-application);
 }
 .swatch-personal {
-  background: #d4537e;
+  background: var(--cat-personal);
 }
 
 .tag-dropdown-label {
@@ -2017,12 +2203,12 @@ body.dark .bible-library-greeting {
 
 /* ─── Reference input error ──────────────────────────────────────────────────── */
 .reference-input--error {
-  color: #d4537e;
+  color: var(--cat-personal);
 }
 .reference-input-error {
   margin-top: 6px;
   font-size: 12px;
-  color: #d4537e;
+  color: var(--cat-personal);
 }
 
 /* ─── Note discoverability: first-use hint + mobile chip row ──────────────────── */
@@ -2035,8 +2221,8 @@ body.dark .bible-library-greeting {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  background: #fff;
-  border: 0.5px solid #e0ddd8;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
   border-radius: 10px;
   padding: 12px 14px;
   box-shadow:
@@ -2048,18 +2234,18 @@ body.dark .bible-library-greeting {
 .note-hint-text {
   font-size: 12.5px;
   line-height: 1.5;
-  color: #555;
+  color: var(--text-muted);
 }
 .note-hint-text strong {
-  color: #7f77dd;
+  color: var(--accent);
   font-weight: 600;
 }
 .note-hint-dismiss {
   flex-shrink: 0;
   align-self: center;
   border: none;
-  background: #f5f3ff;
-  color: #7f77dd;
+  background: var(--accent-weak);
+  color: var(--accent);
   font-family: inherit;
   font-size: 12px;
   font-weight: 500;
@@ -2086,9 +2272,9 @@ body.dark .bible-library-greeting {
 }
 .note-chip {
   flex-shrink: 0;
-  border: 0.5px solid #e0ddd8;
+  border: 0.5px solid var(--border);
   background: #faf9f6;
-  color: #555;
+  color: var(--text-muted);
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
@@ -2110,8 +2296,12 @@ body.dark .bible-library-greeting {
 
 .book-detail-header {
   padding: 24px 36px 16px;
-  border-bottom: 0.5px solid #edebe6;
+  border-bottom: 0.5px solid var(--border);
   flex-shrink: 0;
+}
+.book-detail-header-inner {
+  max-width: var(--shell-max);
+  margin: 0 auto;
 }
 
 .book-detail-back {
@@ -2119,7 +2309,7 @@ body.dark .bible-library-greeting {
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: #aaa;
+  color: var(--text-muted);
   background: none;
   border: none;
   cursor: pointer;
@@ -2130,30 +2320,35 @@ body.dark .bible-library-greeting {
 }
 
 .book-detail-back:hover {
-  color: #7f77dd;
+  color: var(--accent);
 }
 
 .book-detail-title {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text);
   letter-spacing: -0.4px;
   margin-bottom: 4px;
 }
 
 .book-detail-meta {
   font-size: 12px;
-  color: #aaa;
+  color: var(--text-muted);
 }
 
 /* Chapter selector */
 .chapter-selector-wrap {
+  padding: 8px 16px;
+  border-bottom: 0.5px solid var(--border);
+  flex-shrink: 0;
+}
+.chapter-selector-wrap-inner {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 8px 16px;
-  border-bottom: 0.5px solid #edebe6;
-  flex-shrink: 0;
+  max-width: var(--shell-max);
+  margin: 0 auto;
 }
 
 .chapter-nav-btn {
@@ -2163,7 +2358,7 @@ body.dark .bible-library-greeting {
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: #bbb;
+  color: var(--text-faint);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -2174,7 +2369,7 @@ body.dark .bible-library-greeting {
 }
 .chapter-nav-btn:hover {
   background: #f0eee9;
-  color: #555;
+  color: var(--text-muted);
 }
 
 .chapter-selector {
@@ -2194,10 +2389,10 @@ body.dark .bible-library-greeting {
   min-width: 32px;
   height: 28px;
   border-radius: 6px;
-  border: 0.5px solid #e0ddd8;
+  border: 0.5px solid var(--border);
   background: transparent;
   font-size: 12px;
-  color: #aaa;
+  color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
   display: flex;
@@ -2210,31 +2405,31 @@ body.dark .bible-library-greeting {
 }
 
 .chapter-pill:hover {
-  background: #f5f4f1;
-  color: #555;
+  background: var(--surface-2);
+  color: var(--text-muted);
 }
 
 .chapter-pill.active {
-  background: #7f77dd;
-  border-color: #7f77dd;
-  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
   font-weight: 600;
 }
 
 .chapter-pill.has-notes {
-  color: #7f77dd;
-  border-color: #c4c0f0;
+  color: var(--accent);
+  border-color: var(--accent-weak);
 }
 
 .chapter-pill.active.has-notes {
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .chapter-note-dot {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #7f77dd;
+  background: var(--accent);
   flex-shrink: 0;
 }
 
@@ -2249,7 +2444,7 @@ body.dark .bible-library-greeting {
   width: 6px;
 }
 .book-detail-content::-webkit-scrollbar-thumb {
-  background: #ddd;
+  background: var(--border);
   border-radius: 3px;
 }
 
@@ -2265,14 +2460,17 @@ body.dark .bible-library-greeting {
 }
 
 .book-chapter-content {
-  max-width: 640px;
+  max-width: 720px;
   margin: 0 auto;
 }
+/* Rail-present case needs the scripture column plus the 260px rail + its
+   28px gap (see .scripture-grid) — keep it close to --shell-max rather than
+   letting it grow past the width the header/nav above it settled on. */
 .book-chapter-content:has(.scripture-grid:not(.no-rail)) {
   max-width: 940px;
 }
 .reading-content:has(.scripture-grid:not(.no-rail)) {
-  max-width: 980px;
+  max-width: 940px;
 }
 
 .btn-study-chapter {
@@ -2280,9 +2478,9 @@ body.dark .bible-library-greeting {
   align-items: center;
   gap: 5px;
   font-size: 12px;
-  color: #7f77dd;
-  background: rgba(127, 119, 221, 0.07);
-  border: 0.5px solid #c4c0f0;
+  color: var(--accent);
+  background: var(--accent-weaker);
+  border: 0.5px solid var(--accent-weak);
   border-radius: 6px;
   padding: 4px 10px;
   cursor: pointer;
@@ -2292,7 +2490,7 @@ body.dark .bible-library-greeting {
 }
 
 .btn-study-chapter:hover {
-  background: rgba(127, 119, 221, 0.13);
+  background: var(--accent-weak);
 }
 
 /* ─── Animations ────────────────────────────────────────────────────────────── */
@@ -2325,13 +2523,13 @@ body.dark .bible-library-greeting {
 .welcome-title {
   font-size: 22px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text);
   letter-spacing: -0.3px;
 }
 
 .welcome-sub {
   font-size: 14px;
-  color: #999;
+  color: var(--text-muted);
   text-align: center;
   max-width: 320px;
   line-height: 1.6;
@@ -2340,8 +2538,8 @@ body.dark .bible-library-greeting {
 .welcome-cta {
   margin-top: 8px;
   padding: 10px 20px;
-  background: #7f77dd;
-  color: #fff;
+  background: var(--accent);
+  color: var(--on-accent);
   border: none;
   border-radius: 8px;
   font-size: 14px;
@@ -2368,7 +2566,7 @@ body.dark .bible-library-greeting {
 }
 
 .dialog-card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 12px;
   padding: 24px;
   min-width: 300px;
@@ -2382,13 +2580,13 @@ body.dark .bible-library-greeting {
 .dialog-title {
   font-size: 15px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text);
   margin-bottom: 8px;
 }
 
 .dialog-message {
   font-size: 13px;
-  color: #666;
+  color: var(--text-muted);
   line-height: 1.5;
   margin-bottom: 20px;
   word-break: break-word;
@@ -2412,8 +2610,8 @@ body.dark .bible-library-greeting {
 }
 
 .dialog-btn-primary {
-  background: #7f77dd;
-  color: #fff;
+  background: var(--accent);
+  color: var(--on-accent);
 }
 .dialog-btn-primary:hover {
   opacity: 0.88;
@@ -2429,11 +2627,11 @@ body.dark .bible-library-greeting {
 
 .dialog-btn-ghost {
   background: transparent;
-  color: #666;
+  color: var(--text-muted);
   border: 0.5px solid #ddd;
 }
 .dialog-btn-ghost:hover {
-  background: #f5f4f1;
+  background: var(--surface-2);
 }
 
 @keyframes slideUp {
@@ -2469,7 +2667,7 @@ body.dark .bible-library-greeting {
   border-radius: 4px;
   border: none;
   background: transparent;
-  color: #aaa;
+  color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
   transition: all 0.1s;
@@ -2479,7 +2677,7 @@ body.dark .bible-library-greeting {
 
 .se-icon-btn:hover {
   background: rgba(0, 0, 0, 0.06);
-  color: #555;
+  color: var(--text-muted);
 }
 .se-icon-btn.se-icon-danger:hover {
   background: rgba(232, 61, 61, 0.08);
@@ -2488,11 +2686,11 @@ body.dark .bible-library-greeting {
 /* Inline quick-edit is the primary/default note action; give it a resting
    tint (not just on hover) so it reads as the emphasised choice. */
 .se-icon-btn.se-icon-primary {
-  color: #7f77dd;
+  color: var(--accent);
 }
 .se-icon-btn.se-icon-primary:hover {
-  background: rgba(127, 119, 221, 0.1);
-  color: #6f66d4;
+  background: var(--accent-weak);
+  color: var(--accent-hover);
 }
 
 .note-edit-textarea {
@@ -2504,7 +2702,7 @@ body.dark .bible-library-greeting {
   font-family: inherit;
   font-size: 14px;
   line-height: 1.6;
-  color: #1a1a1a;
+  color: var(--text);
   resize: none;
   padding: 0;
   margin: 0;
@@ -2525,13 +2723,13 @@ body.dark .bible-library-greeting {
   cursor: pointer;
   font-size: 12px;
   font-family: inherit;
-  color: #7f77dd;
+  color: var(--accent);
   padding: 2px 6px;
   border-radius: 4px;
   transition: background 0.1s;
 }
 .note-edit-save:hover {
-  background: rgba(127, 119, 221, 0.12);
+  background: var(--accent-weak);
 }
 
 .note-edit-cancel {
@@ -2540,14 +2738,14 @@ body.dark .bible-library-greeting {
   cursor: pointer;
   font-size: 12px;
   font-family: inherit;
-  color: #999;
+  color: var(--text-muted);
   padding: 2px 6px;
   border-radius: 4px;
   transition: background 0.1s;
 }
 .note-edit-cancel:hover {
   background: rgba(0, 0, 0, 0.05);
-  color: #555;
+  color: var(--text-muted);
 }
 
 /* ─── Version chip ──────────────────────────────────────────────────────────── */
@@ -2558,7 +2756,7 @@ body.dark .bible-library-greeting {
   padding: 3px 8px;
   font-size: 11px;
   font-family: inherit;
-  color: #bbbbbb;
+  color: var(--text-faint);
   background: transparent;
   border: none;
   border-radius: 5px;
@@ -2570,7 +2768,7 @@ body.dark .bible-library-greeting {
 }
 .wn-version-chip:hover {
   background: rgba(0, 0, 0, 0.05);
-  color: #555;
+  color: var(--text-muted);
 }
 
 /* ─── Settings modal ─────────────────────────────────────────────────────────── */
@@ -2586,8 +2784,8 @@ body.dark .bible-library-greeting {
 }
 
 .smodal-panel {
-  background: #ffffff;
-  border: 1px solid #e0ddd8;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 14px;
   width: 420px;
   max-height: 90vh;
@@ -2607,13 +2805,13 @@ body.dark .bible-library-greeting {
   align-items: center;
   justify-content: space-between;
   padding: 18px 20px 14px;
-  border-bottom: 1px solid #f0ede8;
+  border-bottom: 1px solid var(--surface-2);
 }
 
 .smodal-title {
   font-size: 15px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text);
   letter-spacing: -0.2px;
 }
 
@@ -2626,7 +2824,7 @@ body.dark .bible-library-greeting {
   border: none;
   background: transparent;
   border-radius: 6px;
-  color: #aaa;
+  color: var(--text-muted);
   cursor: pointer;
   transition:
     background 0.12s,
@@ -2634,7 +2832,7 @@ body.dark .bible-library-greeting {
 }
 .smodal-close:hover {
   background: rgba(0, 0, 0, 0.06);
-  color: #555;
+  color: var(--text-muted);
 }
 
 .smodal-section {
@@ -2644,7 +2842,7 @@ body.dark .bible-library-greeting {
 .smodal-section-label {
   font-size: 11px;
   font-weight: 600;
-  color: #999;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-bottom: 10px;
@@ -2652,8 +2850,99 @@ body.dark .bible-library-greeting {
 
 .smodal-divider {
   height: 1px;
-  background: #f0ede8;
+  background: var(--surface-2);
   margin: 0;
+}
+
+/* ─── Theme picker (Settings) ──────────────────────────────────────────────
+   Independent of light/dark: picks the color + reading-type direction (see
+   useTheme.ts / tokens.css [data-theme]). Each swatch previews its own theme's
+   canvas/accent colors regardless of the app's currently active theme. */
+.theme-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.theme-swatch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition:
+    border-color 0.12s,
+    background 0.12s,
+    transform 0.12s;
+}
+
+.theme-swatch:hover {
+  background: var(--surface-2);
+}
+
+.theme-swatch.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.theme-swatch-preview {
+  position: relative;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.theme-preview-accent {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+/* Each swatch renders a static preview of its OWN theme's palette, not the
+   currently-active one — so all four are comparable at a glance. */
+.theme-preview-berean { background: #f4f0e8; }
+.theme-preview-berean .theme-preview-accent { background: #6b62d6; }
+.theme-preview-scholarly { background: #fbfaf8; }
+.theme-preview-scholarly .theme-preview-accent { background: #6b62d6; }
+.theme-preview-paper { background: #f3efe7; }
+.theme-preview-paper .theme-preview-accent { background: #b5732a; }
+.theme-preview-modern { background: #f7f8fa; }
+.theme-preview-modern .theme-preview-accent { background: #5b57e0; }
+
+.theme-swatch-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.theme-swatch-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.theme-swatch-blurb {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.theme-swatch-check {
+  flex-shrink: 0;
+  color: var(--accent);
 }
 
 /* Translation list */
@@ -2679,10 +2968,10 @@ body.dark .bible-library-greeting {
   width: 100%;
 }
 .smodal-translation-row:hover {
-  background: #f7f6f3;
+  background: var(--bg);
 }
 .smodal-translation-row.active {
-  background: rgba(127, 119, 221, 0.07);
+  background: var(--accent-weaker);
   border-color: rgba(127, 119, 221, 0.3);
 }
 
@@ -2690,7 +2979,7 @@ body.dark .bible-library-greeting {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 1.5px solid #ccc;
+  border: 1.5px solid var(--border-strong);
   flex-shrink: 0;
   margin-top: 1px;
   display: flex;
@@ -2699,14 +2988,14 @@ body.dark .bible-library-greeting {
   transition: border-color 0.1s;
 }
 .smodal-translation-row.active .smodal-translation-radio {
-  border-color: #7f77dd;
+  border-color: var(--accent);
 }
 
 .smodal-radio-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #7f77dd;
+  background: var(--accent);
 }
 
 .smodal-translation-info {
@@ -2719,7 +3008,7 @@ body.dark .bible-library-greeting {
 .smodal-translation-abbr {
   font-size: 13px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text);
   line-height: 1.3;
 }
 .smodal-translation-row.active .smodal-translation-abbr {
@@ -2728,13 +3017,13 @@ body.dark .bible-library-greeting {
 
 .smodal-translation-name {
   font-size: 12px;
-  color: #666;
+  color: var(--text-muted);
   line-height: 1.3;
 }
 
 .smodal-translation-desc {
   font-size: 11px;
-  color: #aaa;
+  color: var(--text-muted);
   line-height: 1.4;
   margin-top: 2px;
 }
@@ -2743,8 +3032,8 @@ body.dark .bible-library-greeting {
 .smodal-esv-key {
   margin-top: 12px;
   padding: 12px 14px;
-  background: #f7f6f3;
-  border: 1px solid #e8e5e0;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 9px;
 }
 
@@ -2754,13 +3043,13 @@ body.dark .bible-library-greeting {
   justify-content: space-between;
   font-size: 12px;
   font-weight: 500;
-  color: #555;
+  color: var(--text-muted);
   margin-bottom: 8px;
 }
 
 .smodal-esv-link {
   font-size: 11px;
-  color: #7f77dd;
+  color: var(--accent);
   text-decoration: none;
   font-weight: 400;
 }
@@ -2773,24 +3062,24 @@ body.dark .bible-library-greeting {
   box-sizing: border-box;
   font-size: 12px;
   padding: 7px 10px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: #fff;
-  color: #444;
+  background: var(--surface);
+  color: var(--text-muted);
   outline: none;
 }
 .smodal-esv-input:focus {
-  border-color: #7f77dd;
-  box-shadow: 0 0 0 2px rgba(127, 119, 221, 0.15);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
 }
 .smodal-esv-input::placeholder {
-  color: #bbb;
+  color: var(--text-faint);
 }
 
 /* Vault section */
 .smodal-vault-desc {
   font-size: 12px;
-  color: #888;
+  color: var(--text-muted);
   line-height: 1.5;
   margin: 0 0 10px;
 }
@@ -2798,9 +3087,9 @@ body.dark .bible-library-greeting {
 .smodal-vault-path {
   font-family: ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, monospace;
   font-size: 11px;
-  color: #555;
-  background: #f5f4f1;
-  border: 1px solid #e0ddd8;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: 7px;
   padding: 8px 12px;
   overflow: hidden;
@@ -2818,18 +3107,18 @@ body.dark .bible-library-greeting {
   font-size: 12px;
   font-weight: 500;
   padding: 6px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 7px;
   background: transparent;
-  color: #555;
+  color: var(--text-muted);
   cursor: pointer;
   transition:
     border-color 0.12s,
     color 0.12s;
 }
 .smodal-vault-btn:hover {
-  border-color: #7f77dd;
-  color: #7f77dd;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* Footer */
@@ -2860,68 +3149,68 @@ body.dark .bible-library-greeting {
 
 /* Dark mode */
 body.dark .smodal-panel {
-  background: #242428;
-  border-color: #333;
+  background: var(--surface-2);
+  border-color: var(--border);
 }
 body.dark .smodal-header {
-  border-color: #333;
+  border-color: var(--border);
 }
 body.dark .smodal-title {
-  color: #f0ede8;
+  color: var(--text);
 }
 body.dark .smodal-close:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #ccc;
+  color: var(--text-faint);
 }
 body.dark .smodal-divider {
-  background: #333;
+  background: var(--border);
 }
 body.dark .smodal-translation-row:hover {
   background: rgba(255, 255, 255, 0.04);
 }
 body.dark .smodal-translation-row.active {
-  background: rgba(127, 119, 221, 0.12);
+  background: var(--accent-weak);
   border-color: rgba(127, 119, 221, 0.35);
 }
 body.dark .smodal-translation-abbr {
   color: #eee;
 }
 body.dark .smodal-translation-row.active .smodal-translation-abbr {
-  color: #9d95e5;
+  color: var(--accent);
 }
 body.dark .smodal-translation-name {
-  color: #888;
+  color: var(--text-muted);
 }
 body.dark .smodal-translation-desc {
-  color: #666;
+  color: var(--text-muted);
 }
 body.dark .smodal-esv-key {
-  background: #1e1e22;
-  border-color: #333;
+  background: var(--surface);
+  border-color: var(--border);
 }
 body.dark .smodal-esv-label {
-  color: #aaa;
+  color: var(--text-muted);
 }
 body.dark .smodal-esv-input {
-  background: #2a2a2e;
+  background: var(--surface-2);
   border-color: #444;
-  color: #ccc;
+  color: var(--text-faint);
 }
 body.dark .smodal-vault-path {
-  background: #1e1e22;
-  border-color: #333;
-  color: #999;
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-muted);
 }
 body.dark .smodal-vault-btn {
   border-color: #444;
-  color: #aaa;
+  color: var(--text-muted);
 }
 body.dark .smodal-vault-btn:hover {
-  border-color: #7f77dd;
-  color: #9d95e5;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 body.dark .smodal-vault-desc {
-  color: #666;
+  color: var(--text-muted);
 }
 
 .wn-dot {
@@ -2929,7 +3218,7 @@ body.dark .smodal-vault-desc {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #7f77dd;
+  background: var(--accent);
   flex-shrink: 0;
 }
 
@@ -2956,7 +3245,7 @@ body.dark .smodal-vault-desc {
 }
 
 .wn-modal {
-  background: #ffffff;
+  background: var(--surface);
   border: 0.5px solid rgba(0, 0, 0, 0.1);
   border-radius: 12px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.14);
@@ -2992,14 +3281,14 @@ body.dark .smodal-vault-desc {
   font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: #7f77dd;
+  color: var(--accent);
   margin-bottom: 3px;
 }
 
 .wn-subtitle {
   font-size: 16px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text);
 }
 
 .wn-close {
@@ -3011,7 +3300,7 @@ body.dark .smodal-vault-desc {
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: #aaa;
+  color: var(--text-muted);
   cursor: pointer;
   transition:
     background 0.1s,
@@ -3020,7 +3309,7 @@ body.dark .smodal-vault-desc {
 }
 .wn-close:hover {
   background: rgba(0, 0, 0, 0.06);
-  color: #555;
+  color: var(--text-muted);
 }
 
 .wn-body {
@@ -3041,15 +3330,15 @@ body.dark .smodal-vault-desc {
 .wn-version {
   font-size: 12px;
   font-weight: 600;
-  color: #1a1a1a;
-  background: rgba(127, 119, 221, 0.1);
+  color: var(--text);
+  background: var(--accent-weak);
   padding: 2px 7px;
   border-radius: 4px;
 }
 
 .wn-date {
   font-size: 11px;
-  color: #aaa;
+  color: var(--text-muted);
 }
 
 .wn-notes {
@@ -3063,7 +3352,7 @@ body.dark .smodal-vault-desc {
 
 .wn-notes li {
   font-size: 13px;
-  color: #444;
+  color: var(--text-muted);
   padding-left: 14px;
   position: relative;
   line-height: 1.5;
@@ -3073,7 +3362,7 @@ body.dark .smodal-vault-desc {
   content: '·';
   position: absolute;
   left: 3px;
-  color: #7f77dd;
+  color: var(--accent);
   font-weight: 700;
 }
 
@@ -3094,19 +3383,19 @@ body.dark .smodal-vault-desc {
   width: 12px;
   height: 12px;
   border: 1.5px solid rgba(0, 0, 0, 0.12);
-  border-top-color: #999;
+  border-top-color: var(--text-muted);
   border-radius: 50%;
   animation: upd-spin 0.7s linear infinite;
 }
 body.dark .upd-spinner {
   border-color: rgba(255, 255, 255, 0.12);
-  border-top-color: #888;
+  border-top-color: var(--text-muted);
 }
 
 .upd-check {
   display: inline-flex;
   align-items: center;
-  color: #1d9e75;
+  color: var(--cat-historical);
 }
 
 .upd-btn {
@@ -3125,23 +3414,23 @@ body.dark .upd-spinner {
 }
 .upd-btn-refresh {
   background: transparent;
-  color: #bbb;
+  color: var(--text-faint);
 }
 .upd-btn-refresh:hover {
   background: rgba(0, 0, 0, 0.06);
-  color: #777;
+  color: var(--text-muted);
 }
 body.dark .upd-btn-refresh {
-  color: #555;
+  color: var(--text-muted);
 }
 body.dark .upd-btn-refresh:hover {
   background: rgba(255, 255, 255, 0.07);
-  color: #999;
+  color: var(--text-muted);
 }
 
 .upd-btn-ready {
-  background: #e07b20;
-  color: #fff;
+  background: var(--cat-application);
+  color: var(--on-accent);
 }
 .upd-btn-ready:hover {
   background: #c96d18;
@@ -3157,7 +3446,7 @@ body.dark .upd-btn-refresh:hover {
 /* Popover — position:fixed applied inline to escape sidebar overflow:hidden */
 .upd-popover {
   width: 210px;
-  background: #fff;
+  background: var(--surface);
   border: 0.5px solid rgba(0, 0, 0, 0.12);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.16);
@@ -3172,17 +3461,17 @@ body.dark .upd-btn-refresh:hover {
   transform: translateX(-50%);
   width: 10px;
   height: 6px;
-  background: #fff;
+  background: var(--surface);
   clip-path: polygon(0 0, 100% 0, 50% 100%);
   border-top: none;
 }
 body.dark .upd-popover {
-  background: #2a2a2a;
+  background: var(--surface-2);
   border-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 body.dark .upd-popover::after {
-  background: #2a2a2a;
+  background: var(--surface-2);
 }
 
 .upd-popover-title {
@@ -3197,11 +3486,11 @@ body.dark .upd-popover-title {
 
 .upd-popover-sub {
   font-size: 11px;
-  color: #888;
+  color: var(--text-muted);
   margin-bottom: 10px;
 }
 body.dark .upd-popover-sub {
-  color: #777;
+  color: var(--text-muted);
 }
 
 .upd-popover-actions {
@@ -3219,22 +3508,22 @@ body.dark .upd-popover-sub {
   cursor: pointer;
 }
 .upd-popover-btn-primary {
-  background: #e07b20;
-  color: #fff;
+  background: var(--cat-application);
+  color: var(--on-accent);
 }
 .upd-popover-btn-primary:hover {
   background: #c96d18;
 }
 .upd-popover-btn-ghost {
   background: rgba(0, 0, 0, 0.06);
-  color: #555;
+  color: var(--text-muted);
 }
 .upd-popover-btn-ghost:hover {
   background: rgba(0, 0, 0, 0.1);
 }
 body.dark .upd-popover-btn-ghost {
   background: rgba(255, 255, 255, 0.08);
-  color: #aaa;
+  color: var(--text-muted);
 }
 body.dark .upd-popover-btn-ghost:hover {
   background: rgba(255, 255, 255, 0.13);
@@ -3242,7 +3531,7 @@ body.dark .upd-popover-btn-ghost:hover {
 
 /* Amber dot on version chip when update is ready */
 .wn-dot-update {
-  background: #e07b20;
+  background: var(--cat-application);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -3300,19 +3589,30 @@ body.dark .upd-popover-btn-ghost:hover {
   .topnav-search {
     display: none;
   }
+  /* Was transparent on the header's own --surface-2 background, so it
+     visually vanished into its own container — the most-flagged version of
+     "hard to notice". A distinct fill (--surface, one step lighter) plus a
+     hairline border and resting shadow makes it read as a real, discrete
+     tappable chip instead of a stray icon glyph. */
   .topnav-search-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     margin-left: auto;
-    border: none;
-    background: transparent;
-    border-radius: 8px;
-    color: #555;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--elev-1);
+    border-radius: 50%;
+    color: var(--text-muted);
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    transition: background 0.12s, color 0.12s;
+  }
+  .topnav-search-btn:active {
+    background: var(--surface-2);
+    color: var(--accent);
   }
 
   /* Dedicated mobile search surface: a full-screen overlay anchored to the top,
@@ -3346,7 +3646,7 @@ body.dark .upd-popover-btn-ghost:hover {
     background: transparent;
     font-family: inherit;
     font-size: 14px;
-    color: #7f77dd;
+    color: var(--accent);
     cursor: pointer;
   }
   .global-search--surface .search-results {
@@ -3368,8 +3668,8 @@ body.dark .upd-popover-btn-ghost:hover {
     right: 0;
     height: calc(56px + env(safe-area-inset-bottom));
     padding-bottom: env(safe-area-inset-bottom);
-    background: #f5f4f1;
-    border-top: 0.5px solid #e0ddd8;
+    background: var(--surface-2);
+    border-top: 0.5px solid var(--border);
     z-index: 300;
   }
 
@@ -3382,14 +3682,28 @@ body.dark .upd-popover-btn-ghost:hover {
     gap: 3px;
     border: none;
     background: transparent;
-    color: #888;
+    color: var(--text-muted);
     font-family: inherit;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
   .bottomnav .nav-tab.active {
-    color: #7f77dd;
+    color: var(--accent);
   }
+
+  /* Opacity-based priority de-emphasis for Journal/Profile was tried and
+     reverted — didn't land as a good strategy. Revisit mobile nav priority
+     (Bible = home, Journal = rare, Study = action) as a fresh pass later
+     rather than iterating further on this mechanism now. See BACKLOG. */
+
+  /* Study's distinct "this is the compose action" signal now lives entirely
+     in its icon (a fixed-color filled badge, not currentColor — see
+     studyIcon in NavBar.tsx), not in text color. Making the label
+     permanently accent-colored made it visually indistinguishable from
+     .nav-tab.active — Study looked "currently selected" even while sitting
+     on Bible/Journal/Profile. The label now follows the exact same
+     muted-at-rest / accent-when-actually-active rule as its siblings, so
+     "active" only ever means one thing across all four tabs. */
 
   .bottomnav .nav-tab-label {
     font-size: 10px;
@@ -3425,11 +3739,31 @@ body.dark .upd-popover-btn-ghost:hover {
     flex-direction: column;
     max-height: 34vh;
     min-height: 0;
-    border-bottom: 0.5px solid #e8e6e1;
-    background: #f8f7f4;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--surface-2);
   }
   .study-layout--scripture-expanded .study-right {
     max-height: 62vh;
+  }
+  /* Before any reference is committed there's nothing to peek at — the 34vh
+     panel was reserving real vertical space just to show placeholder copy
+     ("Type a reference...") that reads like an invitation to type IN that
+     spot, when the actual input is the reference field below. Collapsed to
+     just the header bar until a passage loads; growing to the normal peek
+     the moment one does is a direct, expected result of the user's own
+     Enter-to-load action, not a surprise pop-in. */
+  .study-right--empty {
+    max-height: none;
+  }
+  .study-right--empty .study-scripture-body {
+    display: none;
+  }
+  .study-right--empty .study-scripture-toggle {
+    cursor: default;
+  }
+  .study-right--empty .study-scripture-toggle-hint,
+  .study-right--empty .study-scripture-chevron {
+    display: none;
   }
   /* The scrollable scripture body inside the pinned panel. */
   .study-scripture-body {
@@ -3445,13 +3779,13 @@ body.dark .upd-popover-btn-ghost:hover {
     gap: 8px;
     width: 100%;
     border: none;
-    border-bottom: 0.5px solid #edebe6;
-    background: rgba(248, 247, 244, 0.96);
+    border-bottom: 0.5px solid var(--border);
+    background: var(--surface-2);
     padding: 10px 18px;
     font-family: inherit;
     font-size: 13px;
     font-weight: 600;
-    color: #444;
+    color: var(--text-muted);
     cursor: pointer;
     text-align: left;
     flex-shrink: 0;
@@ -3465,11 +3799,11 @@ body.dark .upd-popover-btn-ghost:hover {
   .study-scripture-toggle-hint {
     font-size: 11px;
     font-weight: 400;
-    color: #aaa;
+    color: var(--text-muted);
   }
   .study-scripture-chevron {
     flex-shrink: 0;
-    color: #999;
+    color: var(--text-muted);
     transition: transform 0.15s ease;
   }
   .study-scripture-chevron.expanded {
@@ -3487,21 +3821,31 @@ body.dark .upd-popover-btn-ghost:hover {
   .passage-heading-input {
     font-size: 20px;
   }
+  /* .study-actions (Save & Read/Next) already sits in normal flow right after
+     this, not floating over it — this padding isn't footer clearance. Actual
+     keyboard-open clearance is handled dynamically by scrollLineIntoView's
+     keyboardAware mode (visualViewport-based, in NoteEditor.tsx), not by a
+     static reservation. 180px was oversized for that: with only a couple of
+     lines typed it left a large dead gap below them that read as "the note
+     box is tiny" rather than "there's room to keep typing." */
   .notes-list {
-    padding: 14px 18px 180px;
+    padding: 14px 18px 64px;
   }
-  /* Chip row: sticky just above the keyboard/action bar so tap-to-insert stays
-     reachable while typing. Only shown on mobile. */
+  .hint-text-desktop {
+    display: none;
+  }
+  .hint-text-mobile {
+    display: inline;
+  }
+  /* Now a real flex sibling of .notes-list in .study-left (not its scrolled
+     last child) — always sits directly above .study-actions, never moves as
+     note content grows/shrinks. Only shown on mobile. */
   .note-chip-row {
     display: flex;
-    position: sticky;
-    bottom: 0;
-    margin: 0 -18px;
-    padding: 8px 18px calc(8px + env(safe-area-inset-bottom));
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-top: 0.5px solid #edebe6;
+    flex-shrink: 0;
+    padding: 8px 18px;
+    background: var(--surface-2);
+    border-top: 0.5px solid var(--border);
   }
   .study-actions {
     padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
@@ -3557,7 +3901,7 @@ body.dark .upd-popover-btn-ghost:hover {
     display: block;
     padding-left: 24px;
     margin: 4px 0 8px;
-    border-top: 0.5px solid #edebe6;
+    border-top: 0.5px solid var(--border);
     padding-top: 6px;
   }
   .verse-span-bracket {
@@ -3712,167 +4056,167 @@ body.dark .upd-popover-btn-ghost:hover {
 
 /* Dark mode for the nav chrome. */
 body.dark .topnav {
-  background: #100f16;
+  background: var(--bg);
   border-bottom-color: rgba(255, 255, 255, 0.07);
 }
 body.dark .topnav-appname {
-  color: #eceae4;
+  color: var(--text);
 }
 body.dark .workspace-btn {
-  color: #8a8890;
+  color: var(--text-muted);
 }
 body.dark .workspace-btn:hover {
   background: rgba(255, 255, 255, 0.06);
-  color: #ccc;
+  color: var(--text-faint);
 }
 body.dark .topnav-tabs .nav-tab {
-  color: #8a8890;
+  color: var(--text-muted);
 }
 body.dark .topnav-tabs .nav-tab:hover {
   background: rgba(255, 255, 255, 0.05);
-  color: #ccc;
+  color: var(--text-faint);
 }
 body.dark .topnav-tabs .nav-tab.active {
-  background: rgba(127, 119, 221, 0.15);
-  color: #9d97e8;
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 body.dark .avatar-btn {
-  background: #6b64c0;
+  background: var(--accent-hover);
 }
 body.dark .nav-menu {
-  background: #1e1c28;
-  border-color: #333;
+  background: var(--surface);
+  border-color: var(--border);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
 }
 body.dark .nav-menu-name {
-  color: #eceae4;
+  color: var(--text);
 }
 body.dark .nav-menu-item {
-  color: #b8b6be;
+  color: var(--text-muted);
 }
 body.dark .nav-menu-item:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.06);
 }
 body.dark .nav-menu-item.active {
-  color: #9d97e8;
+  color: var(--accent);
 }
 body.dark .nav-menu-divider {
   background: rgba(255, 255, 255, 0.08);
 }
 body.dark .nav-menu-hint {
-  color: #55535a;
+  color: var(--text-faint);
 }
 body.dark .bottomnav {
-  background: #100f16;
+  background: var(--bg);
   border-top-color: rgba(255, 255, 255, 0.07);
 }
 body.dark .bottomnav .nav-tab {
-  color: #55535a;
+  color: var(--text-faint);
 }
 body.dark .bottomnav .nav-tab.active {
-  color: #9d97e8;
+  color: var(--accent);
 }
 
 /* Dark mode — global search. */
 body.dark .topnav-search-btn {
-  color: #8a8890;
+  color: var(--text-muted);
 }
 body.dark .search-input {
-  background: #1e1c28;
-  border-color: #333;
-  color: #eceae4;
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
 }
 body.dark .search-input::placeholder {
-  color: #55535a;
+  color: var(--text-faint);
 }
 body.dark .search-input-icon {
-  color: #55535a;
+  color: var(--text-faint);
 }
 body.dark .search-input:focus {
-  border-color: #6b64c0;
-  box-shadow: 0 0 0 3px rgba(127, 119, 221, 0.18);
+  border-color: var(--accent-hover);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 body.dark .global-search--bar .search-results,
 body.dark .search-surface {
-  background: #1e1c28;
+  background: var(--surface);
 }
 body.dark .global-search--bar .search-results {
-  border-color: #333;
+  border-color: var(--border);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
 }
 body.dark .search-section + .search-section {
   border-top-color: rgba(255, 255, 255, 0.08);
 }
 body.dark .search-section-label {
-  color: #55535a;
+  color: var(--text-faint);
 }
 body.dark .search-result:hover {
   background: rgba(127, 119, 221, 0.14);
 }
 body.dark .search-result-ref {
-  color: #eceae4;
+  color: var(--text);
 }
 body.dark .search-result-kind {
-  color: #9d97e8;
+  color: var(--accent);
 }
 body.dark .search-result-note-preview {
-  color: #8a8890;
+  color: var(--text-muted);
 }
 body.dark .search-note-loading,
 body.dark .search-empty {
-  color: #6f6d76;
+  color: var(--text-faint);
 }
 body.dark .search-surface-close {
-  color: #9d97e8;
+  color: var(--accent);
 }
 
 body.dark .journal-page-title {
-  color: #eceae4;
+  color: var(--text);
 }
 body.dark .journal-page-hint {
-  color: #55535a;
+  color: var(--text-faint);
 }
 body.dark .journal-heading,
 body.dark .journal-entry-ref {
-  color: #eceae4;
+  color: var(--text);
 }
 body.dark .journal-sub,
 body.dark .journal-entry-preview {
-  color: #6f6d76;
+  color: var(--text-faint);
 }
 body.dark .journal-book-header {
-  color: #55535a;
+  color: var(--text-faint);
 }
 body.dark .journal-entry {
-  background: #1e1c28;
+  background: var(--surface);
   border-color: rgba(255, 255, 255, 0.07);
 }
 body.dark .journal-entry:hover {
   border-color: #4a4570;
-  background: #232030;
+  background: var(--surface-2);
 }
 body.dark .journal-entry-date {
-  color: #55535a;
+  color: var(--text-faint);
 }
 body.dark .journal-entry-count {
-  color: #9d97e8;
+  color: var(--accent);
 }
 body.dark .profile-page-avatar {
-  background: #6b64c0;
+  background: var(--accent-hover);
 }
 body.dark .profile-page-name {
-  color: #eceae4;
+  color: var(--text);
 }
 body.dark .profile-page-workspace {
-  color: #55535a;
+  color: var(--text-faint);
 }
 body.dark .profile-page-btn {
-  background: #1e1c28;
-  border-color: #333;
-  color: #b8b6be;
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-muted);
 }
 body.dark .profile-page-btn:hover:not(:disabled) {
-  background: #26242f;
+  background: var(--surface-2);
 }
 body.dark .profile-page-btn-signout {
   color: #e08a82;
@@ -3910,7 +4254,7 @@ body.dark .offline-pill {
   font-size: 13px;
   font-weight: 500;
   color: #fff;
-  background: #2a2a2e;
+  background: var(--surface-2);
   border-radius: 8px;
   padding: 10px 16px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
@@ -3919,8 +4263,8 @@ body.dark .offline-pill {
   animation: toastIn 0.15s ease;
 }
 body.dark .offline-toast {
-  background: #1a1a1e;
-  border: 1px solid #333;
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
 
 @keyframes toastIn {

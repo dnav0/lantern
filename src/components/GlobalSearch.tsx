@@ -97,6 +97,29 @@ export default function GlobalSearch({
     if (autoFocus) inputRef.current?.focus()
   }, [autoFocus])
 
+  // Desktop-only "/" shortcut (the always-present top-bar instance): jumps
+  // straight into search, like GitHub/Notion/Linear, without requiring a
+  // mouse trip to a small top-right box. Ignored while the user is already
+  // typing anywhere else (an input/textarea/contenteditable, or a modifier is
+  // held, e.g. Cmd+/ for something else) so it never hijacks a keystroke mid
+  // note-edit. The mobile 'surface' variant has its own dedicated full-screen
+  // entry point and doesn't need this.
+  useEffect(() => {
+    if (variant !== 'bar') return
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return
+      const target = e.target as HTMLElement | null
+      const tag = target?.tagName
+      const isEditable =
+        tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable
+      if (isEditable) return
+      e.preventDefault()
+      inputRef.current?.focus()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [variant])
+
   const choose = useCallback(
     (fn: () => void) => {
       fn()
@@ -217,6 +240,10 @@ export default function GlobalSearch({
           enterKeyHint="search"
           aria-label="Search references or notes"
         />
+        {/* Signals the "/" shortcut is available, the way Notion/Linear/GitHub
+            do — visible only at rest so it doesn't crowd the query while
+            typing. Purely a hint; the input itself works with or without it. */}
+        {variant === 'bar' && !query && <kbd className="search-input-kbd" aria-hidden="true">/</kbd>}
       </div>
       {showResults && results}
     </div>

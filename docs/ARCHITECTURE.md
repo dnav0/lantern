@@ -58,11 +58,28 @@ list), and book+chapter[:verse] jumps to the chapter; no verse text is searched;
 and (2) matching notes via the additive
 `BereanApi.searchNotes` (case-insensitive substring; `ilike` in Supabase, a
 workspace scan in the memory stub). On desktop it's an always-present top-bar
-input rendering a popover; on mobile a dedicated full-screen surface opened from
-a top-bar search button. The two sections are structurally decoupled (a
-synchronous `useMemo` for section 1, a debounced effect for section 2) so
-neither blocks the other. Scripture verse-text search and a Postgres FTS index
-are backlogged.
+input rendering a popover, focusable from anywhere via a `/` shortcut
+(ignored while already typing in an editable field); on mobile a dedicated
+full-screen surface opened from a top-bar search button. The two sections are
+structurally decoupled (a synchronous `useMemo` for section 1, a debounced
+effect for section 2) so neither blocks the other. Search is deliberately
+**not** promoted to a hero/landing element — a prominent search bar primes
+lookup-and-leave behavior, the opposite psychological posture from the
+Bible-centric home's "settle in and read" intent; the `/` affordance and a
+resting elevation shadow make it feel like a capable, fast tool without
+competing with the reading canvas for attention. Scripture verse-text search
+and a Postgres FTS index are backlogged.
+
+**Top-bar layout is a 3-column CSS grid** (`.topnav`, `grid-template-columns:
+1fr auto 1fr`), not flex-with-self-centering — the two outer columns
+(`.topnav-lead`, a new `.topnav-right` wrapper grouping the search box/button +
+avatar) are forced to equal width so the center destination tabs land on the
+true viewport center regardless of the two sides' own (unequal) content width.
+Each of the three children carries an explicit `grid-column` rather than
+relying on source-order auto-placement, because a `display:none` grid item
+(e.g. `.topnav-tabs` on mobile) is removed from the grid entirely and
+auto-placement would otherwise pack the remaining visible children into the
+wrong columns.
 
 ### Notes & studies model (the mental model behind the IA)
 
@@ -431,6 +448,8 @@ it the shell reflows for a phone (primary target: Android Chrome, ~360–430px).
 | Static `book_number` (1–66), drop Books table | Book metadata is static and belongs client-side; removes a table and its bookkeeping. |
 | BSB via helloao, cached forever in IndexedDB | Free, no key; immutable chapters cache indefinitely, so provider downtime doesn't affect reads. Provider interface keeps KJV/ESV addable. |
 | `platform/` abstraction + pure-web rule | Keeps the code portable to native wrappers; nothing under `src/` touches Node/Electron. |
+| Design-token layer (`src/assets/tokens.css`) | One source of truth for color/elevation/spacing/motion/type, consumed via `var()`. Default theme "Berean" (warm cream canvas + indigo accent + serif scripture) in `:root`; `body.dark` reassigns tokens (also warm-tinted, F1b). Live theme picker in Settings (`src/utils/useTheme.ts`, `[data-theme]` blocks in `tokens.css`) lets the user choose Berean / Scholarly Serif / Warm Paper / Quiet Modern independent of light/dark. Values chosen via a throwaway `design/mockup.html` compare-artifact + reading-UX/color research. F1–F3 (tokens, serif reading typography, contrast) landed; F4 (motion layer) is the deferred next pass — see BACKLOG. |
+| Overlap-match on "Start study on {ref}" | Selecting verses that overlap an existing passage reopens it (with its notes) instead of always starting a blank study — interval overlap, not exact-range match, so a note anchored anywhere inside the selection surfaces. A step short of the deferred "multiple study instances" feature, which would let a user deliberately start a *distinct* new effort over already-studied verses. |
 
 ## Risks & mitigations
 

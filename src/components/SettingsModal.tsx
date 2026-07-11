@@ -1,12 +1,15 @@
 import React, { useCallback, useState } from 'react'
 import { useApi } from '../api/context'
 import { exportAllNotesAsZip } from '../platform/export'
+import { THEMES, type ThemeId } from '../utils/useTheme'
 
 interface SettingsModalProps {
   isOpen: boolean
   onClose: () => void
   isDark: boolean
   onToggleDark: () => void
+  theme: ThemeId
+  onSetTheme: (theme: ThemeId) => void
   // Sign-out handler, or null when there is no auth (memory stub / dev).
   onSignOut: (() => Promise<void>) | null
 }
@@ -17,6 +20,8 @@ export default function SettingsModal({
   onClose,
   isDark,
   onToggleDark,
+  theme,
+  onSetTheme,
   onSignOut
 }: SettingsModalProps): React.ReactElement | null {
   const api = useApi()
@@ -64,6 +69,37 @@ export default function SettingsModal({
               <button className="smodal-vault-btn" onClick={onToggleDark}>
                 {isDark ? 'Switch to light mode' : 'Switch to dark mode'}
               </button>
+            </div>
+          </div>
+
+          <div className="smodal-divider" />
+
+          {/* Theme — the color/reading-type direction, independent of light/dark */}
+          <div className="smodal-section">
+            <div className="smodal-section-label">Theme</div>
+            <div className="theme-picker" role="radiogroup" aria-label="Visual theme">
+              {THEMES.map(t => (
+                <button
+                  key={t.id}
+                  className={`theme-swatch${theme === t.id ? ' active' : ''}`}
+                  onClick={() => onSetTheme(t.id)}
+                  role="radio"
+                  aria-checked={theme === t.id}
+                >
+                  <span className={`theme-swatch-preview theme-preview-${t.id}`} aria-hidden="true">
+                    <span className="theme-preview-accent" />
+                  </span>
+                  <span className="theme-swatch-text">
+                    <span className="theme-swatch-label">{t.label}</span>
+                    <span className="theme-swatch-blurb">{t.blurb}</span>
+                  </span>
+                  {theme === t.id && (
+                    <svg className="theme-swatch-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
 

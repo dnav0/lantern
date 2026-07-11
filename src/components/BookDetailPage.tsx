@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { BiblePassage, NoteWithPassageInfo, NoteCategory } from '../types'
+import { BiblePassage, NoteWithPassageInfo, NoteCategory, Passage } from '../types'
 import { BibleBook, findBookByAlias } from '../utils/bibleBooks'
 import { parseNoteLine } from '../utils/noteParser'
 import { useApi } from '../api/context'
@@ -21,6 +21,33 @@ const CATEGORY_LABELS: Record<NoteCategory, string> = {
 interface NoteGroup {
   main: NoteWithPassageInfo
   subnotes: NoteWithPassageInfo[]
+}
+
+// (chapter, verse) -> a single sortable number, so range overlap is a plain
+// numeric interval comparison. 1000 headroom per chapter comfortably covers
+// every book (Psalm 119, the longest chapter, has 176 verses).
+const toKey = (chapter: number, verse: number): number => chapter * 1000 + verse
+
+// "Start study on {ref}" / "Study chapter" should land in an existing study
+// if one already covers the selected verses, rather than always starting
+// blank — overlap/containment, not just an exact-range match, per the
+// decided behavior: a note anchored anywhere inside the selection should
+// show up, regardless of exactly which range you dragged this time. Picks
+// the first match; multiple distinct overlapping efforts merging into one
+// editor is the deferred "multiple study instances" feature (see BACKLOG).
+function findOverlappingPassage(
+  passages: Passage[],
+  chapter: number,
+  startVerse: number,
+  endVerse: number
+): Passage | undefined {
+  const selStart = toKey(chapter, startVerse)
+  const selEnd = toKey(chapter, endVerse)
+  return passages.find(p => {
+    const pStart = toKey(p.chapter_start, p.verse_start)
+    const pEnd = toKey(p.chapter_end, p.verse_end)
+    return pStart <= selEnd && pEnd >= selStart
+  })
 }
 
 function groupNotes(notes: NoteWithPassageInfo[]): NoteGroup[] {
@@ -96,11 +123,12 @@ interface ChapterViewProps {
   bookName: string
   chapter: number
   notes: NoteWithPassageInfo[]
-  onStudyChapter: (ref: string) => void
+  passages: Passage[]
+  onStudyChapter: (ref: string, passageId?: string) => void
   onNotesChanged: () => void
 }
 
-function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged }: ChapterViewProps): React.ReactElement {
+function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onNotesChanged }: ChapterViewProps): React.ReactElement {
   const api = useApi()
   const [bibleData, setBibleData] = useState<BiblePassage | null>(null)
   const [loading, setLoading] = useState(true)
@@ -267,9 +295,17 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
   }
 
   const handleStartStudyOnSelection = (): void => {
-    if (!selReference) return
+    if (!selReference || !selRange) return
+    const existing = findOverlappingPassage(passages, chapter, selRange[0], selRange[1])
     clearSelection()
-    onStudyChapter(selReference)
+    // When reopening an existing passage, pass ITS OWN reference_label, not
+    // the freshly-dragged selection's — StudyMode only ever reads the
+    // reference text from initialPassageId's own fetch (never from
+    // initialReference once a passageId is set), but the two still race to
+    // set the transient scripture-preview state; matching them avoids a
+    // visible flicker between "1 Cor 5:3-5" and the existing passage's real
+    // "1 Cor 5:2-6" while that resolves.
+    onStudyChapter(existing?.reference_label ?? selReference, existing?.id)
   }
 
   const handleQuickNoteFromSelection = (): void => {
@@ -557,12 +593,16 @@ function ChapterView({ bookName, chapter, notes, onStudyChapter, onNotesChanged 
       )}
       <div className="book-chapter-content fade-in">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#BBB', letterSpacing: '0.04em' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-faint)', letterSpacing: '0.04em' }}>
           CHAPTER {chapter}
         </div>
         <button
           className="btn-study-chapter"
-          onClick={() => onStudyChapter(`${bookName} ${chapter}`)}
+          onClick={() => {
+            const lastVerse = verses[verses.length - 1]?.verse ?? 1
+            const existing = findOverlappingPassage(passages, chapter, 1, lastVerse)
+            onStudyChapter(existing?.reference_label ?? `${bookName} ${chapter}`, existing?.id)
+          }}
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -719,7 +759,7 @@ interface BookDetailPageProps {
   // Chapter to open on first mount (e.g. a search jump); defaults to 1.
   initialChapter?: number
   onBack: () => void
-  onStudy: (reference: string) => void
+  onStudy: (reference: string, passageId?: string) => void
   onRefresh?: () => void
 }
 
@@ -733,17 +773,27 @@ export default function BookDetailPage({
   const api = useApi()
   const [selectedChapter, setSelectedChapter] = useState(initialChapter ?? 1)
   const [allNotes, setAllNotes] = useState<NoteWithPassageInfo[]>([])
+  // The book's existing Passages (not just notes) — needed to find one whose
+  // range overlaps a fresh verse selection, so "Start study on {ref}" /
+  // "Study chapter" can reopen it (with its existing notes) instead of
+  // always starting blank. See findOverlappingPassage.
+  const [bookPassages, setBookPassages] = useState<Passage[]>([])
   const chapterSelectorRef = useRef<HTMLDivElement>(null)
 
   const reloadNotes = useCallback(async (): Promise<void> => {
-    const notes = await api.getNotesByBook(bibleBook.number)
+    const [notes, passages] = await Promise.all([
+      api.getNotesByBook(bibleBook.number),
+      api.getPassagesByBook(bibleBook.number)
+    ])
     setAllNotes(notes)
+    setBookPassages(passages)
     // Always refresh app-level state so the sidebar stays in sync
     onRefresh?.()
   }, [api, bibleBook.number, onRefresh])
 
   useEffect(() => {
     api.getNotesByBook(bibleBook.number).then(setAllNotes)
+    api.getPassagesByBook(bibleBook.number).then(setBookPassages)
   }, [api, bibleBook.number])
 
   const chaptersWithNotes = new Set(allNotes.map(n => n.chapter_start))
@@ -764,44 +814,48 @@ export default function BookDetailPage({
   return (
     <div className="book-detail-layout">
       <div className="book-detail-header">
-        <button className="book-detail-back" onClick={onBack}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6"/>
-          </svg>
-          Library
-        </button>
-        <div>
-          <h1 className="book-detail-title">{bibleBook.name}</h1>
-          <div className="book-detail-meta">
-            {bibleBook.chapters} chapters
-            {studiedCount > 0 && <> · <span style={{ color: '#7F77DD' }}>{studiedCount} with notes</span></>}
+        <div className="book-detail-header-inner">
+          <button className="book-detail-back" onClick={onBack}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            Library
+          </button>
+          <div>
+            <h1 className="book-detail-title">{bibleBook.name}</h1>
+            <div className="book-detail-meta">
+              {bibleBook.chapters} chapters
+              {studiedCount > 0 && <> · <span style={{ color: 'var(--accent)' }}>{studiedCount} with notes</span></>}
+            </div>
           </div>
         </div>
       </div>
 
       <div className="chapter-selector-wrap">
-        <button className="chapter-nav-btn" onClick={() => scrollChapters(-1)} aria-label="Scroll left">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <div className="chapter-selector" ref={chapterSelectorRef}>
-          {Array.from({ length: bibleBook.chapters }, (_, i) => i + 1).map(ch => {
-            const hasNotes = chaptersWithNotes.has(ch)
-            const isActive = ch === selectedChapter
-            return (
-              <button
-                key={ch}
-                className={`chapter-pill${isActive ? ' active' : ''}${hasNotes ? ' has-notes' : ''}`}
-                onClick={() => setSelectedChapter(ch)}
-              >
-                {ch}
-                {hasNotes && !isActive && <span className="chapter-note-dot" />}
-              </button>
-            )
-          })}
+        <div className="chapter-selector-wrap-inner">
+          <button className="chapter-nav-btn" onClick={() => scrollChapters(-1)} aria-label="Scroll left">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div className="chapter-selector" ref={chapterSelectorRef}>
+            {Array.from({ length: bibleBook.chapters }, (_, i) => i + 1).map(ch => {
+              const hasNotes = chaptersWithNotes.has(ch)
+              const isActive = ch === selectedChapter
+              return (
+                <button
+                  key={ch}
+                  className={`chapter-pill${isActive ? ' active' : ''}${hasNotes ? ' has-notes' : ''}`}
+                  onClick={() => setSelectedChapter(ch)}
+                >
+                  {ch}
+                  {hasNotes && !isActive && <span className="chapter-note-dot" />}
+                </button>
+              )
+            })}
+          </div>
+          <button className="chapter-nav-btn" onClick={() => scrollChapters(1)} aria-label="Scroll right">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
         </div>
-        <button className="chapter-nav-btn" onClick={() => scrollChapters(1)} aria-label="Scroll right">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
       </div>
 
       <div className="book-detail-content">
@@ -810,6 +864,7 @@ export default function BookDetailPage({
           bookName={bibleBook.name}
           chapter={selectedChapter}
           notes={allNotes}
+          passages={bookPassages}
           onStudyChapter={onStudy}
           onNotesChanged={reloadNotes}
         />

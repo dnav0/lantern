@@ -1,8 +1,9 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react'
-import { NoteCategory } from '../types'
+import { NoteCategory, Note } from '../types'
 import { parseNoteLine } from '../utils/noteParser'
 import { decideEnter, decideBackspace } from '../utils/noteKeydown'
 import { getRawText, getRawCursorPos, setRawCursorPos, renderRich } from '../utils/richText'
+import { formatRelativeTime } from '../utils/relativeTime'
 import CrossRefPill from './CrossRefPill'
 
 // ─── types ───────────────────────────────────────────────────────────────────
@@ -11,6 +12,10 @@ export interface NoteLineData {
   id: string
   text: string
   indent: number
+  // Set when this line was hydrated from an already-persisted note (see
+  // StudyMode's reconciling save). Drives the "existing note" timestamp cue
+  // below, distinguishing it from a line typed fresh this session.
+  noteId?: string
 }
 
 interface TagOption {
@@ -146,6 +151,11 @@ interface NoteEditorProps {
    * re-focused on demand without an extra id.
    */
   focusNonce?: number
+  // Source notes for hydrated lines (noteId -> Note), so an existing note can
+  // show a subtle "already saved" timestamp — at any real scale it's easy to
+  // lose track of what you just typed this session vs. what was already
+  // there. A line with no matching entry here is new/unsaved this session.
+  existingNotes?: Map<string, Note>
 }
 
 export default function NoteEditor({
@@ -154,7 +164,8 @@ export default function NoteEditor({
   onChange,
   onFocusChange,
   onCursorLine,
-  focusNonce
+  focusNonce,
+  existingNotes
 }: NoteEditorProps): React.ReactElement {
   const elRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const [tagDropdown, setTagDropdown] = useState<TagDropdown | null>(null)
@@ -490,6 +501,7 @@ export default function NoteEditor({
   }, [])
 
   return (
+    <>
     <div className="notes-list">
       {lines.map((line) => {
         const isFocused = focusedLineId === line.id
@@ -541,6 +553,24 @@ export default function NoteEditor({
               </div>
             )}
 
+            {(() => {
+              const src = line.noteId ? existingNotes?.get(line.noteId) : undefined
+              // Only show "saved X ago" when the line still matches what was
+              // actually persisted — a stamp on since-edited content would
+              // read as "this is safely saved" when it isn't. Its absence is
+              // itself the signal for "new or changed this session,"
+              // distinguishing that from lines untouched since load.
+              if (!src || src.content !== line.text || (src.indent_level ?? 0) !== line.indent) {
+                return null
+              }
+              const stamp = src.updated_at || src.created_at
+              return (
+                <time className="note-line-timestamp" dateTime={stamp}>
+                  {formatRelativeTime(stamp)}
+                </time>
+              )
+            })()}
+
             {showDropdown && (
               <div className="tag-dropdown">
                 {filteredTags.map((tag, i) => (
@@ -575,7 +605,16 @@ export default function NoteEditor({
           </div>
         )
       })}
-
+    </div>
+      {/* A sibling of .notes-list, not its last child: it used to be inside
+          the scrollable list, position:sticky to its bottom — sticky only
+          holds an element at an edge once you'd otherwise scroll it past that
+          edge, so with just a couple of short lines it sat in normal flow
+          right after them, leaving a large, size-varying gap below before the
+          Save buttons ("moving elements" — the gap changed as you typed).
+          As a real flex sibling here, it has a fixed position between the
+          list and .study-actions; .notes-list (flex:1, its own scroll) fills
+          only whatever space remains above it. */}
       {focusedLineId !== null && (
         <div className="note-chip-row" role="toolbar" aria-label="Insert tag">
           {CHIP_OPTIONS.map(chip => (
@@ -591,6 +630,6 @@ export default function NoteEditor({
           ))}
         </div>
       )}
-    </div>
+    </>
   )
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
+import { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from 'react'
 import NoteEditor, { makeLineId } from './NoteEditor'
 import PassagePane from './PassagePane'
 import ReferenceInput from './ReferenceInput'
@@ -55,8 +55,18 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
   const [lines, setLines] = useState<LineData[]>([{ id: makeLineId(), text: '', indent: 0 }])
   const [focusedLineId, setFocusedLineId] = useState<string | null>(lines[0].id)
   const [highlightedVerses, setHighlightedVerses] = useState<Set<number>>(new Set())
+  const scriptureBodyRef = useRef<HTMLDivElement>(null)
   const [hasHighlight, setHasHighlight] = useState(false)
   const [saving, setSaving] = useState(false)
+  // A brand-new study (no initialPassageId) with every line still empty has
+  // nothing worth persisting — saving it silently created an empty
+  // Passage+Session with zero notes (a dead Journal entry you'd never
+  // remember creating). Editing an EXISTING study down to zero notes is a
+  // different, legitimate action (deliberately deleting the study, which
+  // correctly cascade-deletes the now-empty session/passage), so this only
+  // gates the blank-study case.
+  const hasNoteContent = lines.some(l => l.text.trim() !== '')
+  const blankAndEmpty = !initialPassageId && !hasNoteContent
   const [editSessionId, setEditSessionId] = useState<string | null>(null)
   // The notes this study opened with, keyed by id — the baseline the reconciling
   // save diffs against (to know what changed and what was removed).
@@ -156,6 +166,12 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
       for (let v = start; v <= end; v++) vSet.add(v)
       setHighlightedVerses(vSet)
       setHasHighlight(true)
+      // Bring the tagged verse into view if it's scrolled out of the (often
+      // bounded/collapsed-on-mobile) scripture panel — scrollIntoView on the
+      // nearest scrollable ancestor only (block:'nearest'), so it's a no-op
+      // when the verse is already visible and never scrolls the whole page.
+      const row = scriptureBodyRef.current?.querySelector(`[data-verse="${start}"]`)
+      row?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
     } else {
       setHighlightedVerses(new Set())
       setHasHighlight(false)
@@ -311,7 +327,13 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
             onSubmit={commitReference}
             placeholder="e.g. 1 Corinthians 7:1-15"
           />
-          <div className="passage-heading-hint">Press Enter or Tab to load verse text</div>
+          {/* "...or Tab" only makes sense with a physical keyboard — split by
+              CSS breakpoint rather than a UA check, matching how the rest of
+              the app splits mobile/desktop copy. */}
+          <div className="passage-heading-hint">
+            <span className="hint-text-desktop">Press Enter or Tab to load verse text</span>
+            <span className="hint-text-mobile">Press Enter to load verse text</span>
+          </div>
         </div>
 
         <NoteEditor
@@ -321,13 +343,15 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
           onFocusChange={setFocusedLineId}
           onCursorLine={handleCursorLine}
           focusNonce={noteFocusNonce}
+          existingNotes={existingNotes}
         />
 
         <div className="study-actions">
           <button
             className="btn-action btn-save-read"
             onClick={handleSaveRead}
-            disabled={saving || !reference.trim()}
+            disabled={saving || !reference.trim() || blankAndEmpty}
+            title={blankAndEmpty ? 'Type at least one note before saving' : undefined}
           >
             {saving ? (
               'Saving…'
@@ -343,7 +367,8 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
           <button
             className="btn-action btn-save-next"
             onClick={handleSaveNext}
-            disabled={saving || !reference.trim()}
+            disabled={saving || !reference.trim() || blankAndEmpty}
+            title={blankAndEmpty ? 'Type at least one note before saving' : undefined}
           >
             Save & Next
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -353,15 +378,18 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
         </div>
       </div>
 
-      <div className="study-right">
+      <div className={`study-right${!passage && !loadingPassage ? ' study-right--empty' : ''}`}>
         {/* Mobile-only collapse toggle. On desktop the pane is always fully
             shown (this header is hidden via CSS). Scripture stays pinned at the
-            top on mobile and never scrolls fully off-screen. */}
+            top on mobile and never scrolls fully off-screen. Before a passage
+            is loaded there's nothing to expand, so the toggle is inert
+            (study-right--empty above hides its hint/chevron and collapses it
+            to just this header bar). */}
         <button
           type="button"
           className="study-scripture-toggle"
           aria-expanded={scriptureExpanded}
-          onClick={() => setScriptureExpanded(v => !v)}
+          onClick={() => passage && setScriptureExpanded(v => !v)}
         >
           <span className="study-scripture-toggle-label">
             {passage ? passage.reference : 'Scripture'}
@@ -377,7 +405,7 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
             <polyline points="6 9 12 15 18 9" />
           </svg>
         </button>
-        <div className="study-scripture-body">
+        <div className="study-scripture-body" ref={scriptureBodyRef}>
           <PassagePane
             passage={passage}
             loading={loadingPassage}

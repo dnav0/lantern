@@ -14,6 +14,7 @@ import { Passage } from './types'
 import { BIBLE_BOOKS } from './utils/bibleBooks'
 import { useApi } from './api/context'
 import { useDarkMode } from './utils/useDarkMode'
+import { useTheme } from './utils/useTheme'
 
 interface AppProps {
   // Signed-in display name for the "Welcome back" touch. null on the memory stub.
@@ -40,6 +41,7 @@ interface AppState {
 export default function App({ displayName, onSignOut }: AppProps): React.ReactElement {
   const api = useApi()
   const [isDark, toggleDark] = useDarkMode()
+  const [theme, setTheme] = useTheme()
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const [state, setState] = useState<AppState>({
@@ -208,8 +210,8 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
           bibleBook={selectedBibleBook}
           initialChapter={selectedChapter ?? 1}
           onBack={() => setState(prev => ({ ...prev, selectedBookName: null, selectedChapter: null }))}
-          onStudy={ref => {
-            handleStudyFromReading(ref)
+          onStudy={(ref, passageId) => {
+            handleStudyFromReading(ref, passageId)
             refresh()
           }}
           onRefresh={refresh}
@@ -288,6 +290,8 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
         onClose={() => setSettingsOpen(false)}
         isDark={isDark}
         onToggleDark={toggleDark}
+        theme={theme}
+        onSetTheme={setTheme}
         onSignOut={onSignOut}
       />
 

@@ -89,7 +89,7 @@ export default function NavBar({
     icon: React.ReactElement
   ): React.ReactElement => (
     <button
-      className={`nav-tab${destination === dest ? ' active' : ''}`}
+      className={`nav-tab${dest === 'study' ? ' nav-tab-action' : ''}${destination === dest ? ' active' : ''}`}
       onClick={() => onNavigate(dest)}
       aria-current={destination === dest ? 'page' : undefined}
     >
@@ -130,6 +130,14 @@ export default function NavBar({
       <line x1="9" y1="12" x2="14" y2="12" />
     </svg>
   )
+  // Desktop hides this (.topnav-tabs .nav-tab svg { display:none }; that tab
+  // is text-first, "+ Study"). Two prior attempts at a special mobile
+  // treatment (accent color, then a filled shape badge) both read as
+  // "strange" — an odd-one-out among three consistent line icons draws the
+  // eye for the wrong reason. Reverted to the same plain-line style as
+  // Bible/Journal/Profile; Study is differentiated by label and function,
+  // not by icon decoration. See BACKLOG for the mobile nav priority
+  // discussion this is part of.
   const studyIcon = (
     <svg
       width="18"
@@ -225,74 +233,80 @@ export default function NavBar({
           {navTab('study', '+ Study', studyIcon)}
         </nav>
 
-        {searchSlot && <div className="topnav-search">{searchSlot}</div>}
+        {/* Grouped so the grid's outer two columns (lead / right) are forced to
+            equal width — see .topnav's grid-template-columns — which is what
+            makes the center tabs land on the true viewport center regardless
+            of the logo vs. search+avatar's own (unequal) natural widths. */}
+        <div className="topnav-right">
+          {searchSlot && <div className="topnav-search">{searchSlot}</div>}
 
-        {/* Mobile-only search trigger — opens the dedicated search surface. */}
-        {onOpenSearch && (
-          <button className="topnav-search-btn" onClick={onOpenSearch} aria-label="Search">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </button>
-        )}
-
-        <div className="topnav-trail">
-          <div className="profile-menu-host" ref={profileRef}>
-            <button
-              className="avatar-btn"
-              onClick={() => setProfileOpen(o => !o)}
-              aria-haspopup="menu"
-              aria-expanded={profileOpen}
-              aria-label="Account menu"
-            >
-              {initial}
+          {/* Mobile-only search trigger — opens the dedicated search surface. */}
+          {onOpenSearch && (
+            <button className="topnav-search-btn" onClick={onOpenSearch} aria-label="Search">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
             </button>
-            {profileOpen && (
-              <div className="nav-menu profile-menu" role="menu">
-                <div className="nav-menu-name">{displayName || 'Studying locally'}</div>
-                <div className="nav-menu-divider" />
-                <button
-                  className="nav-menu-item"
-                  role="menuitem"
-                  onClick={() => {
-                    setProfileOpen(false)
-                    onOpenSettings()
-                  }}
-                >
-                  Settings
-                </button>
-                <button
-                  className="nav-menu-item"
-                  role="menuitem"
-                  disabled={exportState === 'exporting'}
-                  onClick={() => void handleExport()}
-                >
-                  {exportState === 'exporting' ? 'Exporting…' : 'Export notes'}
-                </button>
-                {onSignOut && (
-                  <>
-                    <div className="nav-menu-divider" />
-                    <button
-                      className="nav-menu-item"
-                      role="menuitem"
-                      onClick={() => void onSignOut()}
-                    >
-                      Sign out
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
+          )}
+
+          <div className="topnav-trail">
+            <div className="profile-menu-host" ref={profileRef}>
+              <button
+                className="avatar-btn"
+                onClick={() => setProfileOpen(o => !o)}
+                aria-haspopup="menu"
+                aria-expanded={profileOpen}
+                aria-label="Account menu"
+              >
+                {initial}
+              </button>
+              {profileOpen && (
+                <div className="nav-menu profile-menu" role="menu">
+                  <div className="nav-menu-name">{displayName || 'Studying locally'}</div>
+                  <div className="nav-menu-divider" />
+                  <button
+                    className="nav-menu-item"
+                    role="menuitem"
+                    onClick={() => {
+                      setProfileOpen(false)
+                      onOpenSettings()
+                    }}
+                  >
+                    Settings
+                  </button>
+                  <button
+                    className="nav-menu-item"
+                    role="menuitem"
+                    disabled={exportState === 'exporting'}
+                    onClick={() => void handleExport()}
+                  >
+                    {exportState === 'exporting' ? 'Exporting…' : 'Export notes'}
+                  </button>
+                  {onSignOut && (
+                    <>
+                      <div className="nav-menu-divider" />
+                      <button
+                        className="nav-menu-item"
+                        role="menuitem"
+                        onClick={() => void onSignOut()}
+                      >
+                        Sign out
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -301,7 +315,10 @@ export default function NavBar({
       <nav className="bottomnav" aria-label="Primary">
         {navTab('bible', 'Bible', bibleIcon)}
         {navTab('journal', 'Journal', journalIcon)}
-        {navTab('study', '+ Study', studyIcon)}
+        {/* Plain "Study" here, not "+ Study" — the badge icon already carries
+            the "+"; the desktop text-only tab keeps the prefix since it has
+            no icon to carry that signal instead. */}
+        {navTab('study', 'Study', studyIcon)}
         {navTab('profile', 'Profile', profileIcon)}
       </nav>
     </>
