@@ -68,6 +68,21 @@ prioritized.
   replaces. Needs conflict handling and last-write-wins (or better) reconciliation
   given client-set timestamps.
 
+- **Public marketing/landing site + login flow redesign.** Right now there is
+  no public-facing site — `Root.tsx`'s boot flow goes straight from
+  `loading` to `signedOut (SignIn)`, so any unauthenticated visitor lands
+  directly on a sign-in screen with no explanation of what Berean is. Before a
+  real public launch this needs an actual marketing/landing page (what the app
+  is, why it's different, a clear call to sign in/up) and a more polished
+  login flow than today's bare `SignIn.tsx`, consistent with the "Berean"
+  design system (tokens, serif reading voice, warm cream) landed in the design
+  sweep. Planned as its own pass, after the backlog wrap-up (Open-study bridge,
+  self-hosted fonts, mobile nav priority) and separate from any regression-
+  testing/analytics/branding-identity work being considered around the same
+  time. **Bundle the two items below into this pass** — both touch the same
+  surface, so doing them separately would mean revisiting the login screen
+  twice.
+
 - **Custom SMTP for OTP code emails.** Supabase's default email template contains
   only a magic link — the 6-digit code requires adding `{{ .Token }}` to the
   template, which is gated behind custom SMTP (e.g. Resend free tier + a sender
@@ -75,8 +90,16 @@ prioritized.
   path; the code-entry UI in `SignIn.tsx` already works the moment the template
   includes a code. Revisit before any native wrapper (links are fragile there).
 
-- **Google OAuth.** Add alongside email OTP. Links automatically to the existing
-  account via verified email, so no account-merge flow needed.
+- **Google OAuth — recommended, bundle into the login redesign above.** Adds
+  alongside email OTP; links automatically to the existing account via
+  verified email, so no account-merge flow needed (already a low-risk addition
+  per the existing architecture). Worth it for a public launch: one-click
+  sign-in removes the OTP-code/magic-link friction entirely for most visitors,
+  and Google sign-in is a highly familiar, trusted pattern for a general
+  (not especially technical) audience — exactly the kind of friction that
+  determines whether a first-time visitor actually creates an account. Do this
+  at the same time as the login redesign, not as a separate pass — same
+  screen, same testing surface.
 
 - **KJV + translation switcher.** Second `BibleProvider` implementation plus a UI
   to pick translation. The provider interface already exists for this; note
