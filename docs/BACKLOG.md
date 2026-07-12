@@ -10,39 +10,34 @@ prioritized.
 
 ## Deferred
 
-- **Design sweep — remaining work.** The static visual/structural polish pass
-  is done: token layer (F1 + F1b warm dark), serif reading typography (F2),
-  contrast (F3), top-bar/library true centering, the theme picker, the
-  overlap-aware study flow, and a round of mobile study-editor/nav fixes (see
-  Done, below, for the full history). What's left, roughly in likely order:
+- **Design sweep — remaining work.** The visual/structural + motion polish
+  passes are both done: token layer (F1 + F1b warm dark), serif reading
+  typography (F2), contrast (F3), top-bar/library true centering, the theme
+  picker, the overlap-aware study flow, F4 motion (entrance/press/spring
+  micro-interactions), and a round of mobile study-editor/nav fixes (see Done,
+  below, for the full history). Bible/Journal toggle-vs-tabs was discussed and
+  decided against — not adopting it, not revisiting. What's left:
 
-  - **Mobile nav priority — resting state still unresolved beyond the F4 tap
-    treatment.** Discussed as Bible = home/does-everything (full weight),
-    Journal = rarely used, Study = the primary action, Profile = rarely used.
-    Two *static* mechanisms were tried and both reverted on review: an opacity
-    de-emphasis on Journal/Profile ("not a good strategy"), and two different
-    special icon treatments for Study (accent color, then a filled badge —
-    both read as "strange," an odd-one-out among otherwise-consistent line
-    icons). F4 (below) added a motion-only differentiation (a springier press
-    on Study alone, all four tabs still uniform at rest) as a first attempt at
-    "subtle motion, not static color/shape" — worth a live-usage check before
-    deciding whether that alone is enough or whether the *resting* state still
-    needs its own answer (the toggle-vs-tabs question below is the other half
-    of this).
-  - **Bible/Journal navigation: toggle vs. tabs — discussed, not decided.**
-    Considered a segmented-control toggle (like Claude desktop's Home/Code) for
-    Bible/Journal instead of flat tabs, to reduce perceived cognitive load and
-    reinforce "one system, two lenses onto the same notes." Working recommendation from
-    that discussion: don't adopt it — Bible and Journal aren't symmetric peers
-    (Journal is documented as "a librarian, not the front door," Bible is the
-    deliberate home), and a toggle's "two equal, mutually-exclusive modes"
-    framing would misrepresent that. Left genuinely open rather than closed —
-    revisit if the mobile-nav-priority work above doesn't resolve the
-    underlying "feels like too many equal-weight options" concern.
-  - **Note→study "Open study" bridge in `BookDetailPage`'s ChapterView.** Still
-    not built (see the dedicated entry below) — `ChapterView` now loads the
-    book's `Passage[]` (added for overlap-matching), so the data dependency
-    that blocked this is gone; only the button/wiring is left.
+  - **Mobile nav priority — resting state still unresolved.** Discussed as
+    Bible = home/does-everything (full weight), Journal = rarely used, Study =
+    the primary action, Profile = rarely used. Three static/motion mechanisms
+    tried on Study specifically (accent color, a filled badge, a springier
+    press) — the two static ones were reverted as "strange"; the motion one
+    only affects the *tap*, not the *resting* look, so all four tabs are still
+    visually uniform at rest. Needs a fresh answer, or a deliberate decision
+    that uniform-at-rest is fine and priority only needs to show up in
+    behavior/motion, not appearance.
+  - **Note→study "Open study" bridge in `BookDetailPage`'s ChapterView is
+    still NOT built** (confirmed by re-checking the component — no `Open
+    study`/`handleOpenStudy` reference exists there). `ReadingMode` already has
+    this (`onOpenStudy` prop → `App.tsx`'s `handleOpenStudy(passageId)`,
+    button alongside Edit/Delete). `ChapterView`'s note cards currently only
+    have Edit/Delete. The data dependency that blocked this is gone —
+    `ChapterView` already loads the book's `Passage[]` (`bookPassages`, added
+    for overlap-matching) — so this is now just resolving each note to its
+    passage id (chapter/verse range match against `bookPassages`, same idea as
+    `findOverlappingPassage`) and adding the button + wiring
+    `onOpenStudy={handleOpenStudy}` through `BookDetailPage` from `App.tsx`.
   - **Self-host the scripture fonts.** `index.html` currently loads Source Serif 4
     + Newsreader from Google Fonts (Georgia fallback keeps reading graceful
     offline). For full offline/privacy, self-host the woff2s (e.g.
@@ -51,11 +46,11 @@ prioritized.
   - **dark.css redundancy prune (cosmetic).** `dark.css` is now fully token-driven
     and consistent, but many of its `body.dark …` rules only restate a value the
     `tokens.css` `body.dark` reassignment already produces. They're harmless but
-    could be deleted to shrink the file. Low priority.
+    could be deleted to shrink the file. Low priority, skip for the deploy pass.
   - **Elevation-over-borders + cross-surface max-width polish.** Optional refinement:
     apply the `--elev-*` scale to reader/journal/study cards (currently border-led)
     and reconcile the library vs. journal vs. book-detail max-widths for a fully
-    consistent measure across every page. Rolls naturally into the motion pass.
+    consistent measure across every page. Optional, skip for the deploy pass.
 
 - **Modifier-to-copy verse text (marquee escape hatch).** Desktop verse
   selection is now a Windows-style marquee (click-drag draws a box that selects
