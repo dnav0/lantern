@@ -1,9 +1,15 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import AppLogo from './AppLogo'
 import { useApi } from '../api/context'
 import { exportAllNotesAsZip } from '../platform/export'
 
 export type Destination = 'bible' | 'journal' | 'study' | 'profile'
+
+// Matches the literal render order of the bottom tab bar below — used to
+// position the sliding active-tab indicator via a plain CSS transform
+// (translateX(n * 100%)), no layout measurement needed since all four
+// columns are equal-width (flex: 1).
+const BOTTOMNAV_ORDER: Destination[] = ['bible', 'journal', 'study', 'profile']
 
 interface NavBarProps {
   destination: Destination
@@ -59,6 +65,22 @@ export default function NavBar({
   const [exportState, setExportState] = useState<'idle' | 'exporting'>('idle')
   const workspaceRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
+  // Desktop tab indicator: a measured sliding pill, matching the mobile
+  // bottom bar's jump-between-tabs feel instead of each tab just recoloring
+  // in place independently. Measured (not the mobile bar's plain 25%-per-
+  // column transform) because desktop tabs are text-sized, not equal-width
+  // columns. Only tracks Bible/Journal — Study already has its own distinct
+  // permanent look (an accent-outlined pill at rest, solid-filled when
+  // active), so sliding a second, differently-styled highlight underneath it
+  // would double up/clash. The indicator instead fades out when Study
+  // becomes active (staying parked at wherever it last was) and fades back
+  // in at the right spot when the user returns to Bible or Journal.
+  const topnavTabsRef = useRef<HTMLElement>(null)
+  const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number; visible: boolean }>({
+    left: 0,
+    width: 0,
+    visible: false
+  })
 
   useClickOutside(
     workspaceRef,
@@ -83,6 +105,29 @@ export default function NavBar({
 
   const initial = (displayName || '?').trim().charAt(0).toUpperCase() || '?'
 
+  // Measure the active tab (Bible/Journal only) and position the sliding
+  // indicator to match — before paint, so it never visibly snaps into its
+  // initial spot. Re-measures on resize (tab widths depend on font
+  // rendering/container width).
+  useLayoutEffect(() => {
+    const measure = (): void => {
+      const container = topnavTabsRef.current
+      if (!container) return
+      if (destination !== 'bible' && destination !== 'journal') {
+        setIndicatorStyle(s => ({ ...s, visible: false }))
+        return
+      }
+      const tab = container.querySelector<HTMLElement>(`[data-dest="${destination}"]`)
+      if (!tab) return
+      const containerRect = container.getBoundingClientRect()
+      const tabRect = tab.getBoundingClientRect()
+      setIndicatorStyle({ left: tabRect.left - containerRect.left, width: tabRect.width, visible: true })
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [destination])
+
   const navTab = (
     dest: Destination,
     label: string,
@@ -92,6 +137,7 @@ export default function NavBar({
       className={`nav-tab${dest === 'study' ? ' nav-tab-action' : ''}${destination === dest ? ' active' : ''}`}
       onClick={() => onNavigate(dest)}
       aria-current={destination === dest ? 'page' : undefined}
+      data-dest={dest}
     >
       {icon}
       <span className="nav-tab-label">{label}</span>
@@ -227,7 +273,16 @@ export default function NavBar({
           </div>
         </div>
 
-        <nav className="topnav-tabs" aria-label="Primary">
+        <nav className="topnav-tabs" aria-label="Primary" ref={topnavTabsRef as React.RefObject<HTMLElement>}>
+          <span
+            className="topnav-tab-indicator"
+            aria-hidden="true"
+            style={{
+              left: indicatorStyle.left,
+              width: indicatorStyle.width,
+              opacity: indicatorStyle.visible ? 1 : 0
+            }}
+          />
           {navTab('bible', 'Bible', bibleIcon)}
           {navTab('journal', 'Journal', journalIcon)}
           {navTab('study', '+ Study', studyIcon)}
@@ -312,7 +367,12 @@ export default function NavBar({
       </header>
 
       {/* ── Bottom tab bar (mobile only) ── */}
-      <nav className="bottomnav" aria-label="Primary">
+      <nav
+        className="bottomnav"
+        aria-label="Primary"
+        style={{ '--bottomnav-active-index': BOTTOMNAV_ORDER.indexOf(destination) } as React.CSSProperties}
+      >
+        <span className="bottomnav-indicator" aria-hidden="true" />
         {navTab('bible', 'Bible', bibleIcon)}
         {navTab('journal', 'Journal', journalIcon)}
         {/* Plain "Study" here, not "+ Study" — the badge icon already carries

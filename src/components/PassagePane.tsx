@@ -1,5 +1,6 @@
 import React from 'react'
 import { BiblePassage } from '../types'
+import ScriptureSkeleton from './ScriptureSkeleton'
 
 interface PassagePaneProps {
   passage: BiblePassage | null
@@ -17,7 +18,7 @@ export default function PassagePane({
   if (loading) {
     return (
       <div className="passage-pane">
-        <div className="loading-dots">Loading verse text…</div>
+        <ScriptureSkeleton lines={7} narrow />
       </div>
     )
   }
@@ -34,12 +35,12 @@ export default function PassagePane({
   }
 
   return (
-    <div className="passage-pane fade-in">
+    <div className="passage-pane">
       {/* Center the passage column as a block within the pane (verse text stays
           left-aligned via .verse-text). */}
       <div className="passage-pane-col">
         <div className="passage-pane-reference">{passage.reference}</div>
-        {passage.verses.map(v => {
+        {passage.verses.map((v, i) => {
           const isHighlighted = highlightedVerses.has(v.verse)
           const isDimmed = hasAnyHighlight && !isHighlighted
           return (
@@ -47,6 +48,7 @@ export default function PassagePane({
               key={v.verse}
               data-verse={v.verse}
               className={`passage-verse${isHighlighted ? ' highlighted' : ''}${isDimmed ? ' dimmed' : ''}`}
+              style={{ '--stagger-i': i } as React.CSSProperties}
             >
               <span className="verse-number">{v.verse}</span>
               <span className="verse-text">{v.text}</span>

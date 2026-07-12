@@ -5,6 +5,7 @@ import Root from './Root'
 import './assets/tokens.css'
 import './assets/main.css'
 import './assets/dark.css'
+import './assets/motion.css'
 
 // Service worker: precache the app shell, auto-update in the background with
 // no user prompt (registerType: 'autoUpdate' in vite.config.ts). Supabase API

@@ -76,6 +76,39 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
   // get the room; tap the header to expand. Ignored by the desktop side-by-side
   // layout, which shows the full pane regardless.
   const [scriptureExpanded, setScriptureExpanded] = useState(false)
+  // A manually-dragged height (px) overrides the two tap-toggle presets
+  // above, so the user can land on exactly the split they want rather than
+  // only ever choosing between "peek" and "expanded." null = no manual
+  // override yet (or it was just cleared by a tap on the header).
+  const [customHeightPx, setCustomHeightPx] = useState<number | null>(null)
+  const [isResizing, setIsResizing] = useState(false)
+  const studyRightRef = useRef<HTMLDivElement>(null)
+  const resizeStateRef = useRef<{ startY: number; startHeight: number } | null>(null)
+
+  const handleResizeStart = useCallback((e: React.PointerEvent<HTMLDivElement>): void => {
+    const el = studyRightRef.current
+    if (!el) return
+    resizeStateRef.current = { startY: e.clientY, startHeight: el.getBoundingClientRect().height }
+    setIsResizing(true)
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }, [])
+
+  const handleResizeMove = useCallback((e: React.PointerEvent<HTMLDivElement>): void => {
+    if (!resizeStateRef.current) return
+    const delta = e.clientY - resizeStateRef.current.startY
+    // Bounds mirror the two presets' rough range, widened a touch at each
+    // end so dragging can go a bit further than either preset alone.
+    const min = window.innerHeight * 0.1
+    const max = window.innerHeight * 0.85
+    const next = Math.min(max, Math.max(min, resizeStateRef.current.startHeight + delta))
+    setCustomHeightPx(next)
+  }, [])
+
+  const handleResizeEnd = useCallback((e: React.PointerEvent<HTMLDivElement>): void => {
+    resizeStateRef.current = null
+    setIsResizing(false)
+    e.currentTarget.releasePointerCapture(e.pointerId)
+  }, [])
 
   useEffect(() => {
     if (initialReference) {
@@ -378,18 +411,28 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
         </div>
       </div>
 
-      <div className={`study-right${!passage && !loadingPassage ? ' study-right--empty' : ''}`}>
+      <div
+        className={`study-right${!passage && !loadingPassage ? ' study-right--empty' : ''}${isResizing ? ' study-right--resizing' : ''}`}
+        ref={studyRightRef}
+        style={customHeightPx !== null ? { maxHeight: `${customHeightPx}px` } : undefined}
+      >
         {/* Mobile-only collapse toggle. On desktop the pane is always fully
             shown (this header is hidden via CSS). Scripture stays pinned at the
             top on mobile and never scrolls fully off-screen. Before a passage
             is loaded there's nothing to expand, so the toggle is inert
             (study-right--empty above hides its hint/chevron and collapses it
-            to just this header bar). */}
+            to just this header bar). Tapping it clears any manual drag height
+            so the two presets are always reachable again, not stuck behind
+            wherever the panel was last dragged to. */}
         <button
           type="button"
           className="study-scripture-toggle"
           aria-expanded={scriptureExpanded}
-          onClick={() => passage && setScriptureExpanded(v => !v)}
+          onClick={() => {
+            if (!passage) return
+            setCustomHeightPx(null)
+            setScriptureExpanded(v => !v)
+          }}
         >
           <span className="study-scripture-toggle-label">
             {passage ? passage.reference : 'Scripture'}
@@ -413,6 +456,25 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
             hasAnyHighlight={hasHighlight}
           />
         </div>
+        {/* Mobile-only manual resize handle — overlaid on the bottom edge
+            (position:absolute in CSS) rather than taking its own flex row,
+            so it doesn't eat into the scripture body's space. Only shown
+            once there's something to resize (mirrors the toggle's own
+            inertness in the empty state). */}
+        {passage && (
+          <div
+            className="study-resize-handle"
+            onPointerDown={handleResizeStart}
+            onPointerMove={handleResizeMove}
+            onPointerUp={handleResizeEnd}
+            onPointerCancel={handleResizeEnd}
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label="Resize scripture panel"
+          >
+            <span className="study-resize-grip" aria-hidden="true" />
+          </div>
+        )}
       </div>
     </div>
   )

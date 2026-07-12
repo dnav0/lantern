@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { NoteSearchResult } from '../types'
 import { parseScriptureQuery, parseNoteLine } from '../utils/noteParser'
 import { formatRelativeTime } from '../utils/relativeTime'
@@ -58,6 +58,19 @@ export default function GlobalSearch({
   const [noteResults, setNoteResults] = useState<NoteSearchResult[]>([])
   const [notesLoading, setNotesLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  // The desktop 'bar' instance's box travels from its resting top-bar slot to
+  // a centered command-palette position on focus. Rather than switch the box
+  // between absolute (docked) and fixed (centered) — which can't animate
+  // smoothly across a containing-block change — it's fixed-positioned at ALL
+  // times, and its resting coordinates are measured from its own (always
+  // in-flow) parent, `.topnav-search`. This gives CSS a single continuous
+  // transform/position transition instead of a jump.
+  const [restRect, setRestRect] = useState<{ top: number; left: number; width: number } | null>(null)
+  // Keyboard nav through the combined result list (scripture results first,
+  // then notes — same order as rendered). -1 = nothing highlighted yet, so a
+  // bare Enter with no arrow-key use doesn't fire a surprise action.
+  const [activeIndex, setActiveIndex] = useState(-1)
 
   // Section 1: scripture reference(s) — synchronous, from the query alone.
   // May be zero, one, or (for an ambiguous book prefix) up to a handful of
@@ -97,17 +110,50 @@ export default function GlobalSearch({
     if (autoFocus) inputRef.current?.focus()
   }, [autoFocus])
 
+  // Measure the resting slot (.topnav-search, the always-in-flow parent) so
+  // the fixed-positioned box knows where to sit when not focused. Re-measures
+  // on resize; skipped while focused/expanded so the expanded rect never gets
+  // mistaken for "rest." Deliberately useLayoutEffect, not useEffect: this
+  // runs before the browser's first paint, so the CSS fallback (`--rest-left,
+  // 0` → left edge) is never actually painted — with useEffect (fires AFTER
+  // paint) that fallback frame WAS visible for one frame, then the position
+  // transition (meant only for focus/blur) animated it from the left edge to
+  // its real spot, reading as the whole search box "flying in from the left"
+  // on every page load.
+  useLayoutEffect(() => {
+    if (variant !== 'bar') return
+    const measure = (): void => {
+      if (document.activeElement === inputRef.current) return
+      const parent = wrapRef.current?.parentElement
+      if (!parent) return
+      const r = parent.getBoundingClientRect()
+      setRestRect({ top: r.top, left: r.left, width: r.width })
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [variant])
+
   // Desktop-only "/" shortcut (the always-present top-bar instance): jumps
   // straight into search, like GitHub/Notion/Linear, without requiring a
-  // mouse trip to a small top-right box. Ignored while the user is already
-  // typing anywhere else (an input/textarea/contenteditable, or a modifier is
-  // held, e.g. Cmd+/ for something else) so it never hijacks a keystroke mid
-  // note-edit. The mobile 'surface' variant has its own dedicated full-screen
-  // entry point and doesn't need this.
+  // mouse trip to a small top-right box. Pressing "/" again while already
+  // focused closes it instead of typing a literal "/" — a Bible reference or
+  // note-search query never legitimately contains one. Ignored while the user
+  // is typing anywhere else (an input/textarea/contenteditable, or a modifier
+  // is held, e.g. Cmd+/ for something else) so it never hijacks a keystroke
+  // mid note-edit. The mobile 'surface' variant has its own dedicated
+  // full-screen entry point and doesn't need this.
   useEffect(() => {
     if (variant !== 'bar') return
     const handleKeyDown = (e: KeyboardEvent): void => {
       if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return
+      if (document.activeElement === inputRef.current) {
+        e.preventDefault()
+        inputRef.current?.blur()
+        setQuery('')
+        setNoteResults([])
+        return
+      }
       const target = e.target as HTMLElement | null
       const tag = target?.tagName
       const isEditable =
@@ -134,14 +180,45 @@ export default function GlobalSearch({
   const showResults = hasQuery
   const nothing = hasQuery && scriptureResults.length === 0 && !notesLoading && noteResults.length === 0
 
+  // Flat, render-order list of every selectable row (scripture first, then
+  // notes) so arrow keys/Enter can walk it without caring which section a
+  // row lives in. Rebuilt whenever either section's data changes; the reset
+  // effect below keeps `activeIndex` from pointing at a row that just moved.
+  const flatResults = useMemo(
+    () => [
+      ...scriptureResults.map(scripture => ({
+        onSelect: () => choose(() => onJumpToChapter(scripture.bookName, scripture.chapter, scripture.verse))
+      })),
+      ...noteResults.map(r => ({
+        onSelect: () => choose(() => onOpenStudy(r.passage_id))
+      }))
+    ],
+    [scriptureResults, noteResults, choose, onJumpToChapter, onOpenStudy]
+  )
+
+  // A fresh query (or the results it produced) invalidates whatever was
+  // previously highlighted.
+  useEffect(() => {
+    setActiveIndex(-1)
+  }, [query, scriptureResults, noteResults])
+
+  const restStyle =
+    variant === 'bar' && restRect
+      ? ({
+          '--rest-top': `${restRect.top}px`,
+          '--rest-left': `${restRect.left}px`,
+          '--rest-width': `${restRect.width}px`
+        } as React.CSSProperties)
+      : undefined
+
   const results = (
-    <div className="search-results" role="listbox" aria-label="Search results">
+    <div className="search-results" role="listbox" aria-label="Search results" style={restStyle}>
       {/* Section 1 — scripture reference(s); may be zero, one, or several
           (ambiguous book prefix) ranked results. */}
       {scriptureResults.length > 0 && (
         <div className="search-section" data-section="scripture">
           <div className="search-section-label">Jump to scripture</div>
-          {scriptureResults.map(scripture => {
+          {scriptureResults.map((scripture, i) => {
             const ref =
               scripture.verse != null
                 ? `${scripture.bookName} ${scripture.chapter}:${scripture.verse}`
@@ -152,9 +229,10 @@ export default function GlobalSearch({
             return (
               <button
                 key={`${scripture.bookNumber}-${scripture.chapter}-${scripture.verse ?? ''}`}
-                className="search-result search-result--scripture"
+                className={`search-result search-result--scripture${i === activeIndex ? ' active' : ''}`}
                 role="option"
-                aria-selected={false}
+                aria-selected={i === activeIndex}
+                onMouseEnter={() => setActiveIndex(i)}
                 onClick={() =>
                   choose(() => onJumpToChapter(scripture.bookName, scripture.chapter, scripture.verse))
                 }
@@ -176,14 +254,16 @@ export default function GlobalSearch({
           {notesLoading && noteResults.length === 0 ? (
             <div className="search-note-loading">Searching notes…</div>
           ) : (
-            noteResults.map(r => {
+            noteResults.map((r, i) => {
               const preview = notePreview(r.note.content)
+              const flatIndex = scriptureResults.length + i
               return (
                 <button
                   key={r.note.id}
-                  className="search-result search-result--note"
+                  className={`search-result search-result--note${flatIndex === activeIndex ? ' active' : ''}`}
                   role="option"
-                  aria-selected={false}
+                  aria-selected={flatIndex === activeIndex}
+                  onMouseEnter={() => setActiveIndex(flatIndex)}
                   onClick={() => choose(() => onOpenStudy(r.passage_id))}
                 >
                   <div className="search-result-note-top">
@@ -206,7 +286,14 @@ export default function GlobalSearch({
 
   return (
     <div className={`global-search global-search--${variant}`}>
-      <div className="search-input-wrap">
+      {/* Full-page dim while the command-palette-style expansion is active —
+          a sibling inside the same :focus-within scope so no JS state is
+          needed to drive it. Only the 'bar' variant expands like this; the
+          mobile 'surface' variant is already its own full-screen page. */}
+      {variant === 'bar' && (
+        <div className="search-backdrop" aria-hidden="true" onMouseDown={() => inputRef.current?.blur()} />
+      )}
+      <div className="search-input-wrap" ref={wrapRef} style={restStyle}>
         <svg
           className="search-input-icon"
           width="15"
@@ -232,6 +319,25 @@ export default function GlobalSearch({
             if (e.key === 'Escape') {
               if (query) setQuery('')
               else onClose?.()
+              return
+            }
+            if (!flatResults.length) return
+            if (e.key === 'ArrowDown') {
+              e.preventDefault()
+              setActiveIndex(i => (i + 1) % flatResults.length)
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault()
+              setActiveIndex(i => (i - 1 + flatResults.length) % flatResults.length)
+            } else if (e.key === 'Enter' && activeIndex >= 0) {
+              e.preventDefault()
+              flatResults[activeIndex]?.onSelect()
+            }
+          }}
+          onBlur={() => {
+            const parent = wrapRef.current?.parentElement
+            if (parent) {
+              const r = parent.getBoundingClientRect()
+              setRestRect({ top: r.top, left: r.left, width: r.width })
             }
           }}
           placeholder="Search references or notes…"

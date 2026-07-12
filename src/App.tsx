@@ -15,6 +15,7 @@ import { BIBLE_BOOKS } from './utils/bibleBooks'
 import { useApi } from './api/context'
 import { useDarkMode } from './utils/useDarkMode'
 import { useTheme } from './utils/useTheme'
+import { useTextSize } from './utils/useTextSize'
 
 interface AppProps {
   // Signed-in display name for the "Welcome back" touch. null on the memory stub.
@@ -42,6 +43,7 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
   const api = useApi()
   const [isDark, toggleDark] = useDarkMode()
   const [theme, setTheme] = useTheme()
+  const [textSize, setTextSize] = useTextSize()
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const [state, setState] = useState<AppState>({
@@ -239,7 +241,12 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
     }
 
     return (
-      <BibleLibrary passages={passages} onSelectBook={handleSelectBook} displayName={displayName} />
+      <BibleLibrary
+        passages={passages}
+        onSelectBook={handleSelectBook}
+        displayName={displayName}
+        onOpenSearch={() => setSearchOpen(true)}
+      />
     )
   }
 
@@ -292,6 +299,8 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
         onToggleDark={toggleDark}
         theme={theme}
         onSetTheme={setTheme}
+        textSize={textSize}
+        onSetTextSize={setTextSize}
         onSignOut={onSignOut}
       />
 

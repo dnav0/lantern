@@ -38,6 +38,13 @@
   --scripture-font: 'Source Serif 4', Georgia, 'Times New Roman', serif;
   --scripture-size: 19px;
   --scripture-lh: 1.72;
+  /* User-adjustable text-size preference (Settings), independent of theme —
+     see useTextSize.ts. Multiplies --scripture-size at the point of use
+     (.verse-text in main.css), rather than being reassigned onto itself —
+     "--scripture-size: calc(var(--scripture-size) * …)" on the same
+     selector would be a custom-property self-reference cycle (invalid per
+     spec). Set once here; themes below don't need to redeclare it. */
+  --text-scale: 1;
 
   /* ── Surfaces & ink (Berean light) ── */
   --bg:         #f4f0e8;  /* app canvas — warm cream */
@@ -82,10 +89,26 @@
   --elev-3: 0 6px 16px -4px rgba(20, 16, 8, 0.12), 0 20px 40px -12px rgba(20, 16, 8, 0.18);
   --elev-hairline: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 
-  /* ── Motion (gated on prefers-reduced-motion at call sites) ── */
+  /* ── Motion (gated on prefers-reduced-motion at call sites) ──
+     --dur-1/2/3 are the micro-interaction scale: hover/press feedback, tab
+     pops, popovers — anything that responds to a click and should feel
+     immediate. --dur-4/5 are a deliberately slower "calm reveal" scale for
+     page-level entrances (app boot, a fresh page's content settling in) —
+     using the snappy scale there is what read as "sudden"/"mechanical"
+     rather than composed. Keep these two scales for their own purposes:
+     don't reach for --dur-4/5 on anything the user directly triggers and
+     expects to feel instant.
+     --ease-calm pairs with --dur-4/5: a symmetric slow-in/slow-out curve
+     (vs. --ease-out's quick start) for a "breathing" quality on page-level
+     reveals — --ease-out starts fast and only eases the landing, which
+     read as sudden/mechanical at these longer durations; easing the START
+     too is what makes a slower duration actually feel composed rather than
+     just "the same snap, held longer." */
   --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-calm:   cubic-bezier(0.45, 0, 0.15, 1);
   --dur-1: 150ms; --dur-2: 200ms; --dur-3: 260ms;
+  --dur-4: 600ms; --dur-5: 950ms;
 }
 
 /* ── Dark: matches the app's existing cool dark palette for F1 ──
@@ -265,3 +288,9 @@ html[data-theme="modern"] body.dark {
   --elev-2: 0 2px 6px rgba(0,0,0,.36), 0 10px 22px -8px rgba(0,0,0,.48);
   --elev-3: 0 8px 20px -6px rgba(0,0,0,.5), 0 24px 48px -16px rgba(0,0,0,.6);
 }
+
+/* ─── Text size preference (Settings, useTextSize.ts) ───────────────────────
+   Independent of theme/dark mode — `data-text-size` on <html>, "medium"
+   (the default) is unmarked, same convention as [data-theme]. */
+[data-text-size="small"]  { --text-scale: 0.88; }
+[data-text-size="large"]  { --text-scale: 1.16; }

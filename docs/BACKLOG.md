@@ -16,24 +16,19 @@ prioritized.
   overlap-aware study flow, and a round of mobile study-editor/nav fixes (see
   Done, below, for the full history). What's left, roughly in likely order:
 
-  - **F4 — motion layer.** Entrance/press/spring micro-interactions using the
-    already-defined `--ease-*`/`--dur-*` and `--elev-*` tokens, all behind
-    `prefers-reduced-motion` (see `design/mockup.html` for the target feel).
-    This is the next planned pass. Candidate within it: a command-palette-style
-    expand-on-focus for the desktop top-bar search (subtle at rest, more
-    prominent/centered while actively focused — the "/" shortcut trigger and
-    resting `--elev-1` shadow already ship; the focused-state expansion is the
-    motion-heavy part deliberately left for here).
-  - **Mobile nav priority — mechanism still unresolved.** Discussed as Bible =
-    home/does-everything (full weight), Journal = rarely used, Study = the
-    primary action, Profile = rarely used. Two mechanisms were tried and both
-    reverted on review: an opacity de-emphasis on Journal/Profile ("not a good
-    strategy"), and two different special icon treatments for Study (accent
-    color, then a filled badge — both read as "strange," an odd-one-out among
-    otherwise-consistent line icons). Currently all four mobile tabs are
-    visually uniform again. Needs a fresh approach, not another iteration on
-    color/shape-of-icon — worth revisiting once the motion pass exists, in case
-    subtle motion (not static color/shape) is the better differentiator.
+  - **Mobile nav priority — resting state still unresolved beyond the F4 tap
+    treatment.** Discussed as Bible = home/does-everything (full weight),
+    Journal = rarely used, Study = the primary action, Profile = rarely used.
+    Two *static* mechanisms were tried and both reverted on review: an opacity
+    de-emphasis on Journal/Profile ("not a good strategy"), and two different
+    special icon treatments for Study (accent color, then a filled badge —
+    both read as "strange," an odd-one-out among otherwise-consistent line
+    icons). F4 (below) added a motion-only differentiation (a springier press
+    on Study alone, all four tabs still uniform at rest) as a first attempt at
+    "subtle motion, not static color/shape" — worth a live-usage check before
+    deciding whether that alone is enough or whether the *resting* state still
+    needs its own answer (the toggle-vs-tabs question below is the other half
+    of this).
   - **Bible/Journal navigation: toggle vs. tabs — discussed, not decided.**
     Considered a segmented-control toggle (like Claude desktop's Home/Code) for
     Bible/Journal instead of flat tabs, to reduce perceived cognitive load and
@@ -165,6 +160,108 @@ prioritized.
   modifier (or an explicit select mode) so users can still drag-copy verse text.
 
 ## Done
+
+- **F4 — motion layer.** Entrance/press/spring micro-interactions built on
+  `tokens.css`'s `--ease-*`/`--dur-*`/`--elev-*` scale, in a new
+  `src/assets/motion.css` (imported last in `main.tsx`) so its additive
+  `transform`/`animation` rules layer on existing hover-state rules without
+  restating them. Pure CSS throughout — no animation library. Landed across
+  several rounds of live-feedback iteration (the blow-by-blow is git history,
+  not repeated here); what shipped:
+  - **Where motion lives.** A shared tactile hover-lift/press-settle on every
+    repeat-use clickable surface (book rows, search results, verse action
+    buttons, nav tabs, the avatar, note cards, dialog/settings buttons). The
+    quick-edit card (`QuickEditCard.tsx` — see below) and the verse-selection
+    action bar spring in on open. The desktop search box
+    (`.global-search--bar`) travels from its resting top-bar slot to a
+    centered, page-dimmed command-palette position on focus, closes on a
+    second "/" (which also clears the query), and supports arrow-key
+    navigation + Enter through its results. Scripture (`ScriptureSkeleton.tsx`)
+    and Journal show a shimmering placeholder instead of bare "Loading…"
+    text, and scripture reveals top-down verse-by-verse once loaded
+    (`--stagger-i`-keyed, capped so a 176-verse chapter doesn't cascade for
+    seconds). The mobile study scripture panel's expand/collapse actually
+    animates now and supports a manual drag-resize handle
+    (`.study-resize-handle`) to any height, not just the two presets. Desktop
+    nav has a measured sliding indicator between Bible/Journal
+    (`.topnav-tab-indicator`, `NavBar.tsx`); Study is deliberately excluded
+    from the slide (its own accent-filled active look doesn't compose with a
+    shared highlight) and fades in/out at wherever the indicator last was
+    instead. The app shell fades in once, calmly, at true boot only
+    (`.topnav`/`.bottomnav`, plus Bible Library specifically since it's the
+    default landing destination — gated by a module-level `hasBooted` flag
+    in `BibleLibrary.tsx`, not timing-sensitive React state, so it can't be
+    cut short by an unrelated re-render).
+  - **Where motion deliberately does NOT live, and why.** Per-item stagger
+    and entrance fades on Library/Journal content, and a fade on every
+    tab-switch, were all tried and then removed. These are frequently
+    revisited screens/actions (every tab switch, every drill-down back out
+    of a book) — motion well-tuned for a first look still becomes friction
+    once you're sitting through it dozens of times a session. The motion
+    budget is spent on rare/one-time moments (app boot) and on motion that
+    communicates an actual state change (quick-edit opening, verse
+    selection, search), not on decorating a list simply appearing. Journal
+    specifically also delays showing its loading skeleton at all for 150ms
+    (`SKELETON_DELAY_MS` in `JournalPage.tsx`) — a fetch that resolves faster
+    than that never shows a skeleton, avoiding the classic "flash of loading
+    state" on the common fast path; only a genuinely slower load shows it.
+  - **Reduced motion.** Every rule above lives inside
+    `@media (prefers-reduced-motion: no-preference)`; a global kill-switch in
+    `motion.css` (near-zero `animation`/`transition-duration`, not `none`, so
+    `animationend`/`transitionend` still fire) is the backstop for anything
+    not explicitly wrapped, including pre-existing animations that had no
+    reduced-motion handling at all before this pass (confirm dialogs,
+    Settings, What's New, the offline toast). `.upd-spinner` is exempt —
+    it signals real async work, not decorative motion.
+  - **Gotchas worth knowing before touching this file again:**
+    - An element with an `animation` targeting `opacity`/`transform`
+      establishes a CSS stacking context **permanently**, for as long as the
+      rule matches — regardless of whether the animation has finished
+      playing. `.topnav` learned this the hard way: its boot-fade trapped
+      the search backdrop/popover and the profile/workspace dropdown menus
+      (all `position: fixed`/`absolute` descendants nested inside it) into
+      an undefined stacking position, silently painting them *below*
+      `.main-area`'s later content regardless of their own `z-index`.
+      Fixed by giving `.topnav` an explicit `position: relative; z-index:
+      140`. If you add an animation to a new ancestor element, check what's
+      nested inside it.
+    - Giving an ancestor of a `position: fixed` element ANY `transform`
+      value — even a no-op `translateY(0)`, even only for an animation's
+      duration — establishes a new containing block for that descendant,
+      repositioning it relative to the ancestor instead of the viewport.
+      This is why `.topnav`'s boot animation is fade-only (no transform):
+      `GlobalSearch`'s fixed-position box lives inside it.
+    - A CSS animation's keyframe `transform` (e.g. `springIn`'s
+      translateY/scale) permanently overrides any separately-cascaded static
+      `transform` on the same property — so `left: 50%; transform:
+      translateX(-50%)` centering tricks silently break on any element that
+      also has an entrance animation touching `transform`. Center via
+      `left: calc(50vw - half-width)` instead when both are needed.
+    - Measuring an element's position/size for later use (`GlobalSearch`'s
+      `--rest-*`, the desktop nav indicator) must happen in
+      `useLayoutEffect`, not `useEffect` — the latter runs after the
+      browser's first paint, so a CSS fallback value gets painted for one
+      real frame and then visibly animates to the correct position once the
+      effect catches up.
+    - A custom property can't be reassigned in terms of itself on the same
+      selector (`--scripture-size: calc(var(--scripture-size) * …)` is a
+      self-reference cycle, invalid per spec) — `--text-scale` multiplies
+      `--scripture-size` at the point of use (`.verse-text`) instead.
+  - Also landed alongside the motion pass: a from-scratch quick-edit note UI
+    (`QuickEditCard.tsx`, replacing a bare textarea + text-link buttons with
+    a bordered card, category accent, and real labeled icon buttons, used
+    for both creating and editing a note) with a matching inline delete
+    confirmation (`InlineDeleteConfirm.tsx`, replacing a modal `ConfirmDialog`
+    for this one case); a more prominent mobile search entry point in the
+    Bible Library header for the "find a reference fast, mid-service" case;
+    and a user-adjustable Settings "Scripture text size" picker
+    (`useTextSize.ts`, mirroring `useTheme.ts`'s pattern) plus a ~10% mobile
+    size reduction, since the desktop "hero" scripture size ate most of a
+    375px line width.
+  Verified live throughout (puppeteer-driven pointer sequences and
+  computed-style/CSSOM inspection) at desktop and mobile widths, light +
+  dark, across all 4 visual themes where relevant. Build
+  (`tsc --noEmit` + vite) clean.
 
 - **Library spacing correction, mobile nav priority reverted, mobile study
   empty-state.**

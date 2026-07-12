@@ -1,0 +1,459 @@
+/* ─── Motion layer (F4) ─────────────────────────────────────────────────────
+   Entrance/press/spring micro-interactions built on tokens.css's ease, dur,
+   and elev scales. Imported LAST (after tokens/main/dark in main.tsx) so its
+   additive transform/animation rules layer on top of the existing hover/
+   active color rules without needing to restate them.
+
+   Two rules this file enforces everywhere:
+   1. Every transform/animation-adding rule lives inside
+      `@media (prefers-reduced-motion: no-preference)` — never applied at all
+      for a reduced-motion user, not just shortened. This matches
+      design/mockup.html's own motion block and is a stricter, simpler
+      guarantee than "animate but make it instant."
+   2. The global kill-switch at the bottom also neutralizes any *pre-existing*
+      unguarded animation in main.css (dialog/settings-modal/toast entrances,
+      the mobile bottom-sheet slide-up) so reduced-motion is respected
+      app-wide, not just by code added in this pass. `.upd-spinner` is
+      explicitly exempted — it communicates real in-progress work, not
+      decorative motion.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* ── Scripture skeleton (loading placeholder) ──
+   Base bar shapes are unconditional (a reduced-motion user still gets a
+   static gray-bar placeholder, just without the shimmer sweep — a clean
+   fallback, not a missing one). Widths are fixed per position so the
+   skeleton doesn't jitter between loads. */
+.scripture-skeleton {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: var(--space-2) 0;
+}
+.scripture-skeleton--narrow {
+  max-width: 100%;
+}
+.skeleton-verse-row {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  margin-bottom: 14px;
+}
+.skeleton-line {
+  display: block;
+  height: 12px;
+  border-radius: 5px;
+  background: var(--surface-2);
+}
+.skeleton-line--num {
+  width: 14px;
+  height: 9px;
+  flex-shrink: 0;
+}
+.skeleton-line--text {
+  flex: 1;
+}
+.skeleton-verse-row:nth-child(6n+1) .skeleton-line--text { max-width: 94%; }
+.skeleton-verse-row:nth-child(6n+2) .skeleton-line--text { max-width: 72%; }
+.skeleton-verse-row:nth-child(6n+3) .skeleton-line--text { max-width: 88%; }
+.skeleton-verse-row:nth-child(6n+4) .skeleton-line--text { max-width: 60%; }
+.skeleton-verse-row:nth-child(6n+5) .skeleton-line--text { max-width: 82%; }
+.skeleton-verse-row:nth-child(6n+6) .skeleton-line--text { max-width: 96%; }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes skeletonShimmer {
+    0% { background-position: -240px 0; }
+    100% { background-position: 240px 0; }
+  }
+  .skeleton-line {
+    background-image: linear-gradient(
+      90deg,
+      var(--surface-2) 20%,
+      var(--border) 38%,
+      var(--surface-2) 56%
+    );
+    background-size: 240px 100%;
+    animation: skeletonShimmer 1.3s ease-in-out infinite;
+  }
+  .skeleton-verse-row {
+    animation: fadeRise var(--dur-2) var(--ease-out) both;
+    animation-delay: min(calc(var(--stagger-i, 0) * 25ms), 200ms);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes fadeRise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes springIn {
+    from { opacity: 0; transform: translateY(6px) scale(0.94); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* ── Entrance: rail/margin notes fade-rise on first mount only (the note's
+     own id is the React key, so toggling `.highlighted` never replays this). */
+  .rail-note {
+    animation: fadeRise var(--dur-3) var(--ease-out) both;
+  }
+  .inline-verse-notes .reading-note-card {
+    animation: fadeRise var(--dur-2) var(--ease-out) both;
+  }
+
+  /* ── Entrance: the floating verse-selection action bar — the single most
+     repeated interaction surface in the app, so it gets the springier feel. */
+  .verse-action-bar {
+    animation: springIn var(--dur-3) var(--ease-spring) both;
+  }
+
+  /* ── Entrance: the mobile full-screen search surface — animation parity
+     with the desktop bar's travel-to-center. The surface itself fades+rises
+     in (springIn); its own search-input-wrap/results reuse the shared
+     .search-input-wrap/.search-results entrance treatment already defined
+     below, and .search-section's existing stagger applies here too since
+     that rule isn't scoped to a specific variant. */
+  .search-surface {
+    animation: springIn var(--dur-3) var(--ease-spring) both;
+  }
+  .library-search-entry {
+    transition: transform var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out);
+  }
+  .library-search-entry:active {
+    transform: scale(0.98);
+  }
+
+  /* ── Entrance: the quick-edit card (create a note / edit an existing one) —
+     mounts fresh every time it opens (a conditional render swap, not a
+     persistent element), so this replays on every open with no key needed. */
+  .quick-edit-card {
+    animation: springIn var(--dur-2) var(--ease-spring) both;
+  }
+
+  /* ── Confirmation: a brief accent pulse on the note card right after a
+     quick-edit save commits — the card itself unmounts synchronously on
+     save (no window to animate its own exit), so the confirmation lives on
+     the resulting rendered note instead. `.just-saved` is toggled by a
+     short-lived timeout in BookDetailPage/ReadingMode. */
+  @keyframes notedSavedPulse {
+    0% { background: var(--accent-weak); }
+    100% { background: transparent; }
+  }
+  .reading-note-card.just-saved,
+  .reading-subnote.just-saved {
+    animation: notedSavedPulse 900ms var(--ease-out);
+  }
+
+  /* ── Entrance: global search popover + its two independently-mounting
+     sections (scripture jump vs. notes) — GlobalSearch.tsx was already
+     structured for this (decoupled sync/async sections), just unbuilt. */
+  .search-results {
+    animation: springIn var(--dur-2) var(--ease-spring) both;
+  }
+  .search-section:nth-of-type(1) {
+    animation: fadeRise var(--dur-2) var(--ease-out) both;
+    animation-delay: 30ms;
+  }
+  .search-section:nth-of-type(2) {
+    animation: fadeRise var(--dur-2) var(--ease-out) both;
+    animation-delay: 90ms;
+  }
+
+  /* ── Entrance: scripture reveals top-down, verse by verse, instead of a
+     flat/instant fade — the "populating" feel. `--stagger-i` is the verse's
+     own index (set inline in ChapterView/ReadingMode/PassagePane), so it
+     works regardless of DOM siblings (rail notes interleave with verse rows
+     in the same grid, which would throw off a plain nth-child count).
+     `min()` caps the cascade so a 176-verse chapter (Psalm 119) still
+     finishes revealing in ~1/3s, not several seconds. */
+  .reading-verse-block,
+  .passage-verse {
+    animation: fadeRise var(--dur-2) var(--ease-out) both;
+    animation-delay: min(calc(var(--stagger-i, 0) * 18ms), 320ms);
+  }
+
+  /* NOTE: page-content entrance animation (library header/grid, journal
+     header/list) was tried across several rounds — mechanical stagger, a
+     single calm fade, a retuned subtle wave — and deliberately removed in
+     the end. These are frequently-revisited screens (every tab switch,
+     every drill-down), and motion that's well-tuned for a first look still
+     becomes friction once you're sitting through it dozens of times a
+     session. Decided the motion budget is better spent on rare/one-time
+     moments (app boot, below) and on motion that communicates an actual
+     state change (quick-edit opening, verse selection, search) rather than
+     decorating a list simply appearing. Left as a note, not deleted
+     silently, so this isn't quietly re-added later for the same reasons. */
+
+  /* ── Mobile study: the scripture panel's tap-triggered expand/collapse now
+     actually animates (previously an instant max-height snap, no transition
+     at all). Suspended entirely while the user is actively dragging the
+     resize handle (`.study-right--resizing`) — a transition fighting a
+     pointermove-driven height every frame would make the panel visibly lag
+     behind the finger instead of tracking it 1:1. */
+  .study-right {
+    transition: max-height var(--dur-3) var(--ease-spring);
+  }
+  .study-right--resizing {
+    transition: none;
+  }
+
+  /* ── Tactile press/hover system — a small, consistent lift-on-hover /
+     settle-on-press across every clickable surface. Restates each
+     selector's `transition` in full (not just appending `transform`) so nothing
+     regresses to an instant snap on the properties main.css already animates. */
+  .bible-book-row {
+    transition:
+      background var(--dur-1) var(--ease-out),
+      color var(--dur-1) var(--ease-out),
+      transform var(--dur-1) var(--ease-out);
+  }
+  .bible-book-row:hover { transform: translateY(-1px); }
+  .bible-book-row:active { transform: translateY(0) scale(0.99); }
+
+  .search-result {
+    transition:
+      background var(--dur-1) var(--ease-out),
+      transform var(--dur-1) var(--ease-out);
+  }
+  .search-result:hover { transform: translateX(2px); }
+  .search-result:active { transform: scale(0.98); }
+
+  .verse-action-btn {
+    transition:
+      background var(--dur-1) var(--ease-out),
+      transform var(--dur-1) var(--ease-out);
+  }
+  .verse-action-btn:hover { transform: translateY(-1px); }
+  .verse-action-btn:active { transform: translateY(0) scale(0.96); }
+
+  .topnav-tabs .nav-tab {
+    transition:
+      background var(--dur-1) var(--ease-out),
+      color var(--dur-1) var(--ease-out),
+      transform var(--dur-1) var(--ease-out);
+  }
+  .topnav-tabs .nav-tab:active { transform: scale(0.96); }
+
+  .avatar-btn {
+    transition:
+      opacity var(--dur-1) var(--ease-out),
+      transform var(--dur-1) var(--ease-out);
+  }
+  .avatar-btn:hover { transform: scale(1.05); }
+  .avatar-btn:active { transform: scale(0.92); }
+
+  .text-size-option,
+  .theme-swatch {
+    transition:
+      background var(--dur-1) var(--ease-out),
+      border-color var(--dur-1) var(--ease-out),
+      transform var(--dur-1) var(--ease-out);
+  }
+  .text-size-option:active,
+  .theme-swatch:active {
+    transform: scale(0.97);
+  }
+
+  .study-resize-grip {
+    transition: background var(--dur-1) var(--ease-out), width var(--dur-1) var(--ease-out);
+  }
+  .study-resize-handle:hover .study-resize-grip,
+  .study-resize-handle:active .study-resize-grip {
+    background: var(--accent);
+    width: 44px;
+  }
+
+  .reading-note-card {
+    transition:
+      background var(--dur-1) var(--ease-out),
+      transform var(--dur-1) var(--ease-out);
+  }
+  .reading-note-card:hover { transform: translateX(2px); }
+  .reading-note-card:active { transform: scale(0.99); }
+
+  .dialog-btn,
+  .smodal-btn-save {
+    transition:
+      background var(--dur-1) var(--ease-out),
+      opacity var(--dur-1) var(--ease-out),
+      transform var(--dur-1) var(--ease-out);
+  }
+  .dialog-btn:active,
+  .smodal-btn-save:active {
+    transform: scale(0.97);
+  }
+
+  /* ── Mobile bottom tab bar — a uniform tiny press-settle on every tab
+     (all four stay visually identical at rest; see NavBar.tsx / BACKLOG for
+     why two earlier *static* attempts to differentiate Study were reverted).
+     Study alone gets a springier, more pronounced press — the differentiation
+     lives entirely in the instant of the tap, never at rest. */
+  .bottomnav .nav-tab {
+    transition:
+      transform var(--dur-1) var(--ease-out),
+      color var(--dur-1) var(--ease-out);
+  }
+  .bottomnav .nav-tab:active {
+    transform: scale(0.94);
+  }
+  .bottomnav .nav-tab-action {
+    border-radius: 10px;
+    transition:
+      transform var(--dur-2) var(--ease-spring),
+      background-color var(--dur-2) var(--ease-spring),
+      color var(--dur-1) var(--ease-out);
+  }
+  .bottomnav .nav-tab-action:active {
+    transform: scale(0.88);
+    background-color: var(--accent-weak);
+  }
+
+  /* ── App boot: a calm, one-time intro for the chrome that frames every
+     page — the nav bars. Unlike .main-area's contents (which unmount/remount
+     on every tab switch and book/passage drill-down, replaying their own
+     entrance each time), .topnav and .bottomnav are rendered unconditionally
+     by App.tsx and never unmount for the lifetime of the session — so a
+     plain CSS animation on them only ever plays once, exactly at true app
+     start, with no mount-tracking state needed. */
+  @keyframes navFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  /* .topnav is deliberately fade-ONLY, no transform: GlobalSearch's box
+     (`.search-input-wrap`, `position: fixed`) lives inside it, and giving an
+     ancestor of a fixed-position element ANY transform value — even
+     `translateY(0)`, even only for the animation's brief duration —
+     establishes a new containing block for that descendant, making it
+     position relative to .topnav's box instead of the viewport. That would
+     silently break the "fixed to the viewport, travels to page-center on
+     focus" mechanism for as long as the animation is applying. .bottomnav
+     has no such descendant, so it keeps the fuller settle-up motion. */
+  .topnav {
+    animation: navFadeIn var(--dur-5) var(--ease-calm) both;
+  }
+  @keyframes navSettleUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .bottomnav {
+    animation: navSettleUp var(--dur-5) var(--ease-calm) both;
+  }
+
+  /* App boot, continued: Bible Library (the default destination) fades in
+     alongside the nav on true first load — without it, the nav settling in
+     calmly while the library content beneath it just snaps into place read
+     as jumpy/mismatched. `.bible-library--boot` is only ever present on the
+     one BibleLibrary instance that happens to be mounted at true app start
+     (see the `hasBooted` module flag in BibleLibrary.tsx) — every other
+     visit to Library (a genuine remount each time) mounts without it, so
+     this never replays on ordinary navigation. */
+  .bible-library--boot {
+    animation: navFadeIn var(--dur-5) var(--ease-calm) both;
+  }
+
+  /* Journal: a light, single fade for whichever content .journal-index ends
+     up holding — the skeleton (on a slow load) or the real list directly
+     (on a fast one, since the skeleton is skipped entirely below its own
+     delay threshold — see JournalPage.tsx). Deliberately NOT a per-item
+     stagger (removed elsewhere in this file for the same reasoning) and
+     NOT delayed behind a separate header fade — just one clean fade for the
+     whole block, since .journal-index only ever mounts fresh once per visit
+     regardless of which path it took to get there. */
+  .journal-index {
+    animation: navFadeIn var(--dur-3) var(--ease-out) both;
+  }
+
+  /* NOTE: .main-area's per-switch content fade (every tab switch, every
+     book/passage drill-down) was removed for the same reason as the library/
+     journal entrance above — this fires on the single most frequent
+     navigation action in the app, so instant/snappy wins over polish here
+     even at a well-tuned duration. */
+
+  /* ── Desktop nav: a measured sliding pill (see NavBar.tsx's
+     topnavTabsRef/indicatorStyle) between Bible and Journal, matching the
+     mobile bottom bar's jump-between-tabs feel instead of each tab just
+     recoloring independently in place. Study is deliberately excluded from
+     the slide — it already has its own distinct, permanent look (an
+     accent-outlined pill at rest, solid-filled when active), so a second,
+     differently-styled highlight sliding underneath it would double up. The
+     indicator instead fades out (opacity, positions unconditional below) at
+     whatever Bible/Journal spot it last occupied and fades back in there.
+     `left`/`width` come from React as exact inline pixel values (measured in
+     a useLayoutEffect, so they're correct before first paint — same
+     reasoning as GlobalSearch's --rest-* measurement), so only the
+     transition itself needs reduced-motion gating, not the values. */
+  .topnav-tab-indicator {
+    transition:
+      left var(--dur-2) var(--ease-spring),
+      width var(--dur-2) var(--ease-spring),
+      opacity var(--dur-2) var(--ease-out);
+  }
+
+  /* ── Mobile nav: the sliding indicator's position (base rule below) is
+     unconditional so reduced-motion users still see it land in the right
+     place — only the animated glide between positions is gated here. */
+  .bottomnav-indicator {
+    transition: transform var(--dur-2) var(--ease-spring);
+  }
+}
+
+/* Mobile nav: a sliding indicator pill behind the active tab, instead of
+   each tab just recoloring in place — a plain transform (no layout
+   measurement needed) since all four columns are equal width. Index comes
+   from NavBar's own render order (see BOTTOMNAV_ORDER). Position is
+   unconditional (see above for why); only the glide animates.
+   NOTE: deliberately NOT setting `.bottomnav { position: relative }` here —
+   main.css's mobile media query already gives it `position: fixed` (pinned
+   to the bottom), which equally establishes a containing block for the
+   absolutely-positioned indicator below. Adding `position: relative` in this
+   later-imported file would win the cascade (equal specificity, later file)
+   and silently override that `fixed`, un-pinning the whole bar from the
+   bottom — which is exactly what happened once before this comment existed. */
+.bottomnav-indicator {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 0;
+  width: 25%;
+  border-radius: 12px;
+  background: var(--accent-weak);
+  z-index: 0;
+  pointer-events: none;
+  transform: translateX(calc(var(--bottomnav-active-index, 0) * 100%));
+}
+.bottomnav .nav-tab {
+  position: relative;
+  z-index: 1;
+}
+
+/* Desktop nav: sliding pill between Bible/Journal (see NavBar.tsx). Position
+   comes entirely from React inline styles (measured pixel values), so this
+   rule only supplies the visual chrome — no fallback value needed the way
+   --rest-top or --bottomnav-active-index need one, since React always sets
+   left/width/opacity directly rather than through a custom property. */
+.topnav-tab-indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  border-radius: 7px;
+  background: var(--accent-weak);
+  z-index: 0;
+  pointer-events: none;
+}
+.topnav-tabs .nav-tab {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Reduced motion: global kill-switch ──
+   Near-zero (not `none`) so transitionend/animationend still fire for any
+   code that depends on them (e.g. a future note-delete exit animation) —
+   the motion is imperceptible, not the events. `.upd-spinner` is excluded:
+   it signals real async work in progress, not decorative motion. */
+@media (prefers-reduced-motion: reduce) {
+  *:not(.upd-spinner),
+  *:not(.upd-spinner)::before,
+  *:not(.upd-spinner)::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

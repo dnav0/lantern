@@ -1,12 +1,30 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Passage } from '../types'
 import { BIBLE_BOOKS, BibleBook } from '../utils/bibleBooks'
+
+// Module-scoped, not React state: true only until the very first
+// BibleLibrary mount in this tab's lifetime finishes claiming it. Bible is
+// the app's default destination, so this is really "did the app just boot."
+// Every later visit to Library (a genuine remount each time — see App.tsx's
+// renderMain) sees it already claimed and skips the fade. Deliberately not
+// implemented as a ref/effect that flips a class off after some delay —
+// that would risk the animation being cut short mid-play by an unrelated
+// re-render (e.g. the initial `passages` fetch resolving). Using a stable
+// lazy useState initializer instead means the class, once decided at true
+// mount time, never changes for the lifetime of this component instance.
+let hasBooted = false
 
 interface BibleLibraryProps {
   passages: Passage[]
   onSelectBook: (bookName: string) => void
   // Optional signed-in name for a quiet "Welcome back" line.
   displayName?: string | null
+  // Opens the mobile search surface. Renders a prominent full-width search
+  // entry point in the header (mobile only — desktop already has its own
+  // always-present top-bar box, hidden here via CSS). The use case this is
+  // for: mid-service, find a reference fast — the top-right icon button
+  // alone read as too subtle/easy to miss for that.
+  onOpenSearch?: () => void
 }
 
 const OT = BIBLE_BOOKS.filter(b => b.testament === 'OT')
@@ -57,7 +75,12 @@ function TestamentSection({
   )
 }
 
-export default function BibleLibrary({ passages, onSelectBook, displayName }: BibleLibraryProps): React.ReactElement {
+export default function BibleLibrary({ passages, onSelectBook, displayName, onOpenSearch }: BibleLibraryProps): React.ReactElement {
+  const [playBootFade] = useState(() => !hasBooted)
+  useEffect(() => {
+    hasBooted = true
+  }, [])
+
   const countByBook = new Map<number, number>()
   for (const p of passages) {
     countByBook.set(p.book_number, (countByBook.get(p.book_number) ?? 0) + 1)
@@ -67,7 +90,7 @@ export default function BibleLibrary({ passages, onSelectBook, displayName }: Bi
   const studiedBookCount = countByBook.size
 
   return (
-    <div className="bible-library">
+    <div className={`bible-library${playBootFade ? ' bible-library--boot' : ''}`}>
       <div className="bible-library-header">
         {displayName && <p className="bible-library-greeting">Welcome back, {displayName}.</p>}
         <h2 className="bible-library-title">Bible Library</h2>
@@ -76,6 +99,14 @@ export default function BibleLibrary({ passages, onSelectBook, displayName }: Bi
             ? `${studiedBookCount} ${studiedBookCount === 1 ? 'book' : 'books'} · ${passageCount} ${passageCount === 1 ? 'passage' : 'passages'} studied`
             : 'Click any book to begin reading'}
         </p>
+        {onOpenSearch && (
+          <button type="button" className="library-search-entry" onClick={onOpenSearch}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            Search references or notes…
+          </button>
+        )}
       </div>
 
       <TestamentSection label="Old Testament" bibleBooks={OT} countByBook={countByBook} onSelectBook={onSelectBook} />

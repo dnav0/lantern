@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react'
 import { useApi } from '../api/context'
 import { exportAllNotesAsZip } from '../platform/export'
 import { THEMES, type ThemeId } from '../utils/useTheme'
+import { TEXT_SIZES, type TextSizeId } from '../utils/useTextSize'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -10,6 +11,8 @@ interface SettingsModalProps {
   onToggleDark: () => void
   theme: ThemeId
   onSetTheme: (theme: ThemeId) => void
+  textSize: TextSizeId
+  onSetTextSize: (size: TextSizeId) => void
   // Sign-out handler, or null when there is no auth (memory stub / dev).
   onSignOut: (() => Promise<void>) | null
 }
@@ -22,6 +25,8 @@ export default function SettingsModal({
   onToggleDark,
   theme,
   onSetTheme,
+  textSize,
+  onSetTextSize,
   onSignOut
 }: SettingsModalProps): React.ReactElement | null {
   const api = useApi()
@@ -98,6 +103,28 @@ export default function SettingsModal({
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="smodal-divider" />
+
+          {/* Text size — scripture reading type only, independent of theme.
+              A segmented row rather than the theme swatch treatment: there's
+              nothing to preview beyond the label itself. */}
+          <div className="smodal-section">
+            <div className="smodal-section-label">Scripture text size</div>
+            <div className="text-size-picker" role="radiogroup" aria-label="Scripture text size">
+              {TEXT_SIZES.map(s => (
+                <button
+                  key={s.id}
+                  className={`text-size-option${textSize === s.id ? ' active' : ''}`}
+                  onClick={() => onSetTextSize(s.id)}
+                  role="radio"
+                  aria-checked={textSize === s.id}
+                >
+                  {s.label}
                 </button>
               ))}
             </div>

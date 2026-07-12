@@ -5,8 +5,10 @@ import { parseNoteLine } from '../utils/noteParser'
 import { useApi } from '../api/context'
 import InlineTagInput from './InlineTagInput'
 import RichEditInput from './RichEditInput'
-import ConfirmDialog from './ConfirmDialog'
+import InlineDeleteConfirm from './InlineDeleteConfirm'
 import CrossRefPill from './CrossRefPill'
+import ScriptureSkeleton from './ScriptureSkeleton'
+import QuickEditCard from './QuickEditCard'
 import { useVerseMarquee } from '../utils/useVerseMarquee'
 
 // ─── tiny helpers ────────────────────────────────────────────────────────────
@@ -145,6 +147,15 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onNot
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<NoteWithPassageInfo | null>(null)
+  // Brief accent pulse on a note card right after a quick-edit save commits —
+  // the quick-edit card itself unmounts synchronously on save, so this is
+  // where the "saved" confirmation actually lives (see .just-saved in
+  // motion.css). Cleared after the pulse's own duration.
+  const [justSavedId, setJustSavedId] = useState<string | null>(null)
+  const markJustSaved = (id: string): void => {
+    setJustSavedId(id)
+    setTimeout(() => setJustSavedId(prev => (prev === id ? null : prev)), 900)
+  }
   // Ref map for the chip → verse-row scroll linkage (mobile) and marquee hit-test.
   const verseRowRefs = useRef<Map<number, HTMLElement>>(new Map())
   // The full-width reading container the marquee is scoped to, so a drag starting
@@ -392,6 +403,7 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onNot
       setLocalNotes(prev => [...prev, enriched])
       setInlineVerse(null)
       setInlineText('')
+      markJustSaved(saved.id)
       onNotesChanged()
     } finally {
       setSavingInline(false)
@@ -414,6 +426,7 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onNot
       category: parsed.category
     })
     setLocalNotes(prev => prev.map(n => n.id === editingNoteId ? { ...n, ...updated } : n))
+    markJustSaved(editingNoteId)
     setEditingNoteId(null)
     onNotesChanged()
   }
@@ -445,6 +458,7 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onNot
     const { main, subnotes } = group
     const isHighlighted = highlightedNoteIds.has(main.id)
     const isEditing = editingNoteId === main.id
+    const isConfirmingDelete = confirmDelete?.id === main.id
     const hasAnchor = main.anchor_start_verse !== null
     const rangeLabel = hasAnchor
       ? verseRangeLabel(main.anchor_start_verse!, main.anchor_end_verse ?? main.anchor_start_verse!)
@@ -452,7 +466,7 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onNot
     return (
       <div
         key={main.id}
-        className={`reading-note-card cat-${main.category || 'none'}${isHighlighted ? ' highlighted' : ''}`}
+        className={`reading-note-card cat-${main.category || 'none'}${isHighlighted ? ' highlighted' : ''}${justSavedId === main.id ? ' just-saved' : ''}`}
       >
         {(main.category || (opts?.chip && hasAnchor)) && (
           <div className="reading-note-metarow">
@@ -473,13 +487,11 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onNot
           </div>
         )}
         {isEditing ? (
-          <div style={{ marginTop: 2 }}>
+          <QuickEditCard category={main.category} mode="edit" saveDisabled={!editText.trim()} onSave={() => void handleSaveEdit()} onCancel={() => setEditingNoteId(null)}>
             <RichEditInput className="note-edit-textarea" initialValue={editText} onChange={setEditText} onSave={() => void handleSaveEdit()} onCancel={() => setEditingNoteId(null)} />
-            <div className="note-edit-actions">
-              <button className="note-edit-cancel" onClick={() => setEditingNoteId(null)}>Cancel</button>
-              <button className="note-edit-save" onClick={() => void handleSaveEdit()}>Save</button>
-            </div>
-          </div>
+          </QuickEditCard>
+        ) : isConfirmingDelete ? (
+          <InlineDeleteConfirm onConfirm={() => void handleDeleteNote(main)} onCancel={() => setConfirmDelete(null)} />
         ) : (
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
             <div style={{ flex: 1 }} onClick={() => handleNoteClick(main)}>
@@ -493,16 +505,19 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onNot
           <div className="reading-subnotes">
             {subnotes.map(sub => {
               const isSubEditing = editingNoteId === sub.id
+              const isSubConfirmingDelete = confirmDelete?.id === sub.id
               return (
-                <div key={sub.id} className={`reading-subnote${highlightedNoteIds.has(sub.id) ? ' highlighted' : ''}`}>
+                <div key={sub.id} className={`reading-subnote${highlightedNoteIds.has(sub.id) ? ' highlighted' : ''}${justSavedId === sub.id ? ' just-saved' : ''}`}>
                   <span className="reading-subnote-bullet">◦</span>
                   {isSubEditing ? (
                     <div style={{ flex: 1 }}>
-                      <RichEditInput className="note-edit-textarea" initialValue={editText} onChange={setEditText} onSave={() => void handleSaveEdit()} onCancel={() => setEditingNoteId(null)} />
-                      <div className="note-edit-actions">
-                        <button className="note-edit-cancel" onClick={() => setEditingNoteId(null)}>Cancel</button>
-                        <button className="note-edit-save" onClick={() => void handleSaveEdit()}>Save</button>
-                      </div>
+                      <QuickEditCard category={sub.category} mode="edit" saveDisabled={!editText.trim()} onSave={() => void handleSaveEdit()} onCancel={() => setEditingNoteId(null)}>
+                        <RichEditInput className="note-edit-textarea" initialValue={editText} onChange={setEditText} onSave={() => void handleSaveEdit()} onCancel={() => setEditingNoteId(null)} />
+                      </QuickEditCard>
+                    </div>
+                  ) : isSubConfirmingDelete ? (
+                    <div style={{ flex: 1 }}>
+                      <InlineDeleteConfirm onConfirm={() => void handleDeleteNote(sub)} onCancel={() => setConfirmDelete(null)} />
                     </div>
                   ) : (
                     <>
@@ -527,7 +542,7 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onNot
   }
 
   if (loading) {
-    return <div className="loading-dots">Loading chapter {chapter}…</div>
+    return <ScriptureSkeleton />
   }
 
   if (!bibleData) {
@@ -639,7 +654,11 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onNot
           const mobileRangeHere = mobileRangeByVerse.get(v.verse)
 
           return (
-            <div key={v.verse} className="reading-verse-block" style={{ gridRow: i + 1 }}>
+            <div
+              key={v.verse}
+              className="reading-verse-block"
+              style={{ gridRow: i + 1, '--stagger-i': i } as React.CSSProperties}
+            >
               <div
                 ref={el => { if (el) verseRowRefs.current.set(v.verse, el); else verseRowRefs.current.delete(v.verse) }}
                 className={`reading-verse-row${isHighlighted ? ' highlighted' : ''}${isSelected ? ' selected' : ''}`}
@@ -674,17 +693,22 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onNot
 
               {showInline && (
                 <div className="inline-note-row">
-                  <span style={{ color: '#CCC', fontSize: 14 }}>•</span>
-                  <InlineTagInput
-                    value={inlineText}
-                    onChange={setInlineText}
-                    onEnter={handleInlineSave}
-                    onEscape={() => { setInlineVerse(null); setInlineText('') }}
-                    className="inline-note-input"
-                    placeholder={`v${v.verse} type a note…`}
-                    autoFocus
-                  />
-                  <span className="inline-note-hint">↵ save · esc cancel</span>
+                  <QuickEditCard
+                    mode="create"
+                    saveDisabled={!inlineText.trim() || savingInline}
+                    onSave={() => void handleInlineSave()}
+                    onCancel={() => { setInlineVerse(null); setInlineText('') }}
+                  >
+                    <InlineTagInput
+                      value={inlineText}
+                      onChange={setInlineText}
+                      onEnter={handleInlineSave}
+                      onEscape={() => { setInlineVerse(null); setInlineText('') }}
+                      className="inline-note-input"
+                      placeholder={`v${v.verse} type a note…`}
+                      autoFocus
+                    />
+                  </QuickEditCard>
                 </div>
               )}
             </div>
@@ -737,17 +761,6 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onNot
           </button>
         </div>
       )}
-
-      <ConfirmDialog
-        isOpen={confirmDelete !== null}
-        title="Delete note?"
-        message={confirmDelete ? `"${confirmDelete.content.slice(0, 60)}${confirmDelete.content.length > 60 ? '…' : ''}"` : undefined}
-        onClose={() => setConfirmDelete(null)}
-        actions={[
-          { label: 'Delete', variant: 'danger', onClick: () => confirmDelete && void handleDeleteNote(confirmDelete), autoFocus: false },
-          { label: 'Cancel', variant: 'ghost', onClick: () => setConfirmDelete(null), autoFocus: true }
-        ]}
-      />
     </div>
   )
 }

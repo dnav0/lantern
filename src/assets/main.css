@@ -294,6 +294,27 @@ body.dark .bible-library-greeting {
   border-bottom: 0.5px solid var(--border);
   flex-shrink: 0;
   user-select: none;
+  /* Explicit stacking context, positioned above .main-area's content (which
+     sits at the default z-index:0 level). Needed because motion.css's boot
+     fade (`animation` targeting opacity) makes .topnav establish a stacking
+     context whether we ask for one or not — any element with an animation
+     targeting opacity/transform does, permanently, even once the animation
+     itself has finished playing. Once trapped in an unstyled auto-z-index
+     stacking context, EVERYTHING nested inside .topnav (including the
+     search backdrop/box, both position:fixed with their own z-index) stacks
+     only relative to each other — not against the page at large — and
+     since .topnav precedes .main-area in the DOM, the whole thing would
+     silently paint BELOW .main-area's later content regardless of its
+     children's own z-index values. Giving .topnav its own real, elevated
+     z-index (rather than an accidental auto one) fixes this for its whole
+     subtree in one place — the same fix also covers the profile/workspace
+     dropdown menus (.nav-menu, z-index 500), which are nested inside .topnav
+     too and were equally at risk of the same trap.
+     See also: .bottomnav needs no equivalent fix — its own boot animation
+     targets transform, not opacity, but more importantly it has no
+     fixed-position descendants of its own to trap. */
+  position: relative;
+  z-index: 140;
 }
 
 .topnav-lead {
@@ -360,6 +381,7 @@ body.dark .bible-library-greeting {
   align-items: center;
   gap: 4px;
   grid-column: 2;
+  position: relative;
 }
 
 .topnav-tabs .nav-tab {
@@ -387,7 +409,12 @@ body.dark .bible-library-greeting {
   color: var(--text);
 }
 .topnav-tabs .nav-tab.active {
-  background: var(--accent-weak);
+  /* No background here on purpose — the sliding .topnav-tab-indicator
+     (motion.css) supplies it now for Bible/Journal, so the tab itself only
+     needs to update its text color/weight, not fight the indicator with an
+     instant background snap of its own. Study's solid active fill is a
+     separate, more specific rule below (.nav-tab-action.active) and is
+     unaffected by this. */
   color: var(--accent);
   font-weight: 500;
 }
@@ -526,8 +553,78 @@ body.dark .bible-library-greeting {
 
 .topnav-search {
   width: 260px;
+  height: 32px;
   /* gap between this and the avatar now comes from .topnav-right's own gap */
   flex-shrink: 0;
+  position: relative;
+}
+
+/* Command-palette-style expand-on-focus: subtle at rest (the 260px box in
+   the top bar), then travels to a centered overlay — like Raycast/Linear's
+   Cmd+K — while actively focused, dimming the whole page behind it.
+
+   The box is `position: fixed` at ALL times (not absolute-at-rest/
+   fixed-when-focused) because animating a change of `position` value itself
+   doesn't interpolate — switching containing blocks mid-transition causes a
+   jump. Instead its resting coordinates are MEASURED from `.topnav-search`
+   (an always-in-flow parent that never itself becomes fixed) and written as
+   `--rest-*` custom properties by GlobalSearch.tsx; that gives CSS a single
+   continuous position to transition from every time. */
+.global-search--bar {
+  height: 100%;
+}
+.global-search--bar .search-input-wrap {
+  position: fixed;
+  top: var(--rest-top, 10px);
+  left: var(--rest-left, 0);
+  width: var(--rest-width, 260px);
+  height: 32px;
+  z-index: 151;
+}
+/* Full-page scrim, mounted as a sibling inside the same :focus-within scope
+   so its visibility needs no JS state. Sits above everything else but below
+   the search box/results themselves (z-index 151/500). */
+.search-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 16, 8, 0.4);
+  z-index: 150;
+  opacity: 0;
+  pointer-events: none;
+}
+body.dark .search-backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .global-search--bar .search-input-wrap {
+    transition:
+      top var(--dur-3) var(--ease-spring),
+      left var(--dur-3) var(--ease-spring),
+      width var(--dur-3) var(--ease-spring),
+      transform var(--dur-3) var(--ease-spring);
+  }
+  /* Centered via `left: calc(50vw - half-width)` rather than the usual
+     `left:50%; transform:translateX(-50%)` trick — `.search-results` (below)
+     needs its own `transform` free for the springIn entrance animation
+     (motion.css), and a CSS animation's held end-state on a property
+     permanently overrides any other value on that same property, so
+     `transform` can't be reused for centering there. Both rules use the same
+     technique for consistency. */
+  .global-search--bar:focus-within .search-input-wrap {
+    top: 14vh;
+    left: calc(50vw - min(280px, 45vw));
+    width: min(560px, 90vw);
+  }
+  .global-search--bar:focus-within .search-input {
+    box-shadow: var(--elev-3);
+  }
+  .search-backdrop {
+    transition: opacity var(--dur-2) var(--ease-out);
+  }
+  .global-search--bar:focus-within .search-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 /* The mobile-only search trigger button lives in the top bar; hidden on desktop. */
 .topnav-search-btn {
@@ -610,12 +707,17 @@ body.dark .bible-library-greeting {
   appearance: none;
 }
 
-/* Results — a popover on the desktop bar; inline on the mobile surface. */
+/* Results — a popover on the desktop bar; inline on the mobile surface.
+   Mirrors .search-input-wrap's fixed/measured positioning so the popover
+   travels together with the box instead of staying docked under the header
+   while the input centers — same --rest-* custom properties, same
+   focus-within-driven expanded position, just offset downward by the input's
+   own height. */
 .global-search--bar .search-results {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  width: 340px;
+  position: fixed;
+  top: calc(var(--rest-top, 10px) + 38px);
+  left: var(--rest-left, 0);
+  width: var(--rest-width, 260px);
   max-height: 70vh;
   overflow-y: auto;
   background: var(--surface);
@@ -624,6 +726,20 @@ body.dark .bible-library-greeting {
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
   padding: 6px;
   z-index: 500;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .global-search--bar .search-results {
+    transition:
+      top var(--dur-2) var(--ease-out),
+      left var(--dur-2) var(--ease-out),
+      width var(--dur-2) var(--ease-out),
+      transform var(--dur-2) var(--ease-out);
+  }
+  .global-search--bar:focus-within .search-results {
+    top: calc(14vh + 38px);
+    left: calc(50vw - min(280px, 45vw));
+    width: min(560px, 90vw);
+  }
 }
 
 .search-section + .search-section {
@@ -653,8 +769,9 @@ body.dark .bible-library-greeting {
   cursor: pointer;
   transition: background 0.1s;
 }
-.search-result:hover {
-  background: rgba(127, 119, 221, 0.08);
+.search-result:hover,
+.search-result.active {
+  background: var(--accent-weak);
 }
 
 .search-result--scripture {
@@ -761,6 +878,16 @@ body.dark .bible-library-greeting {
   margin-bottom: 24px;
 }
 
+/* Stand-in for .journal-sub while its real text (entry/book counts) is
+   still loading — same box footprint so the heading doesn't shift once the
+   real count line replaces it. */
+.journal-sub-skeleton {
+  display: block;
+  width: 160px;
+  height: 12px;
+  margin-bottom: 24px;
+}
+
 .journal-book-group {
   margin-bottom: 24px;
 }
@@ -824,6 +951,20 @@ body.dark .bible-library-greeting {
   font-weight: 600;
   color: var(--accent);
   flex-shrink: 0;
+}
+
+.journal-entry-skeleton {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.journal-entry-skeleton-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .journal-entry-preview {
@@ -1335,7 +1476,7 @@ body.dark .bible-library-greeting {
    (all three render verse text as .verse-text). Notes stay in the UI sans. */
 .verse-text {
   font-family: var(--scripture-font);
-  font-size: var(--scripture-size);
+  font-size: calc(var(--scripture-size) * var(--text-scale, 1));
   color: var(--text);
   line-height: var(--scripture-lh);
   flex: 1;
@@ -1344,7 +1485,7 @@ body.dark .bible-library-greeting {
 /* The passage pane is a narrower side column in StudyMode — dial the reading
    size down a touch so the measure stays comfortable. */
 .passage-pane .verse-text {
-  font-size: 16.5px;
+  font-size: calc(16.5px * var(--text-scale, 1));
 }
 
 .passage-verse.highlighted .verse-text {
@@ -1754,31 +1895,132 @@ body.dark .bible-library-greeting {
   display: none;
 }
 
-/* Inline add note row in reading mode */
+/* Inline "add a quick note" mount point — the card itself (.quick-edit-card,
+   below) supplies all the visual chrome now; this is just its margin slot. */
 .inline-note-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 6px 12px 6px 20px;
-  margin-bottom: 4px;
+  margin: 4px 0 14px;
 }
 
 .inline-note-input {
   flex: 1;
+  width: 100%;
   border: none;
-  border-bottom: 0.5px solid var(--border);
   background: transparent;
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.6;
   font-family: inherit;
   outline: none;
-  padding: 2px 0;
+  padding: 0;
   color: var(--text);
 }
 
-.inline-note-hint {
+/* ─── Quick-edit card ─────────────────────────────────────────────────────────
+   Shared chrome for both quick-note flows (QuickEditCard.tsx): creating a
+   fresh verse-anchored note and editing an existing one. Replaces what used
+   to be a bare textarea with text-link buttons — a real bordered, elevated
+   card with a category-colored accent and labeled icon buttons. */
+.quick-edit-card {
+  margin: 6px 0 14px;
+  padding: 12px 14px 10px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  box-shadow: var(--elev-2);
+}
+.quick-edit-card.cat-observation { border-left-color: var(--cat-observation); }
+.quick-edit-card.cat-historical  { border-left-color: var(--cat-historical); }
+.quick-edit-card.cat-application{ border-left-color: var(--cat-application); }
+.quick-edit-card.cat-personal   { border-left-color: var(--cat-personal); }
+.quick-edit-card--danger {
+  border-left-color: #e83d3d;
+}
+
+.quick-edit-body {
+  min-height: 1.6em;
+}
+.quick-edit-confirm-message {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text);
+}
+/* No hint row for a plain confirm — right-align the actions on their own. */
+.quick-edit-footer--confirm {
+  justify-content: flex-end;
+}
+
+.quick-edit-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--surface-2);
+}
+
+.quick-edit-hint {
   font-size: 11px;
   color: var(--text-faint);
-  padding-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.quick-edit-hint kbd {
+  font-family: var(--ui-font);
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--surface-2);
+  border-radius: 4px;
+  padding: 1px 4px;
+  color: var(--text-muted);
+}
+
+.quick-edit-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.quick-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.quick-edit-btn-cancel {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.quick-edit-btn-cancel:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.quick-edit-btn-save {
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 1px solid var(--accent);
+}
+.quick-edit-btn-save:hover {
+  background: var(--accent-hover);
+}
+.quick-edit-btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.quick-edit-btn-danger {
+  background: #e83d3d;
+  color: #fff;
+  border: 1px solid #e83d3d;
+}
+.quick-edit-btn-danger:hover {
+  background: #d43333;
 }
 
 /* ─── Verse-range selection floating action bar ─────────────────────────────── */
@@ -1996,6 +2238,15 @@ body.dark .bible-library-greeting {
 .bible-library-sub {
   font-size: 13px;
   color: var(--text-muted);
+}
+
+/* Prominent mobile search entry — desktop already has its own always-present
+   top-bar box (hidden here via CSS, not by omitting onOpenSearch, so nothing
+   changes if a future desktop layout ever wants it too). Sized and worded
+   for the "find a reference fast, mid-service" use case: a full-width real
+   search-field look, not a small icon easy to miss. */
+.library-search-entry {
+  display: none;
 }
 
 .bible-testament-section {
@@ -2562,7 +2813,11 @@ body.dark .bible-library-greeting {
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: fadeIn 0.15s ease;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dialog-backdrop {
+    animation: fadeIn var(--dur-2) var(--ease-out);
+  }
 }
 
 .dialog-card {
@@ -2574,7 +2829,11 @@ body.dark .bible-library-greeting {
   box-shadow:
     0 8px 40px rgba(0, 0, 0, 0.16),
     0 2px 8px rgba(0, 0, 0, 0.08);
-  animation: slideUp 0.15s ease;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dialog-card {
+    animation: slideUp var(--dur-3) var(--ease-spring);
+  }
 }
 
 .dialog-title {
@@ -2710,44 +2969,6 @@ body.dark .bible-library-greeting {
   box-sizing: border-box;
 }
 
-.note-edit-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 6px;
-}
-
-.note-edit-save {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 12px;
-  font-family: inherit;
-  color: var(--accent);
-  padding: 2px 6px;
-  border-radius: 4px;
-  transition: background 0.1s;
-}
-.note-edit-save:hover {
-  background: var(--accent-weak);
-}
-
-.note-edit-cancel {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 12px;
-  font-family: inherit;
-  color: var(--text-muted);
-  padding: 2px 6px;
-  border-radius: 4px;
-  transition: background 0.1s;
-}
-.note-edit-cancel:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--text-muted);
-}
-
 /* ─── Version chip ──────────────────────────────────────────────────────────── */
 .wn-version-chip {
   display: inline-flex;
@@ -2782,6 +3003,11 @@ body.dark .bible-library-greeting {
   z-index: 200;
   -webkit-app-region: no-drag;
 }
+@media (prefers-reduced-motion: no-preference) {
+  .smodal-backdrop {
+    animation: fadeIn var(--dur-2) var(--ease-out);
+  }
+}
 
 .smodal-panel {
   background: var(--surface);
@@ -2793,6 +3019,11 @@ body.dark .bible-library-greeting {
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
   display: flex;
   flex-direction: column;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .smodal-panel {
+    animation: slideUp var(--dur-3) var(--ease-spring);
+  }
 }
 
 .smodal-body {
@@ -2852,6 +3083,37 @@ body.dark .bible-library-greeting {
   height: 1px;
   background: var(--surface-2);
   margin: 0;
+}
+
+/* ─── Text size picker (Settings) ───────────────────────────────────────────
+   Scripture-only scale, independent of theme (see useTextSize.ts /
+   tokens.css --text-scale). A plain segmented row — nothing to preview
+   beyond the label itself, unlike the theme swatches below. */
+.text-size-picker {
+  display: flex;
+  gap: 6px;
+}
+.text-size-option {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+}
+.text-size-option:hover {
+  background: var(--surface-2);
+}
+.text-size-option.active {
+  background: var(--accent-weak);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
 }
 
 /* ─── Theme picker (Settings) ──────────────────────────────────────────────
@@ -3232,7 +3494,11 @@ body.dark .smodal-vault-desc {
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: wn-fade-in 0.15s ease;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wn-backdrop {
+    animation: wn-fade-in var(--dur-2) var(--ease-out);
+  }
 }
 
 @keyframes wn-fade-in {
@@ -3254,7 +3520,11 @@ body.dark .smodal-vault-desc {
   max-height: 70vh;
   display: flex;
   flex-direction: column;
-  animation: wn-slide-up 0.18s ease;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wn-modal {
+    animation: wn-slide-up var(--dur-3) var(--ease-spring);
+  }
 }
 
 @keyframes wn-slide-up {
@@ -3622,7 +3892,7 @@ body.dark .upd-popover-btn-ghost:hover {
     position: fixed;
     inset: 0;
     z-index: 600;
-    background: #faf9f6;
+    background: var(--bg);
     padding: calc(env(safe-area-inset-top) + 10px) 14px 14px;
     overflow-y: auto;
   }
@@ -3657,6 +3927,18 @@ body.dark .upd-popover-btn-ghost:hover {
   }
   .global-search--surface .search-result-note-preview {
     white-space: normal;
+  }
+
+  /* ── Scripture reads too large at this width relative to desktop — the same
+     19-20px that feels "generously hero-sized" on a wide monitor eats most of
+     a 375px line, wrapping constantly and reading as oversized. A flat ~10%
+     reduction (independent of and stacking with the user's own --text-scale
+     preference below) brings it back to a comfortable measure. ─────────────── */
+  .verse-text {
+    font-size: calc(var(--scripture-size) * var(--text-scale, 1) * 0.9);
+  }
+  .passage-pane .verse-text {
+    font-size: calc(16.5px * var(--text-scale, 1) * 0.9);
   }
 
   /* ── Bottom tab bar ───────────────────────────────────────────────────────── */
@@ -3741,9 +4023,33 @@ body.dark .upd-popover-btn-ghost:hover {
     min-height: 0;
     border-bottom: 0.5px solid var(--border);
     background: var(--surface-2);
+    position: relative;
   }
   .study-layout--scripture-expanded .study-right {
     max-height: 62vh;
+  }
+  /* Manual drag handle at the panel's bottom edge, overlaid rather than
+     given its own flex row so it doesn't eat into the scripture body's
+     space. A wide hit target (28px tall) with a slim visible grip pill,
+     the common "there's more here" affordance for a draggable sheet edge. */
+  .study-resize-handle {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -14px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: ns-resize;
+    touch-action: none;
+    z-index: 2;
+  }
+  .study-resize-grip {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border-strong, var(--border));
   }
   /* Before any reference is committed there's nothing to peek at — the 34vh
      panel was reserving real vertical space just to show placeholder copy
@@ -3926,6 +4232,28 @@ body.dark .upd-popover-btn-ghost:hover {
   .bible-library-title {
     font-size: 20px;
   }
+  .library-search-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--elev-1);
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .library-search-entry svg {
+    flex-shrink: 0;
+    color: var(--text-faint);
+  }
   /* Two columns instead of three so book names don't truncate on narrow screens. */
   .bible-books-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -3989,6 +4317,15 @@ body.dark .upd-popover-btn-ghost:hover {
     font-size: 16px;
   }
 
+  /* Quick-edit card: the tag hint truncates to nothing useful at this width
+     ("@ ...") — hide it and let Cancel/Save have the room instead. */
+  .quick-edit-hint {
+    display: none;
+  }
+  .quick-edit-footer {
+    justify-content: flex-end;
+  }
+
   /* ── Modals become bottom sheets ───────────────────────────────────────────── */
   .smodal-backdrop {
     align-items: flex-end;
@@ -3999,7 +4336,7 @@ body.dark .upd-popover-btn-ghost:hover {
     max-height: 88dvh;
     border-radius: 16px 16px 0 0;
     padding-bottom: env(safe-area-inset-bottom);
-    animation: sheetUp 0.2s ease;
+    animation: sheetUp var(--dur-3) var(--ease-out);
   }
   .smodal-vault-btn {
     padding: 10px 14px;
@@ -4019,7 +4356,7 @@ body.dark .upd-popover-btn-ghost:hover {
     min-width: 0;
     border-radius: 16px 16px 0 0;
     padding: 22px 20px calc(22px + env(safe-area-inset-bottom));
-    animation: sheetUp 0.2s ease;
+    animation: sheetUp var(--dur-3) var(--ease-out);
   }
   .dialog-actions {
     flex-direction: column-reverse;
@@ -4077,7 +4414,6 @@ body.dark .topnav-tabs .nav-tab:hover {
   color: var(--text-faint);
 }
 body.dark .topnav-tabs .nav-tab.active {
-  background: var(--accent-soft);
   color: var(--accent);
 }
 body.dark .avatar-btn {
@@ -4150,8 +4486,9 @@ body.dark .search-section + .search-section {
 body.dark .search-section-label {
   color: var(--text-faint);
 }
-body.dark .search-result:hover {
-  background: rgba(127, 119, 221, 0.14);
+body.dark .search-result:hover,
+body.dark .search-result.active {
+  background: var(--accent-weak);
 }
 body.dark .search-result-ref {
   color: var(--text);
@@ -4260,7 +4597,11 @@ body.dark .offline-pill {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   max-width: min(320px, 90vw);
   text-align: center;
-  animation: toastIn 0.15s ease;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .offline-toast {
+    animation: toastIn var(--dur-2) var(--ease-spring);
+  }
 }
 body.dark .offline-toast {
   background: var(--surface);
