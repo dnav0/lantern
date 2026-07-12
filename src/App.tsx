@@ -216,6 +216,7 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
             handleStudyFromReading(ref, passageId)
             refresh()
           }}
+          onOpenStudy={handleOpenStudy}
           onRefresh={refresh}
         />
       )

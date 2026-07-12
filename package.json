@@ -12,6 +12,8 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\""
   },
   "dependencies": {
+    "@fontsource/newsreader": "^5.2.10",
+    "@fontsource/source-serif-4": "^5.2.9",
     "@supabase/supabase-js": "^2.110.0",
     "fflate": "^0.8.3",
     "react": "^18.3.1",

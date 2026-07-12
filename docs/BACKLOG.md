@@ -16,33 +16,11 @@ prioritized.
   picker, the overlap-aware study flow, F4 motion (entrance/press/spring
   micro-interactions), and a round of mobile study-editor/nav fixes (see Done,
   below, for the full history). Bible/Journal toggle-vs-tabs was discussed and
-  decided against — not adopting it, not revisiting. What's left:
+  decided against — not adopting it, not revisiting. The note→study bridge in
+  ChapterView and the font self-host are also done now (see Done). Mobile nav
+  priority is closed as a deliberate decision (see Done). What's left is
+  optional polish only:
 
-  - **Mobile nav priority — resting state still unresolved.** Discussed as
-    Bible = home/does-everything (full weight), Journal = rarely used, Study =
-    the primary action, Profile = rarely used. Three static/motion mechanisms
-    tried on Study specifically (accent color, a filled badge, a springier
-    press) — the two static ones were reverted as "strange"; the motion one
-    only affects the *tap*, not the *resting* look, so all four tabs are still
-    visually uniform at rest. Needs a fresh answer, or a deliberate decision
-    that uniform-at-rest is fine and priority only needs to show up in
-    behavior/motion, not appearance.
-  - **Note→study "Open study" bridge in `BookDetailPage`'s ChapterView is
-    still NOT built** (confirmed by re-checking the component — no `Open
-    study`/`handleOpenStudy` reference exists there). `ReadingMode` already has
-    this (`onOpenStudy` prop → `App.tsx`'s `handleOpenStudy(passageId)`,
-    button alongside Edit/Delete). `ChapterView`'s note cards currently only
-    have Edit/Delete. The data dependency that blocked this is gone —
-    `ChapterView` already loads the book's `Passage[]` (`bookPassages`, added
-    for overlap-matching) — so this is now just resolving each note to its
-    passage id (chapter/verse range match against `bookPassages`, same idea as
-    `findOverlappingPassage`) and adding the button + wiring
-    `onOpenStudy={handleOpenStudy}` through `BookDetailPage` from `App.tsx`.
-  - **Self-host the scripture fonts.** `index.html` currently loads Source Serif 4
-    + Newsreader from Google Fonts (Georgia fallback keeps reading graceful
-    offline). For full offline/privacy, self-host the woff2s (e.g.
-    `@fontsource/source-serif-4`, `@fontsource/newsreader`) and drop the external
-    `<link>`; add to the SW precache.
   - **dark.css redundancy prune (cosmetic).** `dark.css` is now fully token-driven
     and consistent, but many of its `body.dark …` rules only restate a value the
     `tokens.css` `body.dark` reassignment already produces. They're harmless but
@@ -181,23 +159,56 @@ prioritized.
   free vs paid, billing, quota enforcement. Design the free single-user
   experience so it never feels crippled.
 
-- **Note→study bridge in the chapter reading view.** `ReadingMode` (saved-passage
-  view) now always shows "Open study" on its notes, wired through the WS1
-  unified `handleOpenStudy` path (Studies & Notes model, workstream 2). Notes
-  rendered inside `BookDetailPage`'s ChapterView (the Bible home reader) still
-  don't have an "Open study" button — out of scope for workstream 2, which only
-  touched the gesture/bridge in the two surfaces named above. The main blocker
-  is gone, though: `ChapterView` now loads the book's `Passage[]`
-  (`bookPassages`, added for the overlap-matching fix below) alongside its
-  notes, so resolving a given note to its passage id is now a straightforward
-  lookup rather than a missing-data problem — adding the button itself is what's
-  left.
-
 - **Modifier to restore verse-text copy under the marquee.** The desktop marquee
   suppresses native text selection over verse text (drag = box-select). Add a
   modifier (or an explicit select mode) so users can still drag-copy verse text.
 
 ## Done
+
+- **Design sweep closeout: note→study bridge in ChapterView, self-hosted
+  scripture fonts, mobile nav priority decision.**
+  - **Note→study "Open study" bridge in `BookDetailPage`'s ChapterView.**
+    Note cards there previously only had Edit/Delete; `ReadingMode` already had
+    a third "Open study" button (`onOpenStudy` → `App.tsx`'s
+    `handleOpenStudy(passageId)`). `ChapterView` now has the same button,
+    resolved per-note via a new `resolveNotePassageId` helper that reuses the
+    existing `findOverlappingPassage` (already used by "Start study on {ref}"/
+    "Study chapter") against `bookPassages` — no new matching logic. Threaded
+    `onOpenStudy: (passageId: string) => void` through `ChapterViewProps` →
+    `BookDetailPageProps` → `App.tsx` (`onOpenStudy={handleOpenStudy}`, same
+    handler `ReadingMode` already uses). If a note's range doesn't overlap any
+    known passage, the button is hidden rather than left as a dead click
+    target. Verified live (memory stub, `.env` moved aside): clicking "Open
+    study" on the seeded John 1:1 note correctly opens `StudyMode` on the
+    existing "John 1:1-5" passage with its note loaded, both at desktop
+    (1280px) and mobile (375px) widths. Build (`tsc --noEmit` + vite) clean.
+  - **Self-hosted scripture fonts.** `index.html`'s Google Fonts `<link>` +
+    preconnects for Source Serif 4 (400/500/600) and Newsreader (400/500) are
+    gone, replaced with `@fontsource/source-serif-4` and `@fontsource/newsreader`
+    (static per-weight CSS, only the weights `tokens.css` actually references),
+    imported in `main.tsx`. Both packages register the same family names
+    already used by `--scripture-font`, so `tokens.css` needed no changes — a
+    variable-font (`@fontsource-variable/*`) alternative was tried first but
+    registers under a different family name (`"Source Serif 4 Variable"`) and
+    was dropped in favor of the static packages to avoid touching tokens.css.
+    `vite.config.ts`'s PWA precache glob already included `woff2`, so no config
+    change was needed — confirmed via `npm run build`, which emits the font
+    files under `dist/assets/` and precaches them (36 entries). Georgia stays
+    as the fallback for genuine load failures. Verified live: font requests
+    resolve to `localhost` (not `fonts.googleapis.com`), and `.verse-text`'s
+    computed `font-family` resolves to `"Source Serif 4"` in both light and
+    dark mode.
+  - **Mobile nav priority — closed as uniform-at-rest, deliberately.** Three
+    distinct mechanisms were tried and reverted across earlier passes: accent
+    color on the Study icon (read as "permanently selected"), a filled badge on
+    Study (still read as "off"), and opacity de-emphasis on Journal/Profile via
+    a `nav-tab-low` class (removed entirely). Rather than attempt a fourth
+    treatment, the decision is that uniform-at-rest is fine: priority already
+    shows up through real usage (Bible as the landing destination, Study
+    reachable from several entry points — chapter button, verse selection,
+    nav) without needing an icon-level cue that has three times now read as
+    visual noise instead of signal. No further code change; this closes the
+    item.
 
 - **F4 — motion layer.** Entrance/press/spring micro-interactions built on
   `tokens.css`'s `--ease-*`/`--dur-*`/`--elev-*` scale, in a new

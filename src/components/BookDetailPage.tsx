@@ -127,10 +127,11 @@ interface ChapterViewProps {
   notes: NoteWithPassageInfo[]
   passages: Passage[]
   onStudyChapter: (ref: string, passageId?: string) => void
+  onOpenStudy: (passageId: string) => void
   onNotesChanged: () => void
 }
 
-function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onNotesChanged }: ChapterViewProps): React.ReactElement {
+function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onOpenStudy, onNotesChanged }: ChapterViewProps): React.ReactElement {
   const api = useApi()
   const [bibleData, setBibleData] = useState<BiblePassage | null>(null)
   const [loading, setLoading] = useState(true)
@@ -438,21 +439,43 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onNot
     onNotesChanged()
   }
 
-  const renderNoteActions = (note: NoteWithPassageInfo): React.ReactElement => (
-    <div className="se-note-actions">
-      <button className="se-icon-btn" title="Edit" onClick={e => { e.stopPropagation(); handleStartEdit(note) }}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-        </svg>
-      </button>
-      <button className="se-icon-btn se-icon-danger" title="Delete" onClick={e => { e.stopPropagation(); setConfirmDelete(note) }}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
-        </svg>
-      </button>
-    </div>
-  )
+  // Resolve a note (anchored or passage-level) to the existing Passage it
+  // belongs to, via the same overlap logic "Start study on {ref}" uses —
+  // mirrors ReadingMode's onOpenStudy bridge, except ChapterView spans many
+  // notes/passages so the id has to be resolved per-note rather than closed
+  // over a single passage prop.
+  const resolveNotePassageId = (note: NoteWithPassageInfo): string | undefined => {
+    const start = note.anchor_start_verse ?? note.verse_start
+    const end = note.anchor_end_verse ?? note.anchor_start_verse ?? note.verse_end
+    return findOverlappingPassage(passages, note.chapter_start, start, end)?.id
+  }
+
+  const renderNoteActions = (note: NoteWithPassageInfo): React.ReactElement => {
+    const openPassageId = resolveNotePassageId(note)
+    return (
+      <div className="se-note-actions">
+        <button className="se-icon-btn" title="Edit" onClick={e => { e.stopPropagation(); handleStartEdit(note) }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+        {openPassageId && (
+          <button className="se-icon-btn" title="Open study" onClick={e => { e.stopPropagation(); onOpenStudy(openPassageId) }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+          </button>
+        )}
+        <button className="se-icon-btn se-icon-danger" title="Delete" onClick={e => { e.stopPropagation(); setConfirmDelete(note) }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
+          </svg>
+        </button>
+      </div>
+    )
+  }
 
   const renderNoteGroup = (group: NoteGroup, opts?: { chip?: boolean }): React.ReactElement => {
     const { main, subnotes } = group
@@ -773,6 +796,7 @@ interface BookDetailPageProps {
   initialChapter?: number
   onBack: () => void
   onStudy: (reference: string, passageId?: string) => void
+  onOpenStudy: (passageId: string) => void
   onRefresh?: () => void
 }
 
@@ -781,6 +805,7 @@ export default function BookDetailPage({
   initialChapter,
   onBack,
   onStudy,
+  onOpenStudy,
   onRefresh
 }: BookDetailPageProps): React.ReactElement {
   const api = useApi()
@@ -879,6 +904,7 @@ export default function BookDetailPage({
           notes={allNotes}
           passages={bookPassages}
           onStudyChapter={onStudy}
+          onOpenStudy={onOpenStudy}
           onNotesChanged={reloadNotes}
         />
       </div>

@@ -2,6 +2,14 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import Root from './Root'
+// Scripture reading faces, self-hosted (see tokens.css --scripture-font per
+// [data-theme]; Georgia is still the fallback if a woff2 fails to load).
+// Only the weights actually referenced by tokens.css are pulled in.
+import '@fontsource/source-serif-4/400.css'
+import '@fontsource/source-serif-4/500.css'
+import '@fontsource/source-serif-4/600.css'
+import '@fontsource/newsreader/400.css'
+import '@fontsource/newsreader/500.css'
 import './assets/tokens.css'
 import './assets/main.css'
 import './assets/dark.css'
