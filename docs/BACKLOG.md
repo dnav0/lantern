@@ -99,7 +99,27 @@ prioritized.
   (not especially technical) audience — exactly the kind of friction that
   determines whether a first-time visitor actually creates an account. Do this
   at the same time as the login redesign, not as a separate pass — same
-  screen, same testing surface.
+  screen, same testing surface. **Decided: keep both Google and email, not
+  Google-only** — Google as the prominent one-click default, email kept as
+  the fallback ("or continue with email"). Reasons to not drop email
+  entirely: account-lockout risk if something goes wrong on Google's side
+  (no way back into the app's own data); a real minority of users
+  specifically avoid Google-linked sign-in for a personal spiritual-journal
+  app; and Apple's App Store guidelines require offering Sign in with Apple
+  as a parallel option if Google/Facebook sign-in is offered — a Google-only
+  app today would force adding a *third* auth method later just to ship on
+  iOS (the "Capacitor mobile wrap" item below), whereas keeping email as the
+  neutral fallback avoids that trigger.
+
+- **Journal entries need a delete option.** `JournalPage.tsx` currently has no
+  delete affordance at all — confirmed by inspection. The backend already
+  supports it (`BereanApi.deletePassageAll(passageId)`, cascade-deletes
+  sessions/notes, already implemented in both `memory.ts` and
+  `berean-api.ts`), so this is UI-only: a subtle delete action per Journal
+  row (consistent with the app's existing understated icon-button language,
+  e.g. `.se-icon-btn.se-icon-danger` used elsewhere) plus the existing
+  `ConfirmDialog` component for the destructive-action confirmation, matching
+  how deletes are confirmed everywhere else in the app.
 
 - **KJV + translation switcher.** Second `BibleProvider` implementation plus a UI
   to pick translation. The provider interface already exists for this; note
