@@ -89,16 +89,6 @@ prioritized.
   iOS (the "Capacitor mobile wrap" item below), whereas keeping email as the
   neutral fallback avoids that trigger.
 
-- **Journal entries need a delete option.** `JournalPage.tsx` currently has no
-  delete affordance at all — confirmed by inspection. The backend already
-  supports it (`BereanApi.deletePassageAll(passageId)`, cascade-deletes
-  sessions/notes, already implemented in both `memory.ts` and
-  `berean-api.ts`), so this is UI-only: a subtle delete action per Journal
-  row (consistent with the app's existing understated icon-button language,
-  e.g. `.se-icon-btn.se-icon-danger` used elsewhere) plus the existing
-  `ConfirmDialog` component for the destructive-action confirmation, matching
-  how deletes are confirmed everywhere else in the app.
-
 - **KJV + translation switcher.** Second `BibleProvider` implementation plus a UI
   to pick translation. The provider interface already exists for this; note
   versification papercuts across translations (verse numbers mostly line up).
@@ -164,6 +154,27 @@ prioritized.
   modifier (or an explicit select mode) so users can still drag-copy verse text.
 
 ## Done
+
+- **Journal entry delete.** `JournalPage.tsx` rows had no delete affordance;
+  added one per row without threading through `App.tsx` (the page already holds
+  `useApi()` + its own entries state). Each entry is now wrapped in a
+  `.journal-entry-row` so a `.se-icon-btn.se-icon-danger` delete button sits as
+  a *sibling* of the row `<button>` (never nested — invalid HTML), overlaid at
+  the right edge, hover/focus-revealed (`opacity 0→1`) on pointer devices and
+  always visible under `@media (hover: none)` for touch; the card reserves
+  `padding-right: 40px` so neither the date nor the preview runs under the icon.
+  Confirmation uses the existing modal `ConfirmDialog` (matching how larger
+  deletes are confirmed) — "Delete this study?" with the reference label and a
+  correctly-pluralized note count, `Cancel` (ghost, autofocused) / `Delete`
+  (danger). Delete calls `BereanApi.deletePassageAll(passageId)` (cascade
+  removes sessions/notes in both impls) and drops the row from local state on
+  success rather than refetching; a failed delete leaves the dialog and row in
+  place. Verified live on the memory stub (`.env` moved aside): the seeded
+  "John 1:1-5" study's delete button renders with the right classes/aria, the
+  dialog shows the correct copy + singular "1 note", confirming removes the row
+  and reveals the empty state, and the button inherits the correct
+  `--text-faint` icon color in dark mode. `tsc --noEmit` clean. UI-only — no
+  schema/`BereanApi` change.
 
 - **Design sweep closeout: note→study bridge in ChapterView, self-hosted
   scripture fonts, mobile nav priority decision.**

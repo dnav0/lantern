@@ -3,6 +3,7 @@ import { JournalEntry } from '../types'
 import { bookByNumber } from '../utils/bibleBooks'
 import { parseNoteLine } from '../utils/noteParser'
 import { useApi } from '../api/context'
+import ConfirmDialog from './ConfirmDialog'
 
 interface JournalPageProps {
   // Open a study (StudyMode) for the given passage.
@@ -67,6 +68,9 @@ export default function JournalPage({ onOpenStudy }: JournalPageProps): React.Re
   const [entries, setEntries] = useState<JournalEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [showSkeleton, setShowSkeleton] = useState(false)
+  // The study pending a delete confirmation (null = dialog closed).
+  const [confirmDelete, setConfirmDelete] = useState<JournalEntry | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     let settled = false
@@ -84,6 +88,23 @@ export default function JournalPage({ onOpenStudy }: JournalPageProps): React.Re
       window.clearTimeout(skeletonTimer)
     }
   }, [api])
+
+  // Delete a whole study. deletePassageAll cascade-removes its sessions/notes
+  // (both API impls), so this is UI-only — drop the row from local state on
+  // success rather than refetching the whole index.
+  const handleDelete = async (entry: JournalEntry): Promise<void> => {
+    setDeleting(true)
+    try {
+      await api.deletePassageAll(entry.passage.id)
+      setEntries(prev => prev.filter(e => e.passage.id !== entry.passage.id))
+      setConfirmDelete(null)
+    } catch {
+      // Leave the dialog open; a failed delete keeps the row so nothing is
+      // silently lost. (The BereanApi seam surfaces its own friendly message.)
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   if (loading) {
     // Nothing rendered yet for the first SKELETON_DELAY_MS — a brief blank
@@ -157,28 +178,62 @@ export default function JournalPage({ onOpenStudy }: JournalPageProps): React.Re
                 const date = entry.last_note_at ?? entry.passage.created_at
                 const preview = entry.preview ? previewText(entry.preview) : ''
                 return (
-                  <button
-                    key={entry.passage.id}
-                    className="journal-entry"
-                    onClick={() => onOpenStudy(entry.passage.id)}
-                  >
-                    <div className="journal-entry-top">
-                      <span className="journal-entry-ref">{entry.passage.reference_label}</span>
-                      <span className="journal-entry-date">{formatDate(date)}</span>
-                    </div>
-                    <div className="journal-entry-bottom">
-                      <span className="journal-entry-count">
-                        {entry.note_count} note{entry.note_count === 1 ? '' : 's'}
-                      </span>
-                      {preview && <span className="journal-entry-preview">{preview}</span>}
-                    </div>
-                  </button>
+                  <div key={entry.passage.id} className="journal-entry-row">
+                    <button
+                      className="journal-entry"
+                      onClick={() => onOpenStudy(entry.passage.id)}
+                    >
+                      <div className="journal-entry-top">
+                        <span className="journal-entry-ref">{entry.passage.reference_label}</span>
+                        <span className="journal-entry-date">{formatDate(date)}</span>
+                      </div>
+                      <div className="journal-entry-bottom">
+                        <span className="journal-entry-count">
+                          {entry.note_count} note{entry.note_count === 1 ? '' : 's'}
+                        </span>
+                        {preview && <span className="journal-entry-preview">{preview}</span>}
+                      </div>
+                    </button>
+                    <button
+                      className="se-icon-btn se-icon-danger journal-entry-delete"
+                      title="Delete study"
+                      aria-label={`Delete study ${entry.passage.reference_label}`}
+                      onClick={() => setConfirmDelete(entry)}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6" /><path d="M14 11v6" />
+                      </svg>
+                    </button>
+                  </div>
                 )
               })}
             </div>
           ))}
         </div>
       </div>
+      <ConfirmDialog
+        isOpen={confirmDelete !== null}
+        title="Delete this study?"
+        message={
+          confirmDelete
+            ? `“${confirmDelete.passage.reference_label}” and its ${confirmDelete.note_count} note${confirmDelete.note_count === 1 ? '' : 's'} will be permanently deleted. This can't be undone.`
+            : undefined
+        }
+        onClose={() => { if (!deleting) setConfirmDelete(null) }}
+        actions={[
+          {
+            label: 'Cancel',
+            variant: 'ghost',
+            autoFocus: true,
+            onClick: () => { if (!deleting) setConfirmDelete(null) }
+          },
+          {
+            label: deleting ? 'Deleting…' : 'Delete',
+            variant: 'danger',
+            onClick: () => { if (confirmDelete && !deleting) void handleDelete(confirmDelete) }
+          }
+        ]}
+      />
     </div>
   )
 }

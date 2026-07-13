@@ -919,6 +919,40 @@ body.dark .search-backdrop {
   background: #fbfaff;
 }
 
+/* Row = the study card + its (hover-revealed) delete affordance. The card
+   itself stays a full button; the delete sits as a sibling overlaid at the
+   right edge so we never nest a button inside a button. */
+.journal-entry-row {
+  position: relative;
+}
+
+/* Reserve space at the card's right edge so neither the date nor the preview
+   sits under the delete icon when it appears. */
+.journal-entry-row .journal-entry {
+  padding-right: 40px;
+}
+
+.journal-entry-delete {
+  position: absolute;
+  top: 50%;
+  right: 9px;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity var(--dur-1) var(--ease-out);
+}
+
+.journal-entry-row:hover .journal-entry-delete,
+.journal-entry-row:focus-within .journal-entry-delete {
+  opacity: 1;
+}
+
+/* Touch devices have no hover — keep the delete affordance always visible. */
+@media (hover: none) {
+  .journal-entry-delete {
+    opacity: 1;
+  }
+}
+
 .journal-entry-top {
   display: flex;
   align-items: baseline;
