@@ -2,8 +2,10 @@
 
 ## What this is
 
-Berean is a single-user, web-first PWA for personal Bible-study notes, deployed on
-Cloudflare Pages and backed by Supabase (Postgres + auth + RLS). It's a rewrite of
+Lantern (renamed from Berean — see CLAUDE.md; internal `Berean*` identifiers and
+persisted keys deliberately kept) is a single-user, web-first PWA for personal
+Bible-study notes, deployed on Cloudflare Pages and backed by Supabase
+(Postgres + auth + RLS). It's a rewrite of
 a local-only Electron desktop app. The desktop app carried its whole domain model
 and pure-React UI through a single `window.api` bridge with zero direct Electron
 imports in the renderer — that bridge is the seam the rewrite pivots on, so the UI
@@ -324,7 +326,7 @@ npx tsx scripts/migrate-sqlite.ts \
 `vite-plugin-pwa` (`vite.config.ts`, `generateSW` strategy) emits the web app
 manifest and a Workbox service worker at build time:
 
-- **Manifest** — name/short_name "Berean", `standalone` display, theme and
+- **Manifest** — name/short_name "Lantern", `standalone` display, theme and
   background color `#F5F4F1` (matching the app's light background), three
   icons (`192`, `512`, and a `512` `maskable` variant with ~10% safe-area
   padding baked in) generated from `public/icon.svg`.
@@ -448,7 +450,7 @@ it the shell reflows for a phone (primary target: Android Chrome, ~360–430px).
 | Static `book_number` (1–66), drop Books table | Book metadata is static and belongs client-side; removes a table and its bookkeeping. |
 | BSB via helloao, cached forever in IndexedDB | Free, no key; immutable chapters cache indefinitely, so provider downtime doesn't affect reads. Provider interface keeps KJV/ESV addable. |
 | `platform/` abstraction + pure-web rule | Keeps the code portable to native wrappers; nothing under `src/` touches Node/Electron. |
-| Design-token layer (`src/assets/tokens.css`) | One source of truth for color/elevation/spacing/motion/type, consumed via `var()`. Default theme "Berean" (warm cream canvas + indigo accent + serif scripture) in `:root`; `body.dark` reassigns tokens (also warm-tinted, F1b). Live theme picker in Settings (`src/utils/useTheme.ts`, `[data-theme]` blocks in `tokens.css`) lets the user choose Berean / Scholarly Serif / Warm Paper / Quiet Modern independent of light/dark. Values chosen via a throwaway `design/mockup.html` compare-artifact + reading-UX/color research. F1–F4 (tokens, serif reading typography, contrast, motion) all landed, plus the note→study bridge and self-hosted scripture fonts closed out the sweep — see BACKLOG's Done section. Only cosmetic/optional polish (dark.css redundancy prune, elevation-over-borders consistency) remains, deliberately deferred past the first deploy. |
+| Design-token layer (`src/assets/tokens.css`) | One source of truth for color/elevation/spacing/motion/type, consumed via `var()`. Default theme, now labelled "Lantern" (warm cream canvas + indigo accent + serif scripture), in `:root`; `body.dark` reassigns tokens (also warm-tinted, F1b). Its stored id stays `berean` deliberately — that value is persisted in localStorage and hooked by `tokens.css`, so renaming it would reset every user's theme. Live theme picker in Settings (`src/utils/useTheme.ts`, `[data-theme]` blocks in `tokens.css`) lets the user choose Lantern / Scholarly Serif / Warm Paper / Quiet Modern independent of light/dark. Values chosen via a throwaway `design/mockup.html` compare-artifact + reading-UX/color research. F1–F4 (tokens, serif reading typography, contrast, motion) all landed, plus the note→study bridge and self-hosted scripture fonts closed out the sweep — see BACKLOG's Done section. Only cosmetic/optional polish (dark.css redundancy prune, elevation-over-borders consistency) remains, deliberately deferred past the first deploy. |
 | Overlap-match on "Start study on {ref}" | Selecting verses that overlap an existing passage reopens it (with its notes) instead of always starting a blank study — interval overlap, not exact-range match, so a note anchored anywhere inside the selection surfaces. A step short of the deferred "multiple study instances" feature, which would let a user deliberately start a *distinct* new effort over already-studied verses. |
 
 ## Risks & mitigations

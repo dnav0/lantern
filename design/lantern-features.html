@@ -1,0 +1,304 @@
+<!doctype html>
+<!--
+  Lantern — FEATURE CLIPS (THROWAWAY / review artifact)
+  ---------------------------------------------------------------------------
+  Three focused clips for the landing's features section, in the hero's visual
+  language (cursor, typing, category colours, cream + serif). Each loops
+  independently and is compact enough to sit beside copy.
+
+    1  Four lenses      — one verse gathering a note of each category.
+    2  Notes on the verse — set in the STUDY VIEW (notes editor + scripture
+                           pane, matching the app's real split), showing a note
+                           and its anchored verse light up together.
+    3  Find and return  — type a reference to jump to a chapter, then the
+                           journal of past studies grouped by book.
+
+  Brand is now WORDMARK-ONLY ("Lantern", Source Serif 4 display cut).
+  prefers-reduced-motion shows each clip's resting state.
+-->
+<html lang="en" data-mode="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lantern — feature clips</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600&display=swap');
+:root {
+  --ui-font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --scripture-font:'Source Serif 4',Georgia,serif;
+  --bg:#f4f0e8; --surface:#fbf9f4; --surface-2:#ece6da; --border:#e2dccf; --border-strong:#d8d0c0;
+  --text:#201e1a; --text-muted:#6a6353; --text-faint:#938a77;
+  --accent:#6b62d6; --accent-weak:rgba(107,98,214,.14); --on-accent:#fff;
+  --cat-observation:#6b62d6; --cat-historical:#3f8f5b; --cat-application:#b5732a; --cat-personal:#c05070;
+  --elev-2:0 2px 6px rgba(20,16,8,.06),0 8px 20px -6px rgba(20,16,8,.10);
+  --elev-3:0 6px 16px -4px rgba(20,16,8,.12),0 20px 40px -12px rgba(20,16,8,.18);
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+html[data-mode="dark"] {
+  --bg:#17140f; --surface:#211d17; --surface-2:#2b2620; --border:#38322a; --border-strong:#473f34;
+  --text:#ece4d6; --text-muted:#a99f8e; --text-faint:#7a7264;
+  --accent:#a49cf0; --accent-weak:rgba(164,156,240,.17); --on-accent:#17140f;
+  --cat-observation:#a49cf0; --cat-historical:#5fbf92; --cat-application:#d79a55; --cat-personal:#e58aab;
+  --elev-2:0 2px 6px rgba(0,0,0,.32),0 10px 22px -8px rgba(0,0,0,.42);
+  --elev-3:0 8px 20px -6px rgba(0,0,0,.45),0 24px 48px -16px rgba(0,0,0,.55);
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background-color:var(--bg); color:var(--text); font-family:var(--ui-font);
+  -webkit-font-smoothing:antialiased; padding:44px; transition:background-color .2s; }
+.toolbar { position:fixed; top:14px; right:14px; display:flex; gap:2px; background:var(--surface);
+  border:1px solid var(--border); border-radius:999px; padding:5px; box-shadow:var(--elev-2); z-index:30; }
+.toolbar button { font:inherit; font-size:12px; font-weight:600; border:0; cursor:pointer;
+  padding:6px 12px; border-radius:999px; background:transparent; color:var(--text-muted); }
+.toolbar button.on { background:var(--accent); color:var(--on-accent); }
+.brand { font-family:var(--scripture-font); font-weight:600; font-size:30px; letter-spacing:-.02em;
+  font-variation-settings:'opsz' 60; margin-bottom:4px; }
+.lede { color:var(--text-muted); font-size:14px; margin-bottom:38px; max-width:64ch; line-height:1.55; }
+
+.feature { display:grid; grid-template-columns:1fr 1fr; gap:44px; align-items:center;
+  padding:40px 0; border-top:1px solid var(--border); }
+.feature:nth-child(even) .copy { order:2; }
+.copy .eyebrow { font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--text-faint); }
+.copy h2 { font-family:var(--scripture-font); font-weight:500; font-size:30px; letter-spacing:-.015em; margin:10px 0 12px; }
+.copy p { font-size:15px; line-height:1.6; color:var(--text-muted); max-width:42ch; }
+
+.frame { position:relative; height:290px; background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; box-shadow:var(--elev-3); overflow:hidden; }
+.bar { height:34px; display:flex; align-items:center; gap:7px; padding:0 12px; border-bottom:1px solid var(--border);
+  background:var(--surface-2); }
+.bar .d { width:7px; height:7px; border-radius:50%; background:var(--border-strong); }
+.bar .t { margin-left:6px; font-family:var(--scripture-font); font-size:11.5px; font-weight:600; color:var(--text-muted); }
+.stage { position:relative; height:calc(100% - 34px); padding:14px 16px; }
+
+.v { font-family:var(--scripture-font); font-size:13.5px; line-height:1.6; color:var(--text); padding:3px 6px;
+  border-radius:5px; transition:background-color .4s var(--ease); }
+.v .vn { font-family:var(--ui-font); font-size:9px; color:var(--text-faint); vertical-align:super; margin-right:4px; }
+.v.lit { background-color:var(--accent-weak); }
+
+.note { position:relative; padding-left:10px; opacity:0; transform:translateY(4px);
+  transition:opacity .45s var(--ease), transform .45s var(--ease); }
+.note::before { content:''; position:absolute; left:0; top:1px; bottom:1px; width:2px; border-radius:2px;
+  background:var(--c); transform:scaleY(0); transform-origin:top; transition:transform .45s var(--ease) .05s; }
+.note.show { opacity:1; transform:none; } .note.show::before { transform:scaleY(1); }
+.note .lbl { font-size:8.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--c); }
+.note .bd { font-family:var(--scripture-font); font-size:11.5px; line-height:1.4; color:var(--text-muted); margin-top:1px; }
+
+.cursor { position:absolute; width:16px; height:16px; z-index:14; left:0; top:0; opacity:0;
+  transition:transform .55s var(--ease), opacity .3s var(--ease); pointer-events:none;
+  filter:drop-shadow(0 1px 2px rgba(20,16,8,.35)); }
+.caret { display:inline-block; width:1.2px; height:1em; background:var(--accent); vertical-align:-2px; opacity:0; }
+.caret.on { animation:blink 1s steps(1) infinite; } @keyframes blink { 50%{opacity:0} 0%,100%{opacity:1} }
+
+/* clip 2 — study split */
+.split { display:grid; grid-template-columns:1fr 1fr; gap:12px; height:100%; }
+.pane { border:1px solid var(--border); border-radius:9px; padding:9px; overflow:hidden; background:var(--bg); }
+.pane-h { font-size:8.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-faint); margin-bottom:7px; }
+.noteline { padding:5px 6px; border-radius:6px; margin-bottom:5px; border-left:2px solid var(--c);
+  background:transparent; transition:background-color .35s var(--ease); }
+.noteline.active { background-color:var(--accent-weak); }
+.noteline .lbl { font-size:8px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--c); }
+.noteline .bd { font-family:var(--scripture-font); font-size:11px; line-height:1.35; color:var(--text-muted); margin-top:1px; }
+
+/* clip 3 — search + journal */
+.searchbox { display:flex; align-items:center; gap:7px; border:1px solid var(--border-strong); border-radius:9px;
+  padding:7px 10px; background:var(--bg); font-size:12px; color:var(--text); }
+.searchbox .ph { color:var(--text-faint); }
+.result { margin-top:8px; padding:7px 9px; border-radius:8px; border:1px solid var(--border); background:var(--bg);
+  display:flex; align-items:center; justify-content:space-between; opacity:0; transform:translateY(4px);
+  transition:opacity .35s var(--ease), transform .35s var(--ease), background-color .3s; }
+.result.show { opacity:1; transform:none; } .result.hot { background-color:var(--accent-weak); }
+.result .r { font-family:var(--scripture-font); font-size:12.5px; font-weight:600; }
+.result .k { font-size:9.5px; color:var(--text-faint); }
+.phase { position:absolute; inset:14px 16px; opacity:0; transition:opacity .4s var(--ease); pointer-events:none; }
+.phase.on { opacity:1; }
+.jgroup { font-size:8.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-faint); margin:0 0 6px; }
+.jrow { padding:7px 9px; border-radius:8px; border:1px solid var(--border); background:var(--bg); margin-bottom:6px;
+  transition:background-color .3s; }
+.jrow.hot { background-color:var(--accent-weak); }
+.jrow .top { display:flex; justify-content:space-between; align-items:baseline; }
+.jrow .rf { font-family:var(--scripture-font); font-size:12px; font-weight:600; }
+.jrow .dt { font-size:9px; color:var(--text-faint); }
+.jrow .pv { font-size:10px; color:var(--text-muted); margin-top:2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor { display:none; } .caret { display:none; }
+  .note { opacity:1; transform:none; } .note::before { transform:scaleY(1); }
+  .result { opacity:1; transform:none; } .phase { opacity:1; }
+}
+@media (max-width:900px){ .feature { grid-template-columns:1fr; } .feature:nth-child(even) .copy { order:0; } }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <button data-val="light" class="on">Light</button>
+  <button data-val="dark">Dark</button>
+</div>
+
+<div class="brand">Lantern</div>
+<p class="lede">Feature clips for the landing page, in the hero's language. Each loops on its own. Clip 2 is set in the
+Study view, matching the app's real split of notes editor and scripture pane.</p>
+
+<!-- ═══ 1 · Four lenses ═══ -->
+<section class="feature">
+  <div class="copy">
+    <div class="eyebrow">Four lenses</div>
+    <h2>One passage, seen four ways.</h2>
+    <p>Every note is one of four kinds. Over time a passage fills in from every angle, and you can read it back lens by lens.</p>
+  </div>
+  <div class="frame" id="f1">
+    <div class="bar"><span class="d"></span><span class="d"></span><span class="d"></span><span class="t">John 1</span></div>
+    <div class="stage">
+      <div class="v" id="c1v"><span class="vn">5</span>The light shines in the darkness, and the darkness has not overcome it.</div>
+      <div style="display:flex; flex-direction:column; gap:7px; margin-top:9px;">
+        <div class="note" data-n="1" style="--c:var(--cat-observation)"><div class="lbl">Observation</div><div class="bd">"Light" and "darkness" set against each other.</div></div>
+        <div class="note" data-n="2" style="--c:var(--cat-historical)"><div class="lbl">Historical</div><div class="bd">John's readers knew Genesis 1 by heart.</div></div>
+        <div class="note" data-n="3" style="--c:var(--cat-application)"><div class="lbl">Application</div><div class="bd">Light to walk by, not only to look at.</div></div>
+        <div class="note" data-n="4" style="--c:var(--cat-personal)"><div class="lbl">Personal</div><div class="bd">The dark never won. Hold onto that.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 2 · Notes on the verse (STUDY VIEW) ═══ -->
+<section class="feature">
+  <div class="copy">
+    <div class="eyebrow">In the study</div>
+    <h2>Your notes live on the verse.</h2>
+    <p>Write in the study and every note stays anchored to its exact verse. Touch a note and the Scripture it belongs to lights up.</p>
+  </div>
+  <div class="frame" id="f2">
+    <div class="bar"><span class="d"></span><span class="d"></span><span class="d"></span><span class="t">Study · John 1:1–5</span></div>
+    <div class="stage">
+      <div class="split">
+        <div class="pane">
+          <div class="pane-h">Notes</div>
+          <div class="noteline" data-nl="1" style="--c:var(--cat-observation)"><div class="lbl">Observation</div><div class="bd">With God, and was God.</div></div>
+          <div class="noteline" data-nl="3" style="--c:var(--cat-historical)"><div class="lbl">Historical</div><div class="bd">Echoes Genesis 1.</div></div>
+          <div class="noteline" data-nl="5" style="--c:var(--cat-personal)"><div class="lbl">Personal</div><div class="bd">The dark never won.</div></div>
+        </div>
+        <div class="pane">
+          <div class="pane-h">Scripture</div>
+          <div class="v" data-sv="1"><span class="vn">1</span>In the beginning was the Word…</div>
+          <div class="v" data-sv="2"><span class="vn">2</span>He was with God in the beginning.</div>
+          <div class="v" data-sv="3"><span class="vn">3</span>Through him all things were made.</div>
+          <div class="v" data-sv="4"><span class="vn">4</span>In him was life, the light of all.</div>
+          <div class="v" data-sv="5"><span class="vn">5</span>The light shines in the darkness…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 3 · Find and return ═══ -->
+<section class="feature">
+  <div class="copy">
+    <div class="eyebrow">Find and return</div>
+    <h2>Everything you've studied, waiting.</h2>
+    <p>Type a reference to jump straight to a chapter. Every study you've done is kept in a journal, grouped by book.</p>
+  </div>
+  <div class="frame" id="f3">
+    <div class="bar"><span class="d"></span><span class="d"></span><span class="d"></span><span class="t">Lantern</span></div>
+    <div class="stage">
+      <div class="phase on" id="p3a">
+        <div class="searchbox"><span>🔍</span><span id="q3"></span><span class="caret" id="c3"></span><span class="ph" id="ph3">Search a reference or a note…</span></div>
+        <div class="result" id="r3"><span class="r">John 1</span><span class="k">Open chapter</span></div>
+      </div>
+      <div class="phase" id="p3b">
+        <div class="jgroup">John</div>
+        <div class="jrow" id="j1"><div class="top"><span class="rf">John 1:1–5</span><span class="dt">Jul 14</span></div><div class="pv">4 notes · With God, and was God.</div></div>
+        <div class="jrow" id="j2"><div class="top"><span class="rf">John 3:1–8</span><span class="dt">Jul 9</span></div><div class="pv">2 notes · Born of the Spirit.</div></div>
+        <div class="jgroup" style="margin-top:9px">Romans</div>
+        <div class="jrow" id="j3"><div class="top"><span class="rf">Romans 8:28–39</span><span class="dt">Jul 2</span></div><div class="pv">6 notes · Nothing separates.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const wait = ms => new Promise(r=>setTimeout(r,ms));
+function mkCursor(frame){
+  const c=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  c.setAttribute('viewBox','0 0 24 24'); c.setAttribute('class','cursor');
+  c.innerHTML='<path d="M5 3l14 8-6 1.4L16 20l-2.4 1L10.5 13 5 17z" fill="currentColor"/>';
+  c.style.color='var(--text)'; frame.appendChild(c); return c;
+}
+function at(frame, el, dx=0, dy=0){
+  const f=frame.getBoundingClientRect(), r=el.getBoundingClientRect();
+  return { x:r.left-f.left+dx, y:r.top-f.top+dy };
+}
+function move(cur,p,o=1){ cur.style.transform=`translate(${p.x}px,${p.y}px)`; cur.style.opacity=o; }
+
+// ── Clip 1: four lenses ──
+async function clip1(){
+  const f=document.getElementById('f1');
+  const notes=[...f.querySelectorAll('.note')];
+  while(true){
+    notes.forEach(n=>n.classList.remove('show'));
+    await wait(900);
+    for(const n of notes){ n.classList.add('show'); await wait(680); }
+    await wait(2400);
+  }
+}
+// ── Clip 2: study view, note ↔ verse ──
+async function clip2(){
+  const f=document.getElementById('f2');
+  const cur=mkCursor(f);
+  const lines=[...f.querySelectorAll('.noteline')];
+  const verses=[...f.querySelectorAll('.v[data-sv]')];
+  const clear=()=>{ lines.forEach(l=>l.classList.remove('active')); verses.forEach(v=>v.classList.remove('lit')); };
+  while(true){
+    clear(); move(cur, at(f, lines[0], 90, 40), 0); await wait(700);
+    for(const l of lines){
+      move(cur, at(f, l, 60, 14)); await wait(620);
+      clear();
+      l.classList.add('active');
+      const target=verses.find(v=>v.dataset.sv===l.dataset.nl);
+      if(target) target.classList.add('lit');
+      await wait(1300);
+    }
+    move(cur, at(f, lines[0], 90, 60), 0);
+    await wait(900);
+  }
+}
+// ── Clip 3: search → jump, then journal ──
+async function clip3(){
+  const f=document.getElementById('f3');
+  const cur=mkCursor(f);
+  const q=document.getElementById('q3'), caret=document.getElementById('c3'), ph=document.getElementById('ph3');
+  const r=document.getElementById('r3'), a=document.getElementById('p3a'), b=document.getElementById('p3b');
+  const rows=[document.getElementById('j1'),document.getElementById('j2'),document.getElementById('j3')];
+  while(true){
+    a.classList.add('on'); b.classList.remove('on');
+    q.textContent=''; ph.style.display=''; r.classList.remove('show','hot'); caret.classList.remove('on');
+    rows.forEach(x=>x.classList.remove('hot'));
+    move(cur, at(f, a, 200, 120), 0); await wait(700);
+    // click the field and type
+    move(cur, at(f, a, 60, 12)); await wait(600);
+    ph.style.display='none'; caret.classList.add('on'); await wait(400);
+    for(const ch of 'john 1'){ q.textContent+=ch; await wait(110); }
+    await wait(300); caret.classList.remove('on');
+    r.classList.add('show'); await wait(600);
+    // click the result
+    move(cur, at(f, r, 40, 12)); await wait(600);
+    r.classList.add('hot'); await wait(500);
+    // → journal
+    a.classList.remove('on'); b.classList.add('on');
+    move(cur, at(f, b, 200, 130), 0); await wait(900);
+    move(cur, at(f, rows[0], 60, 14)); await wait(700);
+    rows[0].classList.add('hot'); await wait(1400);
+    move(cur, at(f, rows[0], 200, 90), 0); await wait(700);
+  }
+}
+if(!reduce){ clip1(); clip2(); clip3(); }
+else { document.querySelectorAll('.note').forEach(n=>n.classList.add('show')); }
+
+document.querySelectorAll('.toolbar button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.documentElement.setAttribute('data-mode', b.dataset.val);
+    document.querySelectorAll('.toolbar button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+  });
+});
+</script>
+</body>
+</html>

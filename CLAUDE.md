@@ -1,9 +1,19 @@
-# Berean — working notes for contributors (human and AI)
+# Lantern — working notes for contributors (human and AI)
 
-Berean is a personal Bible-study notes app. You read a passage, capture what you
+Lantern is a personal Bible-study notes app. You read a passage, capture what you
 see in it (observations, historical context, application, personal reflection),
 and read those notes back later anchored to the verses. This is the web-first
 rewrite; the old Electron desktop app is frozen on the `legacy/electron` branch.
+
+**The app was renamed Berean → Lantern** (Psalm 119:105; "Berean" collided with
+the Berean Standard Bible, the translation this app displays). The rename covered
+user-visible strings and assets ONLY. **Internal `Berean*` identifiers are
+deliberately unchanged** — `BereanApi`, `berean-api.ts`, `SupabaseBereanApi`, and
+every persisted key (`berean.onboarded`, `berean-theme`, `berean-visual-theme`,
+`berean-offline-mirror`, `berean-bible-cache`, and the default theme's stored id
+`berean`). Renaming those would silently reset users' preferences and orphan their
+cached data. Don't "tidy" them. The brand identity is wordmark-only — see
+`src/components/Wordmark.tsx` for why every pictorial mark was rejected.
 
 ## Stack
 

@@ -1,16 +1,20 @@
-# Berean
+# Lantern
 
 A quiet place to study Scripture: read a passage, capture what you see in it, and
 read your notes back later anchored to the verses.
 
-Berean is a personal Bible-study notes app. You work in two modes:
+Lantern is a personal Bible-study notes app. You work in two modes:
 
-- **Capture** — load a passage's verse text and write notes beside it. Notes can
+- **Study** — load a passage's verse text and write notes beside it. Notes can
   anchor to a verse (`v3`), carry a category tag (`@observation`, `@historical`,
   `@application`, `@personal`), and reference other passages inline
   (`John 1:1`). Indent a line to make it a sub-note.
 - **Reading** — browse your notes by passage or by book, laid out against the
   verses they anchor to.
+
+Formerly "Berean" — renamed to avoid colliding with the Berean Standard Bible.
+Internal `Berean*` identifiers and persisted storage keys are kept deliberately;
+see `CLAUDE.md`.
 
 ## Status
 
@@ -20,9 +24,11 @@ Electron desktop app is frozen on the `legacy/electron` branch (tag
 `v1.2.1-electron-final`) and is not coming back — future native builds will wrap
 this same web code (Capacitor for mobile, Tauri for desktop).
 
-Right now the app runs entirely on an in-memory stub: the full UI works, data
-lives in memory and resets on reload. The backend, real scripture, mobile layout,
-and offline support land in subsequent phases (see `docs/ARCHITECTURE.md`).
+With `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` set, the app runs auth-gated
+against Supabase. Without them it falls back to an in-memory stub (the full UI
+works; data lives in memory and resets on reload), which is also how the app is
+exercised locally — move `.env` aside to use it. See `docs/ARCHITECTURE.md` for
+the phased plan and `docs/BACKLOG.md` for deferred work.
 
 ## Run it
 

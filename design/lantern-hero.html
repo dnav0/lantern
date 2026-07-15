@@ -1,0 +1,351 @@
+<!doctype html>
+<!--
+  Lantern — HERO "auto-scroll flythrough" v6 (THROWAWAY / review artifact)
+  ---------------------------------------------------------------------------
+  Concept (owner pick): no zoom. Start like a normal reading view and make two
+  real notes (single-verse inline + multi-verse rail). Then the page glides
+  down through a long, densely annotated John 1 at FULL readable size — note
+  after note in the margins, all four category colours — showing the volume of
+  study. It fills the frame the whole time (no whitespace), stays legible, and
+  loops with a soft fade back to the top where the making begins again.
+
+  prefers-reduced-motion shows the annotated chapter, static (no scroll).
+-->
+<html lang="en" data-mode="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lantern — hero flythrough</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&display=swap');
+:root {
+  --ui-font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --scripture-font:'Source Serif 4',Georgia,serif;
+  --bg:#f4f0e8; --surface:#fbf9f4; --surface-2:#ece6da;
+  --border:#e2dccf; --border-strong:#d8d0c0;
+  --text:#201e1a; --text-muted:#6a6353; --text-faint:#938a77;
+  --accent:#6b62d6; --accent-weak:rgba(107,98,214,.13); --accent-soft:rgba(107,98,214,.18); --on-accent:#fff;
+  --cat-observation:#6b62d6; --cat-historical:#3f8f5b; --cat-application:#b5732a; --cat-personal:#c05070;
+  --gold-light:#d4a853;
+  --elev-2:0 2px 6px rgba(20,16,8,.06),0 8px 20px -6px rgba(20,16,8,.10);
+  --elev-3:0 6px 16px -4px rgba(20,16,8,.12),0 20px 40px -12px rgba(20,16,8,.18);
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+html[data-mode="dark"] {
+  --bg:#17140f; --surface:#211d17; --surface-2:#2b2620; --border:#38322a; --border-strong:#473f34;
+  --text:#ece4d6; --text-muted:#a99f8e; --text-faint:#7a7264;
+  --accent:#a49cf0; --accent-weak:rgba(164,156,240,.16); --accent-soft:rgba(164,156,240,.24); --on-accent:#17140f;
+  --cat-observation:#a49cf0; --cat-historical:#5fbf92; --cat-application:#d79a55; --cat-personal:#e58aab;
+  --gold-light:#e8c67a;
+  --elev-2:0 2px 6px rgba(0,0,0,.32),0 10px 22px -8px rgba(0,0,0,.42);
+  --elev-3:0 6px 16px -4px rgba(0,0,0,.45),0 24px 48px -16px rgba(0,0,0,.55);
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background-color:var(--bg); color:var(--text); font-family:var(--ui-font);
+  -webkit-font-smoothing:antialiased; min-height:100vh; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:20px; transition:background-color .2s; padding:32px; }
+.toolbar { position:fixed; top:14px; right:14px; display:flex; gap:2px; background:var(--surface);
+  border:1px solid var(--border); border-radius:999px; padding:5px; box-shadow:var(--elev-2); z-index:20; }
+.toolbar button { font:inherit; font-size:12px; font-weight:600; border:0; cursor:pointer;
+  padding:6px 12px; border-radius:999px; background:transparent; color:var(--text-muted); }
+.toolbar button.on { background:var(--accent); color:var(--on-accent); }
+.hint { font-size:12px; color:var(--text-faint); }
+
+.hero { position:relative; width:600px; max-width:94vw; border-radius:20px; background:var(--surface);
+  border:1px solid var(--border); box-shadow:var(--elev-3); overflow:hidden; }
+.topbar { height:44px; display:flex; align-items:center; gap:8px; padding:0 16px;
+  border-bottom:1px solid var(--border); background:var(--surface-2); position:relative; z-index:8; }
+.topbar .dot { width:8px; height:8px; border-radius:50%; background:var(--border-strong); }
+.topbar .ref { margin-left:8px; font-family:var(--scripture-font); font-size:13px; font-weight:600; color:var(--text-muted); }
+.topbar .grow { flex:1; } .topbar .lamp { width:16px; height:16px; }
+
+.frame { position:relative; overflow:hidden; height:440px; }
+/* Soft top/bottom fades so verses enter/leave the flythrough gently. */
+.frame::before, .frame::after { content:''; position:absolute; left:0; right:0; height:30px; z-index:6; pointer-events:none; }
+.frame::before { top:0; background:linear-gradient(var(--surface), transparent); }
+.frame::after { bottom:0; background:linear-gradient(transparent, var(--surface)); }
+.canvas { will-change:transform, opacity; transform:translateY(0); padding:26px 32px; }
+.spread { display:grid; grid-template-columns:1fr 190px; column-gap:22px; align-items:start; }
+.v { grid-column:1; font-family:var(--scripture-font); font-size:16px; line-height:1.64; color:var(--text);
+  padding:4px 7px; transition:background-color .45s var(--ease); }
+.v .vn { font-family:var(--ui-font); font-size:10px; color:var(--text-faint); vertical-align:super; margin-right:5px;
+  transition:color .5s var(--ease); }
+.v.anch .vn { color:var(--c); font-weight:700; }
+.v.sel { background-color:var(--accent-weak); }
+.v.sel-single { border-radius:6px; }
+.v.sel-first { border-radius:6px 6px 0 0; } .v.sel-last { border-radius:0 0 6px 6px; }
+
+.note { position:relative; padding-left:12px; opacity:0; transform:translateY(5px);
+  transition:opacity .5s var(--ease), transform .5s var(--ease), max-height .45s var(--ease), margin .45s var(--ease); }
+.note::before { content:''; position:absolute; left:0; top:2px; bottom:2px; width:2px; border-radius:2px;
+  background:var(--c); transform:scaleY(0); transform-origin:top; transition:transform .5s var(--ease) .06s; }
+.note.show { opacity:1; transform:none; } .note.show::before { transform:scaleY(1); }
+.note .lbl { font-size:9px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--c); }
+.note .bd { font-family:var(--scripture-font); font-size:12.5px; line-height:1.44; color:var(--text-muted);
+  margin-top:2px; min-height:1.3em; position:relative; }
+.note .ph { position:absolute; left:0; top:0; color:var(--text-faint); transition:opacity .2s; pointer-events:none; }
+.note.inline { grid-column:1; overflow:hidden; max-height:0; margin:0; }
+.note.inline.show { max-height:70px; margin:3px 0 2px; }
+.note.rail { grid-column:2; align-self:stretch; }
+/* User inline note: lives in a fixed-height slot and fades in (no layout push),
+   so clearing it off-screen during the loop causes zero shift. */
+.user-slot { grid-column:1; height:58px; overflow:hidden; }
+.user-inline { opacity:0; transform:translateY(6px);
+  transition:opacity .5s var(--ease), transform .5s var(--ease); }
+.user-inline.show { opacity:1; transform:none; }
+/* Pre-existing notes are shown from the start (they scroll into view). */
+.note.pre { opacity:1; transform:none; } .note.pre::before { transform:scaleY(1); }
+.note.pre.inline { max-height:70px; margin:3px 0 2px; }
+
+.caret { display:inline-block; width:1.5px; height:1em; background:var(--accent); vertical-align:-2px; margin-left:1px; opacity:0; }
+.caret.on { animation:blink 1s steps(1) infinite; } @keyframes blink { 50%{opacity:0} 0%,100%{opacity:1} }
+
+.pill { position:absolute; z-index:12; display:inline-flex; align-items:center; gap:6px; font-size:11.5px;
+  font-weight:600; color:var(--on-accent); background:var(--accent); padding:5px 10px; border-radius:8px;
+  box-shadow:var(--elev-2); opacity:0; transform:translateY(5px) scale(.96); transform-origin:left top;
+  transition:opacity .26s var(--ease), transform .26s var(--ease); pointer-events:none; white-space:nowrap; }
+.pill.show { opacity:1; transform:none; } .pill.press { filter:brightness(.92); transform:scale(.96); }
+.cursor { position:absolute; width:19px; height:19px; z-index:14; left:0; top:0; opacity:0;
+  transition:transform .6s var(--ease), opacity .35s var(--ease); pointer-events:none;
+  filter:drop-shadow(0 1px 2px rgba(20,16,8,.35)); }
+
+.tagline { position:absolute; left:0; right:0; bottom:14px; text-align:center; z-index:10;
+  opacity:0; transition:opacity .7s var(--ease); pointer-events:none; }
+.tagline .t { font-family:var(--scripture-font); font-style:italic; font-size:14.5px; color:var(--text-muted);
+  background:color-mix(in srgb, var(--surface) 86%, transparent); padding:4px 14px; border-radius:999px; box-shadow:var(--elev-2); }
+.tagline.show { opacity:1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor, .pill { display:none; } .caret { display:none; }
+  .note { opacity:1; transform:none; } .note::before { transform:scaleY(1); }
+  .note.inline { max-height:70px; margin:3px 0 2px; }
+  .tagline { opacity:1; }
+}
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <button data-val="light" class="on">Light</button>
+  <button data-val="dark">Dark</button>
+</div>
+
+<div class="hero">
+  <div class="topbar">
+    <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="ref">John 1</span><span class="grow"></span><span class="lamp" id="lamp"></span>
+  </div>
+  <div class="frame" id="frame">
+    <div class="canvas" id="canvas"><div class="spread">
+      <div class="v v1" id="v1" style="grid-row:1; --c:var(--cat-observation)"><span class="vn">1</span>In the beginning was the Word, and the Word was with God, and the Word was God.</div>
+      <div class="note inline" id="uNote1" style="grid-row:2; --c:var(--cat-observation)">
+        <div class="lbl">Observation</div>
+        <div class="bd"><span class="ph" id="ph1">Type what you notice…</span><span id="typed1"></span><span class="caret" id="caret1"></span></div>
+      </div>
+
+      <div class="v" id="v2" style="grid-row:3; --c:var(--cat-personal)"><span class="vn">2</span>He was with God in the beginning.</div>
+      <div class="v" id="v3" style="grid-row:4; --c:var(--cat-personal)"><span class="vn">3</span>Through him all things were made; without him nothing was made that has been made.</div>
+      <div class="note rail" id="uNote2" style="grid-row:3 / 5; --c:var(--cat-personal)">
+        <div class="lbl">Personal</div>
+        <div class="bd"><span class="ph" id="ph2">Type what you notice…</span><span id="typed2"></span><span class="caret" id="caret2"></span></div>
+      </div>
+
+      <div class="v anch" style="grid-row:5; --c:var(--cat-application)"><span class="vn">4</span>In him was life, and that life was the light of all mankind.</div>
+      <div class="note inline pre" style="grid-row:6; --c:var(--cat-application)">
+        <div class="lbl">Application</div><div class="bd">Light to walk by, not only to look at.</div></div>
+
+      <div class="v anch" style="grid-row:7; --c:var(--cat-personal)"><span class="vn">5</span>The light shines in the darkness, and the darkness has not overcome it.</div>
+      <div class="note inline pre" style="grid-row:8; --c:var(--cat-personal)">
+        <div class="lbl">Personal</div><div class="bd">The dark never won. Hold onto that.</div></div>
+
+      <div class="v anch" style="grid-row:9; --c:var(--cat-historical)"><span class="vn">6</span>There was a man sent from God whose name was John.</div>
+      <div class="v anch" style="grid-row:10; --c:var(--cat-historical)"><span class="vn">7</span>He came as a witness to testify concerning that light.</div>
+      <div class="note rail pre" style="grid-row:9 / 11; --c:var(--cat-historical)">
+        <div class="lbl">Historical</div><div class="bd">The witness motif. John's Gospel is framed as testimony.</div></div>
+
+      <div class="v anch" style="grid-row:11; --c:var(--cat-observation)"><span class="vn">8</span>He himself was not the light; he came only as a witness to the light.</div>
+      <div class="note inline pre" style="grid-row:12; --c:var(--cat-observation)">
+        <div class="lbl">Observation</div><div class="bd">"Light" three times in two verses. The theme is set.</div></div>
+
+      <div class="v" style="grid-row:13; --c:var(--cat-application)"><span class="vn">9</span>The true light that gives light to everyone was coming into the world.</div>
+      <div class="v anch" style="grid-row:14; --c:var(--cat-application)"><span class="vn">10</span>He was in the world, and though the world was made through him, the world did not recognize him.</div>
+      <div class="note rail pre" style="grid-row:13 / 15; --c:var(--cat-application)">
+        <div class="lbl">Application</div><div class="bd">Made by him, and still missed. Slow down and look.</div></div>
+
+      <div class="v anch" style="grid-row:15; --c:var(--cat-personal)"><span class="vn">11</span>He came to that which was his own, but his own did not receive him.</div>
+      <div class="v anch" style="grid-row:16; --c:var(--cat-personal)"><span class="vn">12</span>Yet to all who did receive him, he gave the right to become children of God.</div>
+      <div class="note rail pre" style="grid-row:15 / 17; --c:var(--cat-personal)">
+        <div class="lbl">Personal</div><div class="bd">Receiving, not earning. That is the whole door.</div></div>
+
+      <div class="v" style="grid-row:17; --c:var(--cat-historical)"><span class="vn">13</span>children born not of natural descent, nor of human decision, but born of God.</div>
+      <div class="v anch" style="grid-row:18; --c:var(--cat-historical)"><span class="vn">14</span>The Word became flesh and made his dwelling among us.</div>
+      <div class="note inline pre" style="grid-row:19; --c:var(--cat-historical)">
+        <div class="lbl">Historical</div><div class="bd">"Dwelling" = tabernacled. A deliberate Exodus echo.</div></div>
+    </div></div>
+
+    <div class="pill" id="pill"><span id="pillText">Quick note</span></div>
+    <svg class="cursor" id="cursor" viewBox="0 0 24 24" fill="var(--text)" aria-hidden="true">
+      <path d="M5 3l14 8-6 1.4L16 20l-2.4 1L10.5 13 5 17z"/>
+    </svg>
+    <div class="tagline" id="tagline"><span class="t">Your study, kept beside the Word.</span></div>
+  </div>
+</div>
+<div class="hint">Hero v6: make two notes, then glide through a chapter full of your study. Loops.</div>
+
+<script>
+const CONFIG = { scrollMs: 8000, typeSpeed: 30, holdMs: 1500 };
+
+function lampSvg(){return `<svg width="16" height="16" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<rect width="512" height="512" rx="110" fill="#1E3358"/>
+<path d="M256 172C248 172 200 174 152 192L148 358C196 342 246 342 256 344Z" fill="white" opacity=".95"/>
+<path d="M256 172C264 172 312 174 360 192L364 358C316 342 266 342 256 344Z" fill="white" opacity=".72"/>
+<line x1="256" y1="172" x2="256" y2="344" stroke="#D4A853" stroke-width="5" stroke-linecap="round"/>
+<circle cx="256" cy="112" r="17" fill="#D4A853" opacity=".33"/><circle cx="256" cy="112" r="11" fill="#D4A853" opacity=".85"/>
+<circle cx="252" cy="108" r="4" fill="#FFF0B0" opacity=".8"/></svg>`;}
+document.getElementById('lamp').innerHTML = lampSvg();
+
+const frame = document.getElementById('frame');
+const canvas = document.getElementById('canvas');
+const cursor = document.getElementById('cursor');
+const pill = document.getElementById('pill'), pillText = document.getElementById('pillText');
+const tagline = document.getElementById('tagline');
+const g = id => document.getElementById(id);
+const v1=g('v1'),v2=g('v2'),v3=g('v3');
+const uNote1=g('uNote1'), uNote2=g('uNote2');
+const ph1=g('ph1'),typed1=g('typed1'),caret1=g('caret1');
+const ph2=g('ph2'),typed2=g('typed2'),caret2=g('caret2');
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+function pos(el){ const s=frame.getBoundingClientRect(), r=el.getBoundingClientRect();
+  return { x:r.left-s.left, y:r.top-s.top, w:r.width, h:r.height }; }
+function moveCursor(x,y,o=1){ cursor.style.transform=`translate(${x}px,${y}px)`; cursor.style.opacity=o; }
+function showPill(anchor, text, dx=0, dy=6){ const p=pos(anchor); pillText.textContent=text;
+  pill.style.left=(p.x+dx)+'px'; pill.style.top=(p.y+p.h+dy)+'px'; pill.classList.add('show'); }
+async function typeInto(span, caret, text){ caret.classList.add('on');
+  for (let i=0;i<=text.length;i++){ span.textContent=text.slice(0,i); await wait(CONFIG.typeSpeed+(text[i-1]===' '?28:0)); }
+  await wait(360); caret.classList.remove('on'); }
+
+async function makeNotes(){
+  moveCursor(pos(v1).x+130, pos(v1).y+12); await wait(680);
+  v1.classList.add('sel','sel-single'); await wait(300);
+  showPill(v1, 'Quick note', 140); await wait(440);
+  { const p=pos(pill); moveCursor(p.x+15, p.y+13); } await wait(540);
+  pill.classList.add('press'); await wait(150); pill.classList.remove('press'); pill.classList.remove('show');
+  v1.classList.remove('sel','sel-single'); v1.classList.add('anch'); uNote1.classList.add('show'); await wait(150);
+  { const p=pos(uNote1); moveCursor(p.x+64, p.y+28); } caret1.classList.add('on'); await wait(600);
+  ph1.style.opacity=0; { const p=pos(uNote1); moveCursor(p.x-22, p.y+28); }
+  await typeInto(typed1, caret1, 'With God, and was God. Two claims, one line.');
+  await wait(460);
+
+  moveCursor(pos(v2).x+50, pos(v2).y+10); await wait(500);
+  v2.classList.add('sel','sel-first'); await wait(190);
+  moveCursor(pos(v3).x+120, pos(v3).y+10); v3.classList.add('sel','sel-last'); await wait(400);
+  showPill(v3, 'Note on 2–3', 150); await wait(440);
+  { const p=pos(pill); moveCursor(p.x+15, p.y+13); } await wait(540);
+  pill.classList.add('press'); await wait(150); pill.classList.remove('press'); pill.classList.remove('show');
+  v2.classList.add('anch'); v3.classList.add('anch'); uNote2.classList.add('show'); await wait(150);
+  { const p=pos(uNote2); moveCursor(p.x+36, p.y+34); } caret2.classList.add('on'); await wait(600);
+  ph2.style.opacity=0; { const p=pos(uNote2); moveCursor(p.x-20, p.y+34); }
+  await typeInto(typed2, caret2, "Before time, and I'm only meeting him now.");
+  await wait(420);
+}
+
+function clearUserNotes(){
+  uNote1.classList.remove('show'); uNote2.classList.remove('show');
+  typed1.textContent=''; typed2.textContent=''; ph1.style.opacity=1; ph2.style.opacity=1;
+  v1.className='v v1'; v1.style.setProperty('--c','var(--cat-observation)');
+  v2.className='v'; v2.style.setProperty('--c','var(--cat-personal)');
+  v3.className='v'; v3.style.setProperty('--c','var(--cat-personal)');
+}
+
+// Seamless loop: clone the chapter so its top reappears directly below. Scrolling
+// by exactly one chapter-height brings the duplicate top to the same screen spot,
+// so we can reset translateY to 0 with no visible jump.
+let wrapDistance = 0;
+function setupClone(){
+  const spread1 = canvas.querySelector('.spread');
+  const spread2 = spread1.cloneNode(true);
+  spread2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+  spread2.classList.add('clone');
+  canvas.appendChild(spread2);
+  wrapDistance = spread2.offsetTop - spread1.offsetTop;   // = one chapter height
+}
+
+async function run(){
+  setupClone();
+  const spread1 = canvas.querySelector('.spread');
+  const spread2 = canvas.querySelectorAll('.spread')[1];
+  const B1 = 210;   // px to scroll before the verse-1 note is safely off-screen
+  canvas.style.transition = 'none'; canvas.style.transform = 'translateY(0)';
+  await wait(150);
+  while (true){
+    uNote1.style.transition = '';                 // restore the note's own open animation
+    clearUserNotes();
+    canvas.style.transition = 'none'; canvas.style.transform = 'translateY(0)';
+    void canvas.offsetHeight;
+    moveCursor(pos(v1).x+220, pos(v1).y+150, 0);
+    await wait(450);
+
+    await makeNotes();               // the note OPENS here (pushes verses), stationary
+    await wait(450);
+    moveCursor(pos(v1).x+220, pos(v1).y+150, 0);   // cursor away
+    await wait(180);
+
+    // One constant velocity across the whole scroll (linear) so the mid-scroll
+    // collapse compensation is invisible.
+    const wrapOpen = spread2.offsetTop - spread1.offsetTop;   // chapter height, note open
+    const v = wrapOpen / CONFIG.scrollMs;
+
+    // ── B1: scroll until the verse-1 note is off-screen above ──
+    const t1 = B1 / v;
+    canvas.style.transition = `transform ${t1}ms linear`;
+    canvas.style.transform = `translateY(${-B1}px)`;
+    await wait(t1);
+
+    // ── COMPENSATE: collapse the note off-screen and shift the scroll by the same
+    //    amount in one instant, so on-screen content does not move; the top comes
+    //    around clean (matching the duplicate) for a seamless reset. ──
+    const pBefore = spread2.offsetTop;
+    uNote1.style.transition = 'none';             // instant collapse, no animation
+    clearUserNotes();                             // also resets rail note + verse tints
+    void canvas.offsetHeight;
+    const delta = pBefore - spread2.offsetTop;    // the note's collapsed layout height
+    canvas.style.transition = 'none';
+    canvas.style.transform = `translateY(${-B1 + delta}px)`;
+    void canvas.offsetHeight;
+
+    // ── B2: continue at the same velocity to the clean duplicate top ──
+    const wrapClosed = spread2.offsetTop - spread1.offsetTop;
+    const t2 = Math.max(200, (wrapClosed - (B1 - delta)) / v);
+    canvas.style.transition = `transform ${t2}ms linear`;
+    canvas.style.transform = `translateY(${-wrapClosed}px)`;
+    await wait(t2);
+
+    // ── SEAMLESS RESET: duplicate top == real top, both clean ──
+    canvas.style.transition = 'none';
+    canvas.style.transform = 'translateY(0)';
+    void canvas.offsetHeight;
+    await wait(100);
+  }
+}
+
+if (reduce){
+  uNote1.classList.add('show'); uNote2.classList.add('show');
+  typed1.textContent='With God, and was God. Two claims, one line.'; ph1.style.opacity=0;
+  typed2.textContent="Before time, and I'm only meeting him now."; ph2.style.opacity=0;
+  v1.classList.add('anch'); v2.classList.add('anch'); v3.classList.add('anch');
+} else {
+  if (document.readyState === 'complete') run();
+  else window.addEventListener('load', () => run());
+}
+
+document.querySelectorAll('.toolbar button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.documentElement.setAttribute('data-mode', b.dataset.val);
+    document.querySelectorAll('.toolbar button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+  });
+});
+</script>
+</body>
+</html>

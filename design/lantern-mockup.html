@@ -1,0 +1,482 @@
+<!doctype html>
+<!--
+  Lantern — LANDING + LOGIN, v2 (THROWAWAY / review artifact)
+  ---------------------------------------------------------------------------
+  Rework of design/landing-mockup.html after owner feedback:
+    (1) name moving Berean -> Lantern (Ps 119:105, "your word is a lamp"),
+    (2) kill the "generic AI feel": no radial glow blob, no emoji feature
+        icons, no checkmark trust-row, no dead-center symmetry, and copy
+        rewritten with plain punctuation (few/no em dashes).
+  The concept now leads with the product's own metaphor: an annotated page.
+  The landing literally looks like a study page with margin notes in the
+  four category colors, because that is what Lantern is.
+
+  Tokens copied verbatim from src/assets/tokens.css (Berean light + dark),
+  so the palette is the app's real one. Nothing here ships. Open in a
+  browser; toggles are top-right (Light/Dark, Show login).
+-->
+<html lang="en" data-mode="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lantern — landing + login</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&display=swap');
+
+:root {
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
+  --space-5:24px; --space-6:32px; --space-7:48px;
+  --radius-sm:7px; --radius-md:12px; --radius-lg:18px; --radius-xl:26px;
+  --ui-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --scripture-font: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+
+  --bg:#f4f0e8; --surface:#fbf9f4; --surface-2:#ece6da;
+  --border:#e2dccf; --border-strong:#d8d0c0;
+  --text:#201e1a; --text-muted:#6a6353; --text-faint:#938a77;
+
+  --accent:#6b62d6; --accent-hover:#5b52c8;
+  --accent-weak:rgba(107,98,214,.11); --accent-weaker:rgba(107,98,214,.07);
+  --accent-soft:rgba(107,98,214,.18); --on-accent:#fff;
+
+  --cat-observation:#6b62d6; --cat-historical:#3f8f5b;
+  --cat-application:#b5732a; --cat-personal:#c05070;
+  --cat-observation-weak:rgba(107,98,214,.12);
+  --cat-historical-weak:rgba(63,143,91,.12);
+  --cat-application-weak:rgba(181,115,42,.12);
+  --cat-personal-weak:rgba(192,80,112,.12);
+
+  --gold:#c8932a; --gold-light:#d4a853; --ink-navy:#1e3358;
+
+  --elev-1:0 1px 2px rgba(20,16,8,.05), 0 1px 1px rgba(20,16,8,.04);
+  --elev-2:0 2px 6px rgba(20,16,8,.06), 0 8px 20px -6px rgba(20,16,8,.10);
+  --elev-3:0 6px 16px -4px rgba(20,16,8,.12), 0 20px 40px -12px rgba(20,16,8,.18);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --dur-2:200ms;
+}
+html[data-mode="dark"] {
+  --bg:#17140f; --surface:#211d17; --surface-2:#2b2620;
+  --border:#38322a; --border-strong:#473f34;
+  --text:#ece4d6; --text-muted:#a99f8e; --text-faint:#7a7264;
+  --accent:#a49cf0; --accent-hover:#b6aff5;
+  --accent-weak:rgba(164,156,240,.15); --accent-weaker:rgba(164,156,240,.08);
+  --accent-soft:rgba(164,156,240,.22); --on-accent:#17140f;
+  --cat-observation:#a49cf0; --cat-historical:#5fbf92;
+  --cat-application:#d79a55; --cat-personal:#e58aab;
+  --cat-observation-weak:rgba(164,156,240,.18);
+  --cat-historical-weak:rgba(95,191,146,.16);
+  --cat-application-weak:rgba(215,154,85,.16);
+  --cat-personal-weak:rgba(229,138,171,.16);
+  --gold:#d4a853; --gold-light:#e8c67a;
+  --elev-1:0 1px 2px rgba(0,0,0,.30);
+  --elev-2:0 2px 6px rgba(0,0,0,.32), 0 10px 22px -8px rgba(0,0,0,.42);
+  --elev-3:0 8px 20px -6px rgba(0,0,0,.45), 0 24px 48px -16px rgba(0,0,0,.55);
+}
+
+* { box-sizing:border-box; margin:0; padding:0; }
+html,body { background-color:var(--bg); color:var(--text); font-family:var(--ui-font);
+  -webkit-font-smoothing:antialiased; transition:background-color var(--dur-2), color var(--dur-2); }
+a { color:inherit; text-decoration:none; }
+.serif { font-family:var(--scripture-font); }
+.wrap { max-width:1140px; margin:0 auto; padding:0 40px; }
+
+/* Small-caps eyebrow, a recurring typographic signature (not a pill). */
+.eyebrow { font-size:12px; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--text-faint); }
+.eyebrow .mark { color:var(--accent); }
+
+/* ── Toolbar (mockup chrome only) ── */
+.toolbar { position:fixed; top:14px; right:14px; z-index:100; display:flex; gap:6px;
+  background:var(--surface); border:1px solid var(--border); border-radius:999px;
+  padding:5px; box-shadow:var(--elev-2); }
+.toolbar button { font:inherit; font-size:12px; font-weight:600; border:0; cursor:pointer;
+  padding:6px 12px; border-radius:999px; background:transparent; color:var(--text-muted); }
+.toolbar button.on { background:var(--accent); color:var(--on-accent); }
+.toolbar .grp { display:flex; gap:2px; padding-right:6px; border-right:1px solid var(--border); }
+.toolbar .grp:last-child { border-right:0; padding-right:0; }
+
+/* ── Buttons ── */
+.btn { font:inherit; font-weight:600; border-radius:var(--radius-md); cursor:pointer;
+  border:1px solid transparent; padding:12px 20px; font-size:15px; display:inline-flex;
+  align-items:center; gap:10px; transition:transform var(--dur-2) var(--ease-out),
+  box-shadow var(--dur-2), background var(--dur-2); }
+.btn:active { transform:translateY(1px) scale(.99); }
+.btn-primary { background:var(--accent); color:var(--on-accent); box-shadow:var(--elev-1); }
+.btn-primary:hover { background:var(--accent-hover); box-shadow:var(--elev-2); }
+.btn-ghost { background:transparent; color:var(--text); border-color:var(--border-strong); }
+.btn-ghost:hover { background:var(--surface-2); }
+.g-chip { background:#fff; border-radius:4px; padding:2px; display:inline-flex; }
+
+/* ── Nav ── */
+.nav { position:sticky; top:0; z-index:40; backdrop-filter:blur(10px);
+  background:color-mix(in srgb, var(--bg) 84%, transparent);
+  border-bottom:1px solid var(--border); }
+.nav-inner { display:flex; align-items:center; justify-content:space-between; height:68px; }
+.brand { display:flex; align-items:center; gap:11px; }
+.brand-name { font-family:var(--scripture-font); font-size:22px; font-weight:600; letter-spacing:-.01em; }
+.nav-links { display:flex; align-items:center; gap:28px; font-size:14px; font-weight:500; color:var(--text-muted); }
+.nav-links a:hover { color:var(--text); }
+.nav-right { display:flex; align-items:center; gap:18px; }
+.nav-signin { font-size:14px; font-weight:600; color:var(--text-muted); cursor:pointer; }
+.nav-signin:hover { color:var(--text); }
+.logo { flex-shrink:0; line-height:0; }
+
+/* ═══ HERO: the annotated page ═══ */
+.hero { padding:76px 0 40px; }
+.hero-grid { display:grid; grid-template-columns:0.92fr 1.08fr; gap:64px; align-items:center; }
+.hero-copy .eyebrow { margin-bottom:22px; display:block; }
+.hero-h1 { font-family:var(--scripture-font); font-weight:500; font-size:54px; line-height:1.1;
+  letter-spacing:-.02em; }
+.hero-h1 .lamp { font-style:italic; color:var(--accent); }
+.hero-lead { font-size:18px; line-height:1.62; color:var(--text-muted); max-width:42ch; margin-top:24px; }
+.hero-actions { display:flex; gap:12px; margin-top:32px; flex-wrap:wrap; }
+.hero-fine { margin-top:16px; font-size:13px; color:var(--text-faint); }
+.hero-verse { margin-top:40px; padding-top:22px; border-top:1px solid var(--border); max-width:40ch; }
+.hero-verse .v { font-family:var(--scripture-font); font-style:italic; font-size:17px; line-height:1.55;
+  color:var(--text); }
+.hero-verse .cite { display:block; margin-top:8px; font-size:11px; font-weight:600; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--text-faint); }
+
+/* The manuscript card — verses + real margin notes in category colors */
+.page { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+  box-shadow:var(--elev-3); padding:34px 36px 30px; position:relative;
+  transition:transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out); }
+.page:hover { transform:translateY(-2px); }
+/* Restrained "small detail": a soft sheen sweeps across a primary button on hover.
+   Quiet, one-shot per hover — not a looping shimmer. */
+.btn-primary { position:relative; overflow:hidden; }
+.btn-primary::after { content:''; position:absolute; top:0; left:-60%; width:45%; height:100%;
+  background:linear-gradient(100deg, transparent, rgba(255,255,255,.28), transparent);
+  transform:skewX(-18deg); transition:left .6s var(--ease-out); }
+@media (prefers-reduced-motion: no-preference) {
+  .btn-primary:hover::after { left:130%; }
+}
+.page::before { /* faint gold page-edge on the left, like a gilded book */
+  content:''; position:absolute; left:0; top:22px; bottom:22px; width:3px; border-radius:3px;
+  background:linear-gradient(var(--gold-light), transparent); opacity:.5; }
+.page-ref { font-family:var(--ui-font); font-size:11px; font-weight:700; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--text-faint); margin-bottom:18px; }
+.page-verse { font-family:var(--scripture-font); font-size:18.5px; line-height:1.74; color:var(--text); }
+.page-verse .vn { font-family:var(--ui-font); font-size:11px; color:var(--text-faint);
+  vertical-align:super; margin-right:5px; }
+.page-verse mark { color:inherit; border-radius:3px; padding:0 2px;
+  background-image:linear-gradient(var(--accent-weak),var(--accent-weak));
+  background-repeat:no-repeat; background-size:100% 100%; }
+.margin { margin-top:18px; display:flex; flex-direction:column; gap:12px; }
+.mnote { padding-left:14px; position:relative; }
+.mnote::before { content:''; position:absolute; left:0; top:2px; bottom:2px; width:2px;
+  border-radius:2px; background:var(--c); transform-origin:top; }
+.mnote .lbl { font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--c); }
+.mnote .txt { font-size:14px; line-height:1.5; color:var(--text-muted); margin-top:2px; }
+
+/* Mockup-only replay control for the hero animation */
+.replay { margin-top:16px; display:inline-flex; align-items:center; gap:7px; font:inherit;
+  font-size:12.5px; font-weight:600; color:var(--text-faint); background:transparent; border:0;
+  cursor:pointer; padding:0; }
+.replay:hover { color:var(--accent); }
+.replay svg { width:13px; height:13px; }
+
+/* ═══ Hero "study forming" animation (reduced-motion safe) ═══
+   The card autoplays once on load and on scroll-back-in: the verse settles,
+   the key word gets its highlight, then each margin note draws its category
+   line and writes itself in. transform/opacity only. */
+@media (prefers-reduced-motion: no-preference) {
+  .page.anim .page-verse { animation:verseRise .8s var(--ease-out) both; }
+  .page.anim .page-verse mark { background-size:0% 100%; animation:markSweep .55s var(--ease-out) .95s both; }
+  .page.anim .mnote { opacity:0; animation:noteIn .6s var(--ease-out) both; }
+  .page.anim .mnote::before { transform:scaleY(0); animation:lineDraw .5s var(--ease-out) both; }
+  .page.anim .mnote:nth-child(1), .page.anim .mnote:nth-child(1)::before { animation-delay:1.35s; }
+  .page.anim .mnote:nth-child(2), .page.anim .mnote:nth-child(2)::before { animation-delay:1.95s; }
+  .page.anim .mnote:nth-child(3), .page.anim .mnote:nth-child(3)::before { animation-delay:2.55s; }
+}
+@keyframes verseRise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+@keyframes markSweep { to { background-size:100% 100%; } }
+@keyframes noteIn { from { opacity:0; transform:translateX(-9px); } to { opacity:1; transform:none; } }
+@keyframes lineDraw { to { transform:scaleY(1); } }
+
+/* ═══ LENSES: show, don't tell (annotated legend, not emoji cards) ═══ */
+.lenses { padding:64px 0; }
+.sec-head { max-width:52ch; }
+.sec-head h2 { font-family:var(--scripture-font); font-weight:500; font-size:34px; letter-spacing:-.015em;
+  line-height:1.15; margin-top:12px; }
+.sec-head p { font-size:16px; line-height:1.6; color:var(--text-muted); margin-top:14px; max-width:46ch; }
+.lens-rows { margin-top:40px; display:grid; grid-template-columns:1fr 1fr; gap:2px 48px; }
+.lens { display:flex; gap:16px; padding:20px 0; border-top:1px solid var(--border); align-items:baseline; }
+.lens .tag { flex-shrink:0; width:104px; font-size:13px; font-weight:700; color:var(--c); display:flex;
+  align-items:center; gap:9px; }
+.lens .tag .sw { width:9px; height:9px; border-radius:50%; background:var(--c); flex-shrink:0; }
+.lens .desc { font-size:14.5px; line-height:1.55; color:var(--text-muted); }
+.lens .desc b { color:var(--text); font-weight:600; }
+
+/* ═══ HOW: numbered, editorial, no icons ═══ */
+.how { padding:20px 0 72px; }
+.how-grid { margin-top:44px; display:grid; grid-template-columns:repeat(3,1fr); gap:0; }
+.step { padding:0 32px; border-left:1px solid var(--border); }
+.step:first-child { padding-left:0; border-left:0; }
+.step .n { font-family:var(--scripture-font); font-size:32px; font-weight:500; color:var(--accent);
+  line-height:1; }
+.step h3 { font-family:var(--scripture-font); font-size:21px; font-weight:600; margin:14px 0 8px; }
+.step p { font-size:14.5px; line-height:1.6; color:var(--text-muted); }
+
+/* ═══ CTA ═══ */
+.cta { padding:40px 0 84px; }
+.cta-inner { border:1px solid var(--border); border-radius:var(--radius-xl); padding:52px 48px;
+  background:var(--surface); display:flex; align-items:center; justify-content:space-between; gap:40px;
+  box-shadow:var(--elev-1); }
+.cta-inner .l h2 { font-family:var(--scripture-font); font-weight:500; font-size:30px; letter-spacing:-.01em; }
+.cta-inner .l p { font-size:15px; color:var(--text-muted); margin-top:8px; }
+.cta-inner .btn-primary { flex-shrink:0; padding:14px 26px; font-size:16px; }
+
+footer { border-top:1px solid var(--border); padding:32px 0; }
+.foot { display:flex; align-items:center; justify-content:space-between; font-size:13px; color:var(--text-faint); }
+
+/* ═══ LOGIN ═══ */
+.login-hint { position:fixed; bottom:16px; left:16px; z-index:60; font-size:12px; color:var(--text-faint);
+  background:var(--surface); border:1px solid var(--border); padding:7px 12px; border-radius:999px;
+  box-shadow:var(--elev-1); }
+.login-hint button { font:inherit; font-weight:700; color:var(--accent); border:0; background:0; cursor:pointer; padding:0; }
+.scrim { display:none; position:fixed; inset:0; z-index:80;
+  background:color-mix(in srgb, var(--bg) 38%, rgba(20,16,8,.55)); backdrop-filter:blur(6px);
+  align-items:center; justify-content:center; padding:24px; }
+html[data-login="1"] .scrim { display:flex; }
+.lcard { width:100%; max-width:396px; background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius-xl); box-shadow:var(--elev-3); padding:38px 34px 30px; text-align:center; position:relative; }
+.lcard .x { position:absolute; top:16px; right:16px; width:30px; height:30px; border-radius:8px; border:0;
+  background:transparent; color:var(--text-faint); cursor:pointer; font-size:17px; }
+.lcard .x:hover { background:var(--surface-2); color:var(--text); }
+.lcard .llogo { margin:0 auto 16px; line-height:0; }
+.lcard h2 { font-family:var(--scripture-font); font-size:24px; font-weight:600; letter-spacing:-.01em; }
+.lcard .sub { font-size:14px; color:var(--text-muted); margin-top:7px; line-height:1.5; }
+.google-btn { width:100%; justify-content:center; margin-top:24px; background:var(--surface); color:var(--text);
+  border:1.5px solid var(--border-strong); box-shadow:var(--elev-1); font-size:15px; font-weight:600;
+  padding:13px 18px; border-radius:var(--radius-md); display:flex; align-items:center; gap:12px; cursor:pointer;
+  font-family:inherit; transition:background var(--dur-2), box-shadow var(--dur-2), transform var(--dur-2) var(--ease-out); }
+.google-btn:hover { background:var(--surface-2); box-shadow:var(--elev-2); }
+.google-btn:active { transform:translateY(1px); }
+.divider { display:flex; align-items:center; gap:14px; margin:20px 2px 16px; color:var(--text-faint); font-size:12px; }
+.divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
+.field { width:100%; font:inherit; font-size:15px; padding:12px 14px; border-radius:var(--radius-md);
+  border:1px solid var(--border-strong); background:var(--bg); color:var(--text); }
+.field::placeholder { color:var(--text-faint); }
+.email-btn { width:100%; justify-content:center; margin-top:10px; }
+.fine { font-size:12px; color:var(--text-faint); margin-top:20px; line-height:1.5; }
+.fine a { color:var(--accent); font-weight:600; }
+
+@media (max-width:900px) {
+  .hero-grid { grid-template-columns:1fr; gap:44px; }
+  .lens-rows { grid-template-columns:1fr; }
+  .how-grid { grid-template-columns:1fr; gap:28px; }
+  .step { padding:0 0 0 20px; border-left:1px solid var(--border); }
+  .step:first-child { padding-left:20px; border-left:1px solid var(--border); }
+  .cta-inner { flex-direction:column; align-items:flex-start; }
+  .nav-links { display:none; }
+  .hero-h1 { font-size:40px; }
+  .wrap { padding:0 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="grp">
+    <button data-set="mode" data-val="light" class="on">Light</button>
+    <button data-set="mode" data-val="dark">Dark</button>
+  </div>
+  <div class="grp"><button onclick="setLogin('1')">Show login ▸</button></div>
+</div>
+
+<nav class="nav"><div class="wrap nav-inner">
+  <div class="brand"><span class="logo" id="navLogo"></span><span class="brand-name">Lantern</span></div>
+  <div class="nav-links">
+    <a href="#lenses">Four lenses</a>
+    <a href="#how">How it works</a>
+    <a href="#">The name</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-signin" onclick="setLogin('1')">Sign in</span>
+    <button class="btn btn-primary" onclick="setLogin('1')">Get started</button>
+  </div>
+</div></nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero"><div class="wrap"><div class="hero-grid">
+  <div class="hero-copy">
+    <span class="eyebrow">Personal Bible study notes</span>
+    <h1 class="hero-h1 serif">Keep what you see<br>in the <span class="lamp">light</span> of the Word.</h1>
+    <p class="hero-lead">Lantern is a calm reading Bible with a place to write. Notice something,
+      look up the history, apply it, sit with it. Your study stays beside the verse, ready
+      the next time you open the passage.</p>
+    <div class="hero-actions">
+      <button class="btn btn-primary" onclick="setLogin('1')"><span class="g-chip" id="g1"></span> Continue with Google</button>
+      <button class="btn btn-ghost" onclick="setLogin('1')">Continue with email</button>
+    </div>
+    <p class="hero-fine">Free to use. Your notes stay private to you.</p>
+    <div class="hero-verse">
+      <span class="v serif">"Your word is a lamp to my feet and a light to my path."</span>
+      <span class="cite">Psalm 119:105</span>
+    </div>
+  </div>
+
+  <div class="page" id="heroPage">
+    <div class="page-ref">John 1 · 1–5</div>
+    <p class="page-verse serif">
+      <span class="vn">1</span>In the beginning was the <mark>Word</mark>, and the Word was with God,
+      and the Word was God. <span class="vn">2</span>He was with God in the beginning.
+      <span class="vn">3</span>Through him all things were made.</p>
+    <div class="margin">
+      <div class="mnote" style="--c:var(--cat-observation)">
+        <div class="lbl">Observation</div>
+        <div class="txt">"Word" is named three ways in one verse. With God, and God. The repetition is deliberate.</div>
+      </div>
+      <div class="mnote" style="--c:var(--cat-historical)">
+        <div class="lbl">Historical</div>
+        <div class="txt">John opens where Genesis does. "In the beginning" is a claim, not a coincidence.</div>
+      </div>
+      <div class="mnote" style="--c:var(--cat-personal)">
+        <div class="lbl">Personal</div>
+        <div class="txt">If he was there at the start, he predates everything I carried into this chapter.</div>
+      </div>
+    </div>
+    <button class="replay" id="replayBtn" title="Replay the animation">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Replay
+    </button>
+  </div>
+</div></div></section>
+
+<!-- ═══ LENSES ═══ -->
+<section class="lenses" id="lenses"><div class="wrap">
+  <div class="sec-head">
+    <span class="eyebrow">Four lenses</span>
+    <h2 class="serif">One passage, seen four ways.</h2>
+    <p>Every note you write is one of four kinds. Over time a passage fills in from
+      every angle, and you can read it back lens by lens.</p>
+  </div>
+  <div class="lens-rows">
+    <div class="lens" style="--c:var(--cat-observation)">
+      <div class="tag"><span class="sw"></span>Observation</div>
+      <div class="desc">What the text actually <b>says</b>. Words, structure, repetition, what is there before you interpret it.</div>
+    </div>
+    <div class="lens" style="--c:var(--cat-historical)">
+      <div class="tag"><span class="sw"></span>Historical</div>
+      <div class="desc">The world <b>behind</b> it. Who wrote it, to whom, and what a first reader would have heard.</div>
+    </div>
+    <div class="lens" style="--c:var(--cat-application)">
+      <div class="tag"><span class="sw"></span>Application</div>
+      <div class="desc">What it <b>asks</b> of you. The step from the page into an ordinary week.</div>
+    </div>
+    <div class="lens" style="--c:var(--cat-personal)">
+      <div class="tag"><span class="sw"></span>Personal</div>
+      <div class="desc">What it <b>stirs</b> in you. A prayer, a doubt, a line worth remembering.</div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ═══ HOW ═══ -->
+<section class="how" id="how"><div class="wrap">
+  <div class="sec-head">
+    <span class="eyebrow">How it works</span>
+    <h2 class="serif">Read. Note. Return.</h2>
+  </div>
+  <div class="how-grid">
+    <div class="step">
+      <div class="n serif">1</div><h3 class="serif">Read</h3>
+      <p>Open any chapter in a quiet serif reading view built for attention, not for skimming.</p>
+    </div>
+    <div class="step">
+      <div class="n serif">2</div><h3 class="serif">Note</h3>
+      <p>Write beside the verse and tag it. The note anchors to that exact place in Scripture.</p>
+    </div>
+    <div class="step">
+      <div class="n serif">3</div><h3 class="serif">Return</h3>
+      <p>Come back and read the passage with your notes in the margin. Your study, kept.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ═══ CTA ═══ -->
+<section class="cta"><div class="wrap"><div class="cta-inner">
+  <div class="l">
+    <h2 class="serif">Start your first study today.</h2>
+    <p>One passage and a few notes. It will be here when you come back.</p>
+  </div>
+  <button class="btn btn-primary" onclick="setLogin('1')">Get started free</button>
+</div></div></section>
+
+<footer><div class="wrap foot">
+  <div class="brand"><span class="logo" id="footLogo"></span><span class="brand-name serif">Lantern</span></div>
+  <div>Personal Bible study notes. © 2026</div>
+</div></footer>
+
+<div class="login-hint">Login screen: <button onclick="setLogin('1')">show ▸</button></div>
+<div class="scrim" onclick="if(event.target===this)setLogin('0')">
+  <div class="lcard">
+    <button class="x" onclick="setLogin('0')">✕</button>
+    <span class="llogo logo" id="loginLogo"></span>
+    <h2 class="serif">Welcome to Lantern</h2>
+    <div class="sub">Sign in to keep your studies. New here? This creates your account.</div>
+    <button class="google-btn"><span id="gLogin"></span> Continue with Google</button>
+    <div class="divider">or continue with email</div>
+    <input class="field" type="email" placeholder="you@example.com" />
+    <button class="btn btn-primary email-btn" type="button">Send me a sign-in code</button>
+    <p class="fine">By continuing you agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</p>
+  </div>
+</div>
+
+<script>
+function mark(size){return `<svg width="${size}" height="${size}" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0" aria-hidden="true">
+<rect width="512" height="512" rx="110" fill="#1E3358"/>
+<path d="M256 172C248 172 200 174 152 192L148 358C196 342 246 342 256 344Z" fill="white" opacity="0.95"/>
+<path d="M256 172C264 172 312 174 360 192L364 358C316 342 266 342 256 344Z" fill="white" opacity="0.72"/>
+<path d="M148 358C196 342 246 342 256 344C266 342 316 342 364 358L364 365C316 349 266 349 256 351C246 349 196 349 148 365Z" fill="#C8932A" opacity="0.45"/>
+<line x1="256" y1="172" x2="256" y2="344" stroke="#D4A853" stroke-width="4.5" stroke-linecap="round"/>
+<line x1="172" y1="225" x2="244" y2="219" stroke="#8AA3BE" stroke-width="9" stroke-linecap="round" opacity="0.45"/>
+<line x1="172" y1="251" x2="244" y2="246" stroke="#8AA3BE" stroke-width="9" stroke-linecap="round" opacity="0.45"/>
+<line x1="172" y1="277" x2="244" y2="273" stroke="#8AA3BE" stroke-width="9" stroke-linecap="round" opacity="0.45"/>
+<line x1="172" y1="303" x2="224" y2="300" stroke="#8AA3BE" stroke-width="9" stroke-linecap="round" opacity="0.45"/>
+<line x1="268" y1="219" x2="340" y2="225" stroke="#7A92A8" stroke-width="9" stroke-linecap="round" opacity="0.30"/>
+<line x1="268" y1="246" x2="340" y2="251" stroke="#7A92A8" stroke-width="9" stroke-linecap="round" opacity="0.30"/>
+<line x1="268" y1="273" x2="340" y2="277" stroke="#7A92A8" stroke-width="9" stroke-linecap="round" opacity="0.30"/>
+<circle cx="256" cy="112" r="28" fill="#D4A853" opacity="0.14"/>
+<circle cx="256" cy="112" r="18" fill="#D4A853" opacity="0.32"/>
+<circle cx="256" cy="112" r="11" fill="#D4A853" opacity="0.8"/>
+<circle cx="252" cy="108" r="4" fill="#FFF0B0" opacity="0.75"/>
+<line x1="256" y1="123" x2="256" y2="172" stroke="#D4A853" stroke-width="3" stroke-linecap="round" opacity="0.45"/>
+</svg>`;}
+function gmark(){return `<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.91c1.7-1.57 2.69-3.88 2.69-6.62Z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.91-2.26c-.81.54-1.84.86-3.05.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18Z"/><path fill="#FBBC05" d="M3.95 10.7a5.4 5.4 0 0 1 0-3.4V4.96H.96a9 9 0 0 0 0 8.07l2.99-2.32Z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.9 11.43 0 9 0A9 9 0 0 0 .96 4.96l2.99 2.33C4.66 5.16 6.65 3.58 9 3.58Z"/></svg>`;}
+document.getElementById('navLogo').innerHTML=mark(28);
+document.getElementById('footLogo').innerHTML=mark(24);
+document.getElementById('loginLogo').innerHTML=mark(46);
+['g1','gLogin'].forEach(id=>{const e=document.getElementById(id); if(e) e.innerHTML=gmark();});
+// Hero "study forming" animation control: autoplay on load, replay on button,
+// and replay when it scrolls back into view. Restart works by toggling .anim
+// with a forced reflow so the keyframes run again.
+const heroPage = document.getElementById('heroPage');
+function playHero(){
+  heroPage.classList.remove('anim');
+  void heroPage.offsetWidth; // force reflow so the animation restarts
+  heroPage.classList.add('anim');
+}
+playHero();
+document.getElementById('replayBtn').addEventListener('click', playHero);
+if ('IntersectionObserver' in window) {
+  let wasOut = false;
+  new IntersectionObserver(entries => {
+    for (const e of entries) {
+      if (!e.isIntersecting) { wasOut = true; }
+      else if (wasOut) { wasOut = false; playHero(); }
+    }
+  }, { threshold: 0.55 }).observe(heroPage);
+}
+
+function setLogin(v){ document.documentElement.setAttribute('data-login', v); }
+document.querySelectorAll('.toolbar button[data-set]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.documentElement.setAttribute('data-'+b.dataset.set, b.dataset.val);
+    b.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+  });
+});
+</script>
+</body>
+</html>
