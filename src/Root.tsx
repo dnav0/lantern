@@ -23,7 +23,7 @@ const Landing = lazy(() => import('./components/landing/Landing'))
 function MemoryRoot(): React.ReactElement {
   const [api] = useState<BereanApi>(() => {
     const a = createMemoryApi()
-    seedMemoryApi(a)
+    seedMemoryApi()
     return a
   })
   return (

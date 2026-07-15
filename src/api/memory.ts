@@ -216,30 +216,195 @@ export function createMemoryApi(): BereanApi {
   }
 }
 
-// Seed a little sample data so the app isn't empty on first run.
-export function seedMemoryApi(api: BereanApi): void {
-  void (async () => {
-    if (passages.size > 0) return
-    const ref = 'John 1:1-5'
-    const parsed = parseReferenceLabel(ref)!
-    const passage = await api.createPassage({
-      book_number: bookByNumber(43)?.number ?? 43, // John
+// Demo fixture. This is the only path a fresh checkout gets: with no Supabase
+// env vars, Root falls back to the memory stub (see Root.tsx), so this data is
+// what the app boots into for local dev and for agents working without
+// credentials. It deliberately covers every surface a UI change might touch —
+// several books (the Journal index and getNotesByBook group by book), more than
+// one session on a passage, all four categories, sub-notes (indent_level > 0),
+// cross-references, and distinctive wording for searchNotes — because a fixture
+// that only proves "the app renders" sends you to the editor to hand-make data
+// before you can see anything.
+//
+// It writes the maps directly rather than awaiting the api methods: callers
+// render immediately after seeding, so anything async here is a race the first
+// paint can lose (it did — four passages seeded, one showed). Timestamps are
+// fixed offsets from a base date, not now(), so journal ordering and
+// last_note_at are the same on every boot and a test can assert on them.
+
+interface SeedNote {
+  content: string
+  anchor_start_verse: number | null
+  anchor_end_verse: number | null
+  category: Note['category']
+  indent_level: number
+}
+
+interface SeedPassage {
+  book_number: number
+  reference_label: string
+  // One array per session, so passages with two arrays exercise the
+  // multi-session reading view.
+  sessions: SeedNote[][]
+}
+
+const SEED: SeedPassage[] = [
+  {
+    book_number: 43, // John
+    reference_label: 'John 1:1-5',
+    sessions: [
+      [
+        {
+          content: 'v1 The Word was with God and was God. @observation',
+          anchor_start_verse: 1,
+          anchor_end_verse: 1,
+          category: 'observation',
+          indent_level: 0
+        },
+        {
+          content: 'Echoes Genesis 1:1 — the same opening words, now about Christ.',
+          anchor_start_verse: 1,
+          anchor_end_verse: 1,
+          category: 'observation',
+          indent_level: 1
+        },
+        {
+          content:
+            'v4-5 Light shining in the darkness, and the darkness has not overcome it. @personal',
+          anchor_start_verse: 4,
+          anchor_end_verse: 5,
+          category: 'personal',
+          indent_level: 0
+        }
+      ],
+      [
+        {
+          content:
+            'v3 "Through him all things were made" — creation is not a backdrop to the gospel, it is the same story. @observation',
+          anchor_start_verse: 3,
+          anchor_end_verse: 3,
+          category: 'observation',
+          indent_level: 0
+        }
+      ]
+    ]
+  },
+  {
+    book_number: 1, // Genesis
+    reference_label: 'Genesis 1:1-5',
+    sessions: [
+      [
+        {
+          content:
+            'v1 Written to a people surrounded by creation myths where the world is made from a slain god. This one has no struggle in it at all. @historical',
+          anchor_start_verse: 1,
+          anchor_end_verse: 1,
+          category: 'historical',
+          indent_level: 0
+        },
+        {
+          content: 'v3 God speaks and it is so. Creation by word, not by combat. @observation',
+          anchor_start_verse: 3,
+          anchor_end_verse: 3,
+          category: 'observation',
+          indent_level: 0
+        }
+      ]
+    ]
+  },
+  {
+    book_number: 45, // Romans
+    reference_label: 'Romans 8:28-30',
+    sessions: [
+      [
+        {
+          content:
+            'v28 "All things" is wider than the comfortable things. This is not a promise that everything is good. @application',
+          anchor_start_verse: 28,
+          anchor_end_verse: 28,
+          category: 'application',
+          indent_level: 0
+        },
+        {
+          content: 'Worth sitting with the next time a plan collapses.',
+          anchor_start_verse: 28,
+          anchor_end_verse: 28,
+          category: 'personal',
+          indent_level: 1
+        }
+      ]
+    ]
+  },
+  {
+    book_number: 19, // Psalms
+    reference_label: 'Psalm 23:1-6',
+    sessions: [
+      [
+        {
+          content:
+            'v1 A shepherd metaphor from a man who had actually kept sheep — unsentimental about it. @historical',
+          anchor_start_verse: 1,
+          anchor_end_verse: 1,
+          category: 'historical',
+          indent_level: 0
+        },
+        {
+          content: 'v4 Through the valley, not around it. @personal',
+          anchor_start_verse: 4,
+          anchor_end_verse: 4,
+          category: 'personal',
+          indent_level: 0
+        }
+      ]
+    ]
+  }
+]
+
+// Oldest seeded note; each subsequent note is SEED_STEP_MS newer, so the
+// fixture reads as study spread over a couple of weeks rather than one instant.
+const SEED_BASE = Date.parse('2026-06-01T09:00:00.000Z')
+const SEED_STEP_MS = 36 * 60 * 60 * 1000 // 36h
+
+export function seedMemoryApi(): void {
+  if (passages.size > 0) return
+  let tick = 0
+  const stamp = (): string => new Date(SEED_BASE + tick++ * SEED_STEP_MS).toISOString()
+
+  for (const seed of SEED) {
+    const parsed = parseReferenceLabel(seed.reference_label)!
+    const passage: Passage = {
+      id: uuid(),
+      workspace_id: WORKSPACE_ID,
+      book_number: bookByNumber(seed.book_number)?.number ?? seed.book_number,
       chapter_start: parsed.chapter_start,
       verse_start: parsed.verse_start,
       chapter_end: parsed.chapter_end,
       verse_end: parsed.verse_end,
-      reference_label: ref
-    })
-    const session = await api.createSession(passage.id)
-    await api.createNote({
-      session_id: session.id,
-      content: 'v1 The Word was with God and was God. @observation',
-      anchor_start_verse: 1,
-      anchor_end_verse: 1,
-      anchor_book_override: null,
-      anchor_chapter_override: null,
-      category: 'observation',
-      indent_level: 0
-    })
-  })()
+      reference_label: seed.reference_label,
+      created_at: stamp()
+    }
+    passages.set(passage.id, passage)
+
+    for (const sessionNotes of seed.sessions) {
+      const session: Session = { id: uuid(), passage_id: passage.id, created_at: stamp() }
+      sessions.set(session.id, session)
+      for (const seedNote of sessionNotes) {
+        const at = stamp()
+        const note: Note = {
+          id: uuid(),
+          session_id: session.id,
+          content: seedNote.content,
+          anchor_start_verse: seedNote.anchor_start_verse,
+          anchor_end_verse: seedNote.anchor_end_verse,
+          anchor_book_override: null,
+          anchor_chapter_override: null,
+          category: seedNote.category,
+          indent_level: seedNote.indent_level,
+          created_at: at,
+          updated_at: at
+        }
+        notes.set(note.id, note)
+      }
+    }
+  }
 }
