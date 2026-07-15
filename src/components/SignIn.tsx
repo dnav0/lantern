@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import AppLogo from './AppLogo'
+import Wordmark from './Wordmark'
 import { sendOtp, verifyOtp } from '../api/auth'
 
 // Email OTP sign-in. Two steps: enter email -> a 6-digit code is emailed ->
@@ -45,8 +45,7 @@ export default function SignIn(): React.ReactElement {
   return (
     <div className="welcome-screen">
       <div className="welcome-card">
-        <AppLogo size={56} style={{ borderRadius: 13 }} />
-        <h1 className="welcome-title">Berean</h1>
+        <Wordmark size={34} style={{ display: 'block', marginBottom: 4 }} />
         <p className="welcome-subtitle">Personal Bible study notes</p>
 
         {step === 'email' ? (

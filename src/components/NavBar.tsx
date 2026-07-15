@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import AppLogo from './AppLogo'
+import Wordmark from './Wordmark'
 import { useApi } from '../api/context'
 import { exportAllNotesAsZip } from '../platform/export'
 
@@ -220,8 +220,7 @@ export default function NavBar({
       {/* ── Top bar (desktop full nav; mobile shows only the leading slot) ── */}
       <header className="topnav">
         <div className="topnav-lead">
-          <AppLogo size={24} style={{ borderRadius: 6 }} />
-          <span className="topnav-appname">Berean</span>
+          <Wordmark size={19} />
           <div className="workspace-selector" ref={workspaceRef}>
             <button
               className="workspace-btn"

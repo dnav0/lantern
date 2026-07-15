@@ -10,6 +10,27 @@ prioritized.
 
 ## Deferred
 
+- **Lantern rebrand — remaining bits.** The user-visible rebrand landed (see
+  Done). Left over:
+  - **PWA PNG icons still show the old Berean book mark.** `public/icon-192.png`,
+    `icon-512.png`, `icon-maskable-512.png` need regenerating from the new
+    `public/icon.svg` (serif "L" on navy). Requires an image tool — the agent
+    can't rasterise. `icon.svg` itself is already updated.
+  - **Outline the wordmark to SVG paths.** `Wordmark.tsx` renders live text in
+    the self-hosted **static** Source Serif 4 (the variable package registers
+    under a different family name, so there's no `opsz` axis — see the font
+    self-host entry in Done). Real brands ship the wordmark as outlined vector
+    so it's font-independent and can use the display optical cut. Cosmetic.
+  - **Internal `Berean*` identifiers left alone, deliberately.** `BereanApi`,
+    `berean-api.ts`, `SupabaseBereanApi`, and the persisted keys
+    (`berean.onboarded`, `berean-theme`, `berean-visual-theme`,
+    `berean-offline-mirror`, `berean-bible-cache`) were NOT renamed. Renaming
+    the storage keys/DB names would silently reset every user's prefs and
+    orphan their cached data; `BereanApi` is the documented seam in CLAUDE.md.
+    Purely cosmetic — do it only if it ever stops being churn-for-nothing. The
+    default theme's stored id also stays `berean` for the same reason (only its
+    visible label became "Lantern").
+
 - **Design sweep — remaining work.** The visual/structural + motion polish
   passes are both done: token layer (F1 + F1b warm dark), serif reading
   typography (F2), contrast (F3), top-bar/library true centering, the theme
@@ -154,6 +175,41 @@ prioritized.
   modifier (or an explicit select mode) so users can still drag-copy verse text.
 
 ## Done
+
+- **Lantern rebrand (user-visible) + wordmark identity.** The app is now
+  **Lantern**, not Berean. Driver: "Berean" collides in-category with the
+  **Berean Standard Bible** — the very translation the app displays — so app-store
+  and search results are a wall of "Berean Study Bible" apps, and every good
+  domain is taken by Bible ministries. "Lantern" ties to Psalm 119:105 ("your
+  word is a lamp to my feet"), and its only real collisions are out-of-category
+  (a censorship VPN), so it's far more ownable inside Bible study. Domain
+  decided: **`lanternword.com`** (brand-word first, so people read "Lantern" as
+  the name; "Word" = Scripture, which resonates with the audience; and it dodges
+  the `lanternstudy`/`lanternstudy.com` reversal confusion). Verified available;
+  note the GoDaddy connector reports premium/aftermarket domains as "available"
+  even at $10k+, so `inthemargin.com`/`illumined.com` were mirages.
+  - **The identity is wordmark-only** (`src/components/Wordmark.tsx` +
+    `.wordmark` in `main.css`), set in the app's own scripture serif so the
+    brand speaks in the voice the app reads Scripture in. This followed a long
+    exploration in which **every pictorial mark failed a concrete test**, and
+    those findings are worth keeping so nobody re-treads them: a **lantern
+    object** is too complex to reduce (stripped down it reads as a bag/bell/jar);
+    an **open book** is depth-ambiguous at mark size (four renderings — outlined,
+    solid, edge-on, page-stack — all failed; you can't tell a closed back cover
+    from an open book); a **lamp** contradicts the name (a lantern is *carried*,
+    a pendant is *fixed*); and a **flame on a book** risks reading as a *burning
+    Bible*, which is disqualifying for this product. A wordmark is unambiguous,
+    timeless, and makes the mark and the name one thing by definition.
+  - **Changed:** `Wordmark` replaces the retired `AppLogo` (book+beacon, deleted)
+    in `NavBar`, `SignIn`, `Onboarding`; `index.html` title; PWA manifest
+    `name`/`short_name` in `vite.config.ts`; `package.json` name; the default
+    theme's visible label ("Berean" → "Lantern"); and `public/icon.svg` is now a
+    serif "L" on the brand navy, drawn as **outlined shapes rather than `<text>`**
+    because a favicon renders in isolation where the self-hosted font isn't
+    guaranteed. Verified live on the memory stub: title reads "Lantern", the
+    wordmark resolves to Source Serif 4 600, and no "Berean" text remains in the
+    UI. `tsc --noEmit` clean. See Deferred for the leftover PNG icons, the
+    outlined-wordmark step, and why internal `Berean*` identifiers stayed.
 
 - **Journal entry delete.** `JournalPage.tsx` rows had no delete affordance;
   added one per row without threading through `App.tsx` (the page already holds

@@ -5,7 +5,10 @@ const STORAGE_KEY = 'berean-visual-theme'
 export type ThemeId = 'berean' | 'scholarly' | 'paper' | 'modern'
 
 export const THEMES: { id: ThemeId; label: string; blurb: string }[] = [
-  { id: 'berean', label: 'Berean', blurb: 'Warm cream + indigo (default)' },
+  // NOTE: the id stays 'berean' deliberately — it is the persisted value in
+  // localStorage and the [data-theme] hook in tokens.css. Renaming it would
+  // silently reset every existing user's theme. Only the visible label moved.
+  { id: 'berean', label: 'Lantern', blurb: 'Warm cream + indigo (default)' },
   { id: 'scholarly', label: 'Scholarly Serif', blurb: 'Paper-white, quiet' },
   { id: 'paper', label: 'Warm Paper', blurb: 'Cream + amber warmth' },
   { id: 'modern', label: 'Quiet Modern', blurb: 'Cool, crisp sans reading' }

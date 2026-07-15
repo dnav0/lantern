@@ -340,6 +340,20 @@ body.dark .bible-library-greeting {
   letter-spacing: -0.2px;
 }
 
+/* ── Wordmark ──────────────────────────────────────────────────────────────
+   The brand IS the word (see Wordmark.tsx for why every pictorial mark was
+   dropped). Set in the scripture serif so the brand speaks in the same voice
+   the app reads Scripture in. The self-hosted Source Serif 4 is the STATIC cut
+   (no `opsz` axis available — see BACKLOG), so weight + tracking do the work. */
+.wordmark {
+  font-family: var(--scripture-font);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1;
+  white-space: nowrap;
+}
+
 /* Workspace selector stub ("Personal ▾") */
 .workspace-selector {
   position: relative;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import AppLogo from './AppLogo'
+import Wordmark from './Wordmark'
 import { updateDisplayName, markOnboardingDone } from '../api/auth'
 
 interface OnboardingProps {
@@ -42,7 +42,7 @@ export default function Onboarding({ onDone }: OnboardingProps): React.ReactElem
   return (
     <div className="welcome-screen">
       <div className="welcome-card">
-        <AppLogo size={56} style={{ borderRadius: 13 }} />
+        <Wordmark size={30} style={{ display: 'block' }} />
 
         {step === 0 && (
           <>

@@ -24,8 +24,8 @@ export default defineConfig({
         ]
       },
       manifest: {
-        name: 'Berean',
-        short_name: 'Berean',
+        name: 'Lantern',
+        short_name: 'Lantern',
         description:
           'A quiet place to study Scripture: read a passage, capture what you see in it, and read your notes back later anchored to the verses.',
         display: 'standalone',
