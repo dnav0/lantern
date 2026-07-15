@@ -3,13 +3,27 @@ import type { BibleProvider } from './provider'
 import { findBookByAlias, normalizeReference } from '../utils/bibleBooks'
 import { HelloaoBibleProvider } from './helloao'
 import { CachedBibleProvider } from './cache'
+import { FallbackBibleProvider } from './fallback'
+import { FixtureBibleProvider } from './fixture'
 
 // The reference-based lookup components already depend on
 // (`api.getBibleVerse(reference) -> BiblePassage | null`). This module owns
 // that behavior on top of the BibleProvider seam, so both the memory stub and
 // SupabaseBereanApi can delegate to a single implementation instead of each
 // re-implementing scripture lookup. See CLAUDE.md "BibleProvider" section.
-const provider: BibleProvider = new CachedBibleProvider(new HelloaoBibleProvider())
+const network: BibleProvider = new CachedBibleProvider(new HelloaoBibleProvider())
+
+// In dev, fall back to bundled BSB text when the network is unreachable, so a
+// contributor (or an agent in a sandbox with no egress) still gets real verses
+// instead of a thrown fetch. The fixture only covers the chapters seedMemoryApi
+// references — it is a stopgap for the seeded demo, not offline reading.
+// `import.meta.env.DEV` is statically false in a production build, so the whole
+// branch and the ~19KB fixture tree-shake away; real users are unaffected and
+// still get a clean failure, which the full-BSB prefetch (docs/BACKLOG.md) is
+// the actual answer to.
+const provider: BibleProvider = import.meta.env.DEV
+  ? new FallbackBibleProvider(network, new FixtureBibleProvider())
+  : network
 
 interface ParsedReference {
   bookNumber: number

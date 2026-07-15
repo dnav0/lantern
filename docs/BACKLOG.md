@@ -162,6 +162,17 @@ prioritized.
 
 - **Full-Bible offline prefetch.** Optionally cache the entire BSB into IndexedDB
   up front, rather than lazily per chapter, for guaranteed offline reading.
+  Still the real answer for offline readers and for `bible.helloao.org` being
+  down (see the availability risk below): the cache is lazy, so today a user only
+  holds chapters they have already opened, and `HelloaoBibleProvider` *throws* on
+  a failed fetch rather than degrading.
+  **Partially mitigated in dev only** (2026-07-15): `FixtureBibleProvider`
+  (`src/bible/fixture.ts`) bundles the four chapters `seedMemoryApi` seeds, and
+  `FallbackBibleProvider` serves them when the network is unreachable. It is
+  gated on `import.meta.env.DEV` and tree-shakes out of production, so it does
+  nothing for real users — it exists so contributors and agents in sandboxes
+  without egress see real verses instead of a thrown fetch. Four chapters is a
+  fixture, not a Bible; this item stands.
 
 - **Scripture full-text search (verse-text search).** Search v1 (UX overhaul,
   workstream 6) only *parses* a query into a reference jump ("mat 2:13" →
