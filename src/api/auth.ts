@@ -1,9 +1,20 @@
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 
-// Auth module: email OTP (6-digit code) sign-in, session persistence, profile
-// read/write. All calls assume Supabase is configured — the app only mounts the
-// auth-gated tree when supabase !== null (see main.tsx / App bootstrap).
+// Auth module: Google OAuth + email OTP (6-digit code) sign-in, session
+// persistence, profile read/write. All calls assume Supabase is configured — the
+// app only mounts the auth-gated tree when supabase !== null (see main.tsx / App
+// bootstrap).
+//
+// The two methods reach the SAME account. Supabase automatically links identities
+// that share a *verified* email into one auth.users row: the OTP flow verifies an
+// address by definition, and Google returns verified emails, so signing in by
+// email first and Google later (or the reverse) does not fork the account. This
+// matters more than it looks — the signup trigger (supabase/migrations/0001_init
+// .sql) creates a profile + personal workspace on every new auth.users row, so a
+// second row would mean a second, empty workspace and split notes. Nothing here
+// implements that linking; Supabase does it. Picking a *different* Google account
+// is a genuinely different email and will correctly be a separate account.
 
 function client() {
   if (!supabase) throw new Error('Supabase is not configured')
@@ -33,6 +44,30 @@ export async function verifyOtp(email: string, token: string): Promise<Session> 
   if (error) throw error
   if (!data.session) throw new Error('Verification did not return a session')
   return data.session
+}
+
+// Google OAuth. Redirects the whole page to Supabase's /authorize, which bounces
+// to Google and back to `redirectTo` with the session in the URL; the client
+// picks that up (detectSessionInUrl) and surfaces it via onAuthStateChange, so
+// there is nothing to await here.
+//
+// Two things this canNOT do anything about, both verified live:
+//   - It does not validate the provider. supabase-js builds the URL and hands the
+//     browser over without a round-trip, so if the provider is not enabled the
+//     user lands on Supabase's endpoint showing raw JSON ("Unsupported provider:
+//     provider is not enabled") with no way back. The caller's catch never runs.
+//     The only fix is enabling Google in the dashboard — so do NOT put this
+//     button in front of users until that is done (see docs/BACKLOG.md).
+//   - redirectTo must be on the hosted project's Auth > URL Configuration
+//     allowlist or Supabase refuses it. That list is localhost-only today, so
+//     this works in dev and WILL fail in production until the deployed origin is
+//     added.
+export async function signInWithGoogle(): Promise<void> {
+  const { error } = await client().auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin }
+  })
+  if (error) throw error
 }
 
 export async function signOut(): Promise<void> {

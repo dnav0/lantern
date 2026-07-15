@@ -1,28 +1,45 @@
 import React, { useEffect, useState } from 'react'
-import { sendOtp, verifyOtp } from '../api/auth'
+import { sendOtp, signInWithGoogle, verifyOtp } from '../api/auth'
+import GoogleMark from './landing/GoogleMark'
 
 // The sign-in dialog, per design/lantern-mockup.html's login direction: a card
 // over a scrim, opened from the landing page's CTAs rather than being the whole
 // signed-out screen (it used to be — see Root.tsx).
 //
-// Email OTP, two steps: enter email -> a code is emailed -> enter the code. On
-// success, Root's onAuthStateChange takes over and mounts the app; this dialog
-// never sees the signed-in state.
+// Google is the prominent one-click default; email OTP sits below the divider as
+// the fallback. Both reach the same account (see api/auth.ts on identity
+// linking). Email OTP is two steps: enter email -> a code is emailed -> enter the
+// code. On success, Root's onAuthStateChange takes over and mounts the app; this
+// dialog never sees the signed-in state.
 //
-// Google sign-in belongs above the email divider (it is the prominent one-click
-// default in the spec). It is not wired yet — see BACKLOG: the code path is a
-// separate pass, and it needs OAuth credentials registered in Supabase first.
+// `emailFirst` hides the Google button: the landing's "Continue with email"
+// already expressed a choice, so re-offering Google on top of the email field
+// would be asking the same question twice.
 
 interface SignInProps {
   onClose: () => void
+  /** Open directly on the email step rather than showing Google first. */
+  emailFirst?: boolean
 }
 
-export default function SignIn({ onClose }: SignInProps): React.JSX.Element {
+export default function SignIn({ onClose, emailFirst = false }: SignInProps): React.JSX.Element {
   const [step, setStep] = useState<'email' | 'code'>('email')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const handleGoogle = async (): Promise<void> => {
+    setBusy(true)
+    setError(null)
+    try {
+      // On success the browser leaves for Google, so this never resolves here.
+      await signInWithGoogle()
+    } catch {
+      setError('Could not reach Google. Try again, or continue with email.')
+      setBusy(false)
+    }
+  }
 
   // Escape closes, matching every other dismissible surface in the app.
   useEffect(() => {
@@ -84,6 +101,22 @@ export default function SignIn({ onClose }: SignInProps): React.JSX.Element {
             <p className="ll-sub">
               Sign in to keep your studies. New here? This creates your account.
             </p>
+
+            {!emailFirst && (
+              <>
+                <button
+                  className="ll-google-btn"
+                  type="button"
+                  onClick={handleGoogle}
+                  disabled={busy}
+                >
+                  <GoogleMark />
+                  Continue with Google
+                </button>
+                <div className="ll-divider">or continue with email</div>
+              </>
+            )}
+
             <form className="ll-form" onSubmit={handleSendCode}>
               <input
                 className="ll-field"

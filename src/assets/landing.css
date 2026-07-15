@@ -46,10 +46,19 @@
 .landing .serif {
   font-family: var(--scripture-font);
 }
+/* The measure. The spec drew at 1140px; on a wide display that left the page
+   feeling boxed-in, so it opens up in one step rather than scaling forever —
+   prose still wants a readable line length, so only the layout breathes. */
 .ll-wrap {
   max-width: 1140px;
   margin: 0 auto;
   padding: 0 40px;
+}
+@media (min-width: 1440px) {
+  .ll-wrap {
+    max-width: 1320px;
+    padding: 0 56px;
+  }
 }
 
 /* Small-caps eyebrow — a recurring typographic signature, not a pill. */
@@ -115,6 +124,15 @@
     left: 130%;
   }
 }
+/* Google's mark keeps its own colours on any fill, so on the accent-filled hero
+   button it gets a white chip to sit on (as the spec did). */
+.ll-g-chip {
+  background: #fff;
+  border-radius: 4px;
+  padding: 2px;
+  display: inline-flex;
+  line-height: 0;
+}
 .ll-btn-ghost {
   background: transparent;
   color: var(--text);
@@ -179,13 +197,21 @@
 
 /* ── Hero ── */
 .ll-hero-sec {
-  padding: 76px 0 40px;
+  padding: 104px 0 64px;
 }
 .ll-hero-grid {
   display: grid;
   grid-template-columns: 0.92fr 1.08fr;
-  gap: 64px;
+  gap: 72px;
   align-items: center;
+}
+@media (min-width: 1440px) {
+  .ll-hero-sec {
+    padding: 128px 0 80px;
+  }
+  .ll-hero-grid {
+    gap: 96px;
+  }
 }
 .ll-hero-copy .eyebrow {
   margin-bottom: 22px;
@@ -527,17 +553,27 @@
 
 /* ═══ FEATURE CLIPS (design/lantern-features.html) ═══ */
 .ll-features {
-  padding-top: 24px;
-  padding-bottom: 24px;
+  padding-top: 32px;
+  padding-bottom: 32px;
 }
 .lf-feature {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 44px;
+  gap: 64px;
   align-items: center;
-  padding: 40px 0;
+  padding: 72px 0;
   border-top: 1px solid var(--border);
   scroll-margin-top: 84px; /* clears the sticky nav on an anchor jump */
+}
+@media (min-width: 1440px) {
+  .lf-feature {
+    gap: 96px;
+    padding: 88px 0;
+  }
+  /* The clip frames are the one thing that should take the extra width. */
+  .lf-frame {
+    height: 330px;
+  }
 }
 .lf-feature--flip .lf-copy {
   order: 2;
@@ -834,9 +870,56 @@
   margin-top: 2px;
 }
 
+/* ═══ THE NAME ═══
+   Editorial two-column: the claim on the left, the prose on the right. Uses the
+   wide measure without letting the paragraphs run past a readable line. */
+.ll-name {
+  padding: 32px 0 24px;
+}
+.ll-name-grid {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 64px;
+  align-items: start;
+  padding-top: 72px;
+  border-top: 1px solid var(--border);
+}
+.ll-name-head .eyebrow {
+  display: block;
+  margin-bottom: 12px;
+}
+.ll-name-head h2 {
+  font-family: var(--scripture-font);
+  font-weight: 500;
+  font-size: 32px;
+  line-height: 1.18;
+  letter-spacing: -0.015em;
+  max-width: 16ch;
+}
+.ll-name-body p {
+  font-size: 16px;
+  line-height: 1.68;
+  color: var(--text-muted);
+  max-width: 58ch;
+}
+.ll-name-body p + p {
+  margin-top: 16px;
+}
+@media (min-width: 1440px) {
+  .ll-name-grid {
+    gap: 96px;
+    padding-top: 88px;
+  }
+}
+
 /* ═══ CTA ═══ */
 .ll-cta {
-  padding: 40px 0 84px;
+  padding: 72px 0 96px;
+}
+@media (min-width: 1440px) {
+  .ll-cta {
+    padding: 88px 0 112px;
+  }
 }
 .ll-cta-inner {
   border: 1px solid var(--border);
@@ -927,11 +1010,67 @@
   margin-top: 7px;
   line-height: 1.5;
 }
+/* Google is the prominent one-click default; email sits below the divider.
+   The mark keeps Google's own colours (brand requirement), so the button is a
+   neutral surface rather than the accent fill. */
+.ll-google-btn {
+  width: 100%;
+  justify-content: center;
+  margin-top: 24px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1.5px solid var(--border-strong);
+  box-shadow: var(--elev-1);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 13px 18px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition:
+    background var(--dur-2),
+    box-shadow var(--dur-2),
+    transform var(--dur-2) var(--ease-out);
+}
+.ll-google-btn:hover:not(:disabled) {
+  background: var(--surface-2);
+  box-shadow: var(--elev-2);
+}
+.ll-google-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.ll-google-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.ll-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 20px 2px 16px;
+  color: var(--text-faint);
+  font-size: 12px;
+}
+.ll-divider::before,
+.ll-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
 .ll-form {
   margin-top: 24px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+/* The divider already provides the gap above the email field. */
+.ll-divider + .ll-form {
+  margin-top: 0;
 }
 .ll-field {
   width: 100%;
@@ -970,9 +1109,20 @@
   }
   .lf-feature {
     grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 48px 0;
   }
   .lf-feature--flip .lf-copy {
     order: 0;
+  }
+  .ll-name-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding-top: 48px;
+  }
+  .ll-name-head h2 {
+    max-width: none;
+    font-size: 28px;
   }
   .ll-cta-inner {
     flex-direction: column;

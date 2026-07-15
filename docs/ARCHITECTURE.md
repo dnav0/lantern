@@ -277,7 +277,24 @@ documented at their call sites: the landing is **its own scroll container**
 otherwise make a 2300px page unscrollable), and the hero's loop **measures
 layout** rather than trusting fixed pixel distances (see `design/README.md`).
 
-Sign-in is **email OTP**: the user enters an email, Supabase sends a 6-digit code,
+Sign-in offers **two methods reaching one account**: Google OAuth
+(`signInWithOAuth({ provider: 'google' })`, the prominent one-click default) and
+**email OTP** (the fallback). Because first sign-in doubles as sign-up, there is
+only ever *one* action here — which is why the landing offers a choice of method
+rather than a "Get started"/"Sign in" pair. Google is code-complete but inert
+until its credentials are registered in the Supabase dashboard (see BACKLOG);
+note that `signInWithOAuth` hands the browser off without validating the
+provider, so the button must not face users until then.
+
+The two methods do not fork the account: **Supabase automatically links
+identities that share a *verified* email** into one `auth.users` row. The OTP
+flow verifies an address by definition and Google returns verified emails, so
+email-then-Google (or the reverse) lands on the same user. This is load-bearing
+rather than incidental — the signup trigger creates a profile + personal
+workspace on *every* new `auth.users` row, so a second row would mean a second,
+empty workspace and split notes. Nothing in this codebase implements the linking.
+
+Email OTP: the user enters an email, Supabase sends a 6-digit code,
 and the code is verified (`signInWithOtp({ shouldCreateUser: true })` →
 `verifyOtp({ type: 'email' })`, `src/api/auth.ts`). First sign-in doubles as
 sign-up, which fires the Postgres signup trigger that creates the user's profile,

@@ -73,17 +73,14 @@ prioritized.
     ("By continuing you agree to the Terms and Privacy Policy", both `href="#"`)
     was NOT ported: shipping a legal claim that links nowhere is worse than
     shipping neither. Needed before any real public launch, at which point the
-    line goes back on the card.
-  - **The hero CTAs are placeholders for the Google split.** The spec's hero
-    pairs "Continue with Google" with "Continue with email"; until Google is
-    wired (item below), those are a plain "Get started" / "Sign in" pair. Restore
-    the spec's pair as part of the Google pass.
-  - **Delete the design/ specs once Google lands.** `design/README.md` says the
-    three committed specs are temporary and should be deleted once ported. Two of
-    three (hero, features) are fully ported now, but `lantern-mockup.html` still
-    holds the unported login direction (Google prominent, email divider), so all
-    three stay until the Google pass closes it out. They are in git history
-    regardless.
+    line goes back on the card. Now slightly more pointed than when first
+    deferred: the page says "Nothing to buy. Your notes stay private to you." and
+    "The name" section calls the tool private. A privacy page should back those.
+  - **Delete the design/ specs.** `design/README.md` says the three committed
+    specs are temporary and should be deleted once ported. All three now are
+    (hero, features, and the mockup's layout/copy/login direction), so they can
+    go — deferred only so they stay diffable while the landing settles. They are
+    in git history regardless.
 
 - **Custom SMTP for OTP code emails.** Supabase's default email template contains
   only a magic link — the 6-digit code requires adding `{{ .Token }}` to the
@@ -92,10 +89,37 @@ prioritized.
   path; the code-entry UI in `SignIn.tsx` already works the moment the template
   includes a code. Revisit before any native wrapper (links are fragile there).
 
-- **Google OAuth — next up.** (The "bundle this into the login redesign" note
-  below is now stale: the landing + login redesign shipped first, deliberately,
-  so Google could be discussed separately. The login card it lands in already
-  exists — `SignIn.tsx`, now a dialog over the landing.) Adds
+- **Google OAuth — CODE READY, WAITING ON OAUTH CREDENTIALS.** The code path is
+  built and verified as far as it can be locally: `signInWithGoogle()`
+  (`src/api/auth.ts`) is wired to the hero's "Continue with Google" and the
+  dialog's button, and clicking it drives the browser to
+  `<project>.supabase.co/auth/v1/authorize?provider=google&redirect_to=…`, which
+  answers `{"code":400,"error_code":"validation_failed","msg":"Unsupported
+  provider: provider is not enabled"}`. That error IS the proof the wiring is
+  right; the only thing missing is dashboard config. Two owner-only steps remain:
+  1. **Google Cloud** — create an OAuth 2.0 Client ID (Web application) and add
+     `https://<project-ref>.supabase.co/auth/v1/callback` as an Authorized
+     redirect URI. Copy the client id + secret.
+  2. **Supabase dashboard** — Auth > Providers > Google: enable, paste the client
+     id + secret. Then Auth > URL Configuration: add the production origin to the
+     allowlist (see the Cloudflare Pages item — there isn't one yet, and
+     `redirectTo` is `window.location.origin`, so production OAuth fails until
+     both exist).
+
+  **Do not put the Google button in front of users until step 2 is done.**
+  `signInWithOAuth` does not validate the provider — supabase-js builds the URL
+  and hands the browser over with no round-trip, so a disabled provider strands
+  the user on a raw JSON error page with no way back. No client-side catch can
+  intercept that (verified); the button is only safe once the provider is live.
+
+  **Verify once live:** sign in by email, sign out, sign in with Google on the
+  same address, and confirm the notes are still there and no second workspace
+  appeared. Identity linking is Supabase's automatic behaviour (matching
+  *verified* emails collapse into one `auth.users` row), which is what keeps the
+  signup trigger from minting a second personal workspace — but it has never been
+  exercised in this project.
+
+  Original rationale follows. Adds
   alongside email OTP; links automatically to the existing account via
   verified email, so no account-merge flow needed (already a low-risk addition
   per the existing architecture). Worth it for a public launch: one-click
@@ -115,6 +139,7 @@ prioritized.
   app today would force adding a *third* auth method later just to ship on
   iOS (the "Capacitor mobile wrap" item below), whereas keeping email as the
   neutral fallback avoids that trigger.
+
 
 - **KJV + translation switcher.** Second `BibleProvider` implementation plus a UI
   to pick translation. The provider interface already exists for this; note
@@ -192,6 +217,36 @@ prioritized.
   deploy before, or with, the Google pass.
 
 ## Done
+
+- **Landing pass 2 — spacing, the button model, and the anti-SaaS turn.** Owner
+  review of pass 1: slightly cramped (especially on wide displays), the buttons
+  were confusing, and "Get started free" implied a SaaS pricing model.
+  - **The buttons were one action wearing two labels.** "Get started" and "Sign
+    in" both opened the same dialog, because first sign-in *is* sign-up
+    (`shouldCreateUser: true`) — there is no separate signup path to send anyone
+    down. That pair is a SaaS funnel convention (free tier vs returning
+    customer) borrowed into a product with no funnel. **Decided: the only real
+    choice is *how* to sign in, so that is the only one offered.** Nav is a
+    single "Sign in"; the hero is "Continue with Google" + "Continue with email"
+    (which is what the approved mockup always specced); the CTA is one button.
+    `SignIn` takes `emailFirst` so the hero's email choice isn't re-asked inside
+    the dialog.
+  - **Anti-SaaS.** "Get started free" → "Start your first study", CTA heading →
+    "Ready when you are.", and the hero's "Free to use" → "Nothing to buy" (the
+    word *free* only needs saying where a paid tier is implied). Added a **"The
+    name" section**: Psalm 119:105, why a lantern (carried, lights one step), and
+    a short first-person note on why the tool exists. This also restores the
+    mockup's "The name" nav link, which pass 1 dropped as a dead link.
+  - **Spacing.** `--wrap` opens 1140 → 1320px at ≥1440 (one step, not endless
+    scaling — prose still wants a readable measure); hero padding 76 → 104/128px,
+    feature padding 40 → 72/88px, gaps 44 → 64/96px, clip frames 290 → 330px on
+    wide.
+  - **Google's mark needed the spec's white chip.** Dropped onto the accent-fill
+    hero button it read as broken (Google requires the official multicolour G, so
+    it cannot be recoloured to the palette). `lantern-mockup.html` had already
+    solved this with a white `g-chip`; pass 1 missed it.
+  - Verified live at 1728/1440/360px, light + dark: no horizontal overflow, the
+    name section stacks, the dialog shows Google over the email divider.
 
 - **Public landing page.** `Root.tsx`'s `signedOut` phase rendered a bare
   `SignIn` screen: an unauthenticated visitor got an email field and no
