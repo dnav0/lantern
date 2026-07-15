@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react'
+import React, { Suspense, lazy, useEffect, useState } from 'react'
 import App from './App'
-import SignIn from './components/SignIn'
 import Onboarding from './components/Onboarding'
 import { ApiProvider } from './api/context'
 import { createMemoryApi, seedMemoryApi } from './api/memory'
@@ -14,6 +13,11 @@ import type { BereanApi } from './api/types'
 //   - otherwise            -> in-memory stub (dev fallback), with a console warning.
 
 type Phase = 'loading' | 'signedOut' | 'onboarding' | 'ready'
+
+// The landing page is the signed-out surface: marketing copy, four looping
+// animation clips, and its own stylesheet. Lazy so a signed-in user — who never
+// sees it — does not download any of that to reach their notes.
+const Landing = lazy(() => import('./components/landing/Landing'))
 
 // ─── Memory (dev) path ───────────────────────────────────────────────────────
 function MemoryRoot(): React.ReactElement {
@@ -80,7 +84,11 @@ function SupabaseRoot(): React.ReactElement {
   }
 
   if (phase === 'signedOut') {
-    return <SignIn />
+    return (
+      <Suspense fallback={<div className="app-boot" />}>
+        <Landing />
+      </Suspense>
+    )
   }
 
   if (phase === 'onboarding') {

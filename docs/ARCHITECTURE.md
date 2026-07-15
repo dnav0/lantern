@@ -4,8 +4,8 @@
 
 Lantern (renamed from Berean — see CLAUDE.md; internal `Berean*` identifiers and
 persisted keys deliberately kept) is a single-user, web-first PWA for personal
-Bible-study notes, deployed on Cloudflare Pages and backed by Supabase
-(Postgres + auth + RLS). It's a rewrite of
+Bible-study notes, bound for Cloudflare Pages (not deployed yet — see Deploy) and
+backed by Supabase (Postgres + auth + RLS). It's a rewrite of
 a local-only Electron desktop app. The desktop app carried its whole domain model
 and pure-React UI through a single `window.api` bridge with zero direct Electron
 imports in the renderer — that bridge is the seam the rewrite pivots on, so the UI
@@ -267,6 +267,16 @@ notes (id uuid PK, session_id uuid refs sessions on delete cascade,
 
 ## Auth & bootstrap (Phase 1)
 
+**The signed-out surface is the public landing page** (`src/components/landing/`,
+`src/assets/landing.css`) — nav, an animated hero, three feature clips, CTA,
+footer — ported from the approved specs in `design/`. Sign-in is a dialog opened
+from its CTAs (`SignIn.tsx`), not a screen of its own. It is `React.lazy`-loaded
+so a signed-in user never downloads it. Two things there are load-bearing and
+documented at their call sites: the landing is **its own scroll container**
+(the app shell locks `html/body/#root` to `overflow: hidden`, which would
+otherwise make a 2300px page unscrollable), and the hero's loop **measures
+layout** rather than trusting fixed pixel distances (see `design/README.md`).
+
 Sign-in is **email OTP**: the user enters an email, Supabase sends a 6-digit code,
 and the code is verified (`signInWithOtp({ shouldCreateUser: true })` →
 `verifyOtp({ type: 'email' })`, `src/api/auth.ts`). First sign-in doubles as
@@ -277,7 +287,7 @@ a personal workspace, and the owner membership. Sessions persist
 `src/Root.tsx` is the bootstrap that picks the backend and gates the app:
 
 - **Supabase configured** (`VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` present)
-  → auth-gated. Phases: `loading → signedOut (SignIn) → onboarding (Onboarding) →
+  → auth-gated. Phases: `loading → signedOut (Landing) → onboarding (Onboarding) →
   ready (App)`. On a signed-in session it constructs `SupabaseBereanApi.create()`,
   which resolves and caches the user's personal workspace id once, then provides
   it via `ApiProvider`. Onboarding (optional name → capture intro → reading intro,
@@ -398,8 +408,14 @@ stub), since it only calls interface methods.
 
 ## Deploy (Phase 4)
 
-Cloudflare Pages, auto-deploying from `main`. Build command `npm run build`,
-output directory `dist`, environment variables `VITE_SUPABASE_URL` /
+**Not set up yet — this section is the plan, not the state of the world.** The
+Cloudflare Pages project has never been created (see BACKLOG); the app runs
+locally only, and auth redirect URLs are still localhost-only, so OAuth and magic
+links have no production origin to return to.
+
+The plan: Cloudflare Pages, auto-deploying from `main`. Build command
+`npm run build`, output directory `dist`, environment variables
+`VITE_SUPABASE_URL` /
 `VITE_SUPABASE_ANON_KEY`. `public/_redirects` (`/* /index.html 200`) makes the
 single-page app's client-side view state survive a hard reload or deep link on
 any path.

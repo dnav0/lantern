@@ -67,20 +67,23 @@ prioritized.
   replaces. Needs conflict handling and last-write-wins (or better) reconciliation
   given client-set timestamps.
 
-- **Public marketing/landing site + login flow redesign.** Right now there is
-  no public-facing site — `Root.tsx`'s boot flow goes straight from
-  `loading` to `signedOut (SignIn)`, so any unauthenticated visitor lands
-  directly on a sign-in screen with no explanation of what Berean is. Before a
-  real public launch this needs an actual marketing/landing page (what the app
-  is, why it's different, a clear call to sign in/up) and a more polished
-  login flow than today's bare `SignIn.tsx`, consistent with the "Berean"
-  design system (tokens, serif reading voice, warm cream) landed in the design
-  sweep. Planned as its own pass, after the backlog wrap-up (Open-study bridge,
-  self-hosted fonts, mobile nav priority) and separate from any regression-
-  testing/analytics/branding-identity work being considered around the same
-  time. **Bundle the two items below into this pass** — both touch the same
-  surface, so doing them separately would mean revisiting the login screen
-  twice.
+- **Landing page — leftovers from the build.** The page itself is done (see
+  Done). Still open:
+  - **Terms and Privacy pages don't exist.** The login card's spec fine print
+    ("By continuing you agree to the Terms and Privacy Policy", both `href="#"`)
+    was NOT ported: shipping a legal claim that links nowhere is worse than
+    shipping neither. Needed before any real public launch, at which point the
+    line goes back on the card.
+  - **The hero CTAs are placeholders for the Google split.** The spec's hero
+    pairs "Continue with Google" with "Continue with email"; until Google is
+    wired (item below), those are a plain "Get started" / "Sign in" pair. Restore
+    the spec's pair as part of the Google pass.
+  - **Delete the design/ specs once Google lands.** `design/README.md` says the
+    three committed specs are temporary and should be deleted once ported. Two of
+    three (hero, features) are fully ported now, but `lantern-mockup.html` still
+    holds the unported login direction (Google prominent, email divider), so all
+    three stay until the Google pass closes it out. They are in git history
+    regardless.
 
 - **Custom SMTP for OTP code emails.** Supabase's default email template contains
   only a magic link — the 6-digit code requires adding `{{ .Token }}` to the
@@ -89,7 +92,10 @@ prioritized.
   path; the code-entry UI in `SignIn.tsx` already works the moment the template
   includes a code. Revisit before any native wrapper (links are fragile there).
 
-- **Google OAuth — recommended, bundle into the login redesign above.** Adds
+- **Google OAuth — next up.** (The "bundle this into the login redesign" note
+  below is now stale: the landing + login redesign shipped first, deliberately,
+  so Google could be discussed separately. The login card it lands in already
+  exists — `SignIn.tsx`, now a dialog over the landing.) Adds
   alongside email OTP; links automatically to the existing account via
   verified email, so no account-merge flow needed (already a low-risk addition
   per the existing architecture). Worth it for a public launch: one-click
@@ -174,7 +180,81 @@ prioritized.
   suppresses native text selection over verse text (drag = box-select). Add a
   modifier (or an explicit select mode) so users can still drag-copy verse text.
 
+- **Cloudflare Pages deploy does not exist yet.** `docs/ARCHITECTURE.md` has
+  described the app as "Cloudflare Pages, auto-deploying from `main`" since the
+  PWA pass, but the project was never actually created (confirmed with the owner
+  during the landing build; ARCHITECTURE now says so). This blocks more than
+  hosting: Supabase auth redirect URLs are localhost-only today
+  (`supabase/config.toml` `site_url = http://localhost:5173`, plus the hosted
+  project's Auth > URL Configuration allowlist), and there is no production
+  origin to add to them, so **Google OAuth and magic links will fail in
+  production until the deploy exists and its origin is allowlisted.** Do the
+  deploy before, or with, the Google pass.
+
 ## Done
+
+- **Public landing page.** `Root.tsx`'s `signedOut` phase rendered a bare
+  `SignIn` screen: an unauthenticated visitor got an email field and no
+  explanation of what the app was. It now renders a real landing page
+  (`src/components/landing/`, `src/assets/landing.css`), with sign-in moved
+  behind its CTAs as a dialog over the page. Ported faithfully from the approved
+  specs (`design/lantern-mockup.html` layout/copy, `design/lantern-hero.html`
+  hero, `design/lantern-features.html` clips); structure is nav → hero
+  flythrough → the three feature clips → CTA → footer.
+  - **The specs disagreed with each other, and the newest won.**
+    `lantern-mockup.html` predates two later decisions, so porting it literally
+    would have undone them: it draws the **retired book+beacon pictorial mark**
+    in the nav, footer, and login card (identity is wordmark-only — now
+    `<Wordmark />`), and its hero is a **static card superseded by**
+    `lantern-hero.html`'s flythrough. Its static "Four lenses" and "Read. Note.
+    Return." sections were replaced by the three clips (owner's call — one of the
+    clips *is* Four lenses, so keeping both duplicated a section). The hero clip's
+    topbar lamp icon (same retired mark) became the wordmark, matching the real
+    app's top bar. The login card dropped its separate mark: with a wordmark it
+    would render "Lantern" twice, stacked, above "Welcome to Lantern".
+  - **Two real bugs the live check caught, both invisible to a build:**
+    1. **The landing could not be scrolled at all.** `main.css` locks the app
+       shell (`html, body, #root { height:100%; overflow:hidden }`) — right for
+       the app, fatal for a 2300px page: everything below the fold was
+       unreachable. `.landing` is now its own scroll container, which keeps the
+       fix local (nothing to unwind on sign-in, no unlocked body leaking into the
+       app). Note for whoever adds the next full-page surface: scripted
+       `scrollIntoView` still "works" on an `overflow:hidden` container, so it
+       masks this — a wheel is the only honest test.
+    2. **The hero's loop visibly jumped on phones.** The spec collapses the
+       verse-1 note after a hardcoded 210px of scroll, which clears it on a
+       600px-wide card but leaves it in plain sight at 360px (measured: note
+       bottom at 285px), so the compensation fired on visible content. That
+       distance is now **measured** (`noteBottom + CONFIG.noteClearance`), which
+       reproduces the spec's 210px at desktop and adapts elsewhere. The mobile
+       clip also steps down its type/rail (the 190px rail crushed scripture to
+       ~125px and 7-line verses).
+  - **The loop machinery is ported, not rewritten** (`useClipLoop.ts`) — the
+    specs' imperative `while(true)` scripts run as-is, since the sequences are
+    the approved artifact and the hero measures real layout (see
+    `design/README.md`: the clone + translateY compensation are load-bearing).
+    Added around them: cancellation (a loop can't outlive its component or stack
+    up) and IntersectionObserver gating (four always-running loops is the
+    difference between a calm page and a hot laptop). The landing is
+    `React.lazy`-loaded, so signed-in users never download it (26 kB JS + 15 kB
+    CSS, a separate chunk).
+  - Verified live at 1440px and 360px, light + dark, on a real (visible) browser:
+    the flythrough types both notes and glides the chapter; **the seamless splice
+    was measured, not eyeballed** — sampling a verse's screen position every
+    frame across a full scroll showed a steady ~1.05px/frame and **zero
+    discontinuities** at either width, matching the spec's "0px shift" claim.
+    Clips 1–3 all run; the login dialog opens from every CTA. No horizontal
+    overflow at 360px. Build (`tsc --noEmit` + vite) clean.
+  - **Not verified live:** the `prefers-reduced-motion` resting states. The
+    available browser tooling can't emulate that media query, and the flag is read
+    at mount, so it can't be toggled in-page. The paths render statically by
+    construction (each clip has a resting state; every loop is skipped) but no one
+    has actually looked at them — worth a manual pass with the OS setting on.
+
+- **GitHub repo renamed `dnav0/berean` → `dnav0/lantern`.** Finishes the
+  user-visible rebrand outside the code. The local remote was repointed; GitHub
+  redirects the old URL, so existing clones keep working. The local folder stays
+  `D:\Projects\berean` deliberately (the path is fine, renaming it buys nothing).
 
 - **Lantern rebrand (user-visible) + wordmark identity.** The app is now
   **Lantern**, not Berean. Driver: "Berean" collides in-category with the
