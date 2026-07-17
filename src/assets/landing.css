@@ -165,35 +165,6 @@
   justify-content: space-between;
   height: 68px;
 }
-.ll-nav-links {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  font-size: var(--text-base);
-  font-weight: 500;
-  color: var(--text-muted);
-}
-.ll-nav-links a:hover {
-  color: var(--text);
-}
-.ll-nav-right {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-}
-.ll-nav-signin {
-  font: inherit;
-  font-size: var(--text-base);
-  font-weight: 600;
-  color: var(--text-muted);
-  background: transparent;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-}
-.ll-nav-signin:hover {
-  color: var(--text);
-}
 
 /* ── Hero ── */
 .ll-hero-sec {
@@ -563,7 +534,9 @@
   align-items: center;
   padding: 72px 0;
   border-top: 1px solid var(--border);
-  scroll-margin-top: 84px; /* clears the sticky nav on an anchor jump */
+  /* The nav no longer links to these, but the section ids remain, so a direct
+     #hash link still lands clear of the sticky bar rather than under it. */
+  scroll-margin-top: 84px;
 }
 @media (min-width: 1440px) {
   .lf-feature {
@@ -1127,9 +1100,6 @@
   .ll-cta-inner {
     flex-direction: column;
     align-items: flex-start;
-  }
-  .ll-nav-links {
-    display: none;
   }
   .ll-h1 {
     font-size: 40px;

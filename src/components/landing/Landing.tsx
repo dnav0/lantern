@@ -55,17 +55,12 @@ export default function Landing(): React.JSX.Element {
       <nav className="ll-nav">
         <div className="ll-wrap ll-nav-inner">
           <Wordmark size={22} />
-          <div className="ll-nav-links">
-            <a href="#lenses">Four lenses</a>
-            <a href="#study">In the study</a>
-            <a href="#find">Find and return</a>
-            <a href="#name">The name</a>
-          </div>
-          <div className="ll-nav-right">
-            <button className="ll-btn ll-btn-primary" type="button" onClick={openLogin}>
-              Sign in
-            </button>
-          </div>
+          {/* No section links: "Four lenses" / "Find and return" only mean
+              something once you have already read the page they jump to. The page
+              is short enough to scroll. */}
+          <button className="ll-btn ll-btn-primary" type="button" onClick={openLogin}>
+            Sign in
+          </button>
         </div>
       </nav>
 
