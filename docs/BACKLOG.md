@@ -12,10 +12,6 @@ prioritized.
 
 - **Lantern rebrand — remaining bits.** The user-visible rebrand landed (see
   Done). Left over:
-  - **PWA PNG icons still show the old Berean book mark.** `public/icon-192.png`,
-    `icon-512.png`, `icon-maskable-512.png` need regenerating from the new
-    `public/icon.svg` (serif "L" on navy). Requires an image tool — the agent
-    can't rasterise. `icon.svg` itself is already updated.
   - **Outline the wordmark to SVG paths.** `Wordmark.tsx` renders live text in
     the self-hosted **static** Source Serif 4 (the variable package registers
     under a different family name, so there's no `opsz` axis — see the font
@@ -228,6 +224,19 @@ prioritized.
   deploy before, or with, the Google pass.
 
 ## Done
+
+- **PWA PNG icons regenerated from the new mark, plus a browser favicon.** The
+  three manifest icons (`public/icon-192.png`, `icon-512.png`,
+  `icon-maskable-512.png`) still carried the retired Berean book mark; they're now
+  rasterised from `public/icon.svg` (serif "L" on brand navy). The maskable
+  variant is full-bleed navy with the L scaled to 80% so it survives an aggressive
+  platform mask; the other two keep the rounded-rect tile. Rendered with `sharp`
+  in an isolated scratchpad (no project dep added — the earlier "agent can't
+  rasterise" note was wrong: sharp does SVG→PNG natively, no Chromium), verified
+  visually at size. Also added the browser-tab favicon that was simply missing:
+  `index.html` now links `/icon.svg` (SVG favicon) and `/icon-192.png`
+  (apple-touch-icon for iOS home screen). The regen script is
+  `scratchpad/render-icons.mjs` if these ever need redoing.
 
 - **Landing pass 2 — spacing, the button model, and the anti-SaaS turn.** Owner
   review of pass 1: slightly cramped (especially on wide displays), the buttons
