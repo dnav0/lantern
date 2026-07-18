@@ -80,10 +80,31 @@ prioritized.
 
 - **Custom SMTP for OTP code emails.** Supabase's default email template contains
   only a magic link — the 6-digit code requires adding `{{ .Token }}` to the
-  template, which is gated behind custom SMTP (e.g. Resend free tier + a sender
-  domain). Until then `detectSessionInUrl: true` accepts the link as the sign-in
-  path; the code-entry UI in `SignIn.tsx` already works the moment the template
-  includes a code. Revisit before any native wrapper (links are fragile there).
+  template, which is gated behind custom SMTP + a verified sender domain. Until
+  then `detectSessionInUrl: true` accepts the link as the sign-in path; the
+  code-entry UI in `SignIn.tsx` already works the moment the template includes a
+  code. Revisit before any native wrapper (links are fragile there).
+
+  **Provider decided: Brevo** (not Resend — its free tier is reserved for another
+  project). Reasoning: for Supabase *auth* email the pretty template is HTML in
+  Supabase's own template editor and the provider is just the send pipe, so the
+  provider choice is really about the *future* "email updates to users"
+  requirement — which is a broadcast job (contact list, campaigns, unsubscribe
+  compliance), not transactional. Brevo does both transactional SMTP relay and a
+  full marketing/campaign side in one free account (300/day, simple SPF/DKIM),
+  so auth-now + newsletters-later needs no second tool. Mailtrap (4k/mo, cleaner
+  DX, a Claude Code MCP) was the runner-up but is transactional-first; its edge
+  on deliverability is marginal and covered by proper DNS auth. Owner-only setup:
+  1. Brevo account, verify the sender domain (`lanternword.com`), add the SPF +
+     DKIM (and ideally DMARC) records Brevo prints. If DNS is delegated to
+     Cloudflare (see the deploy item), add them there.
+  2. Supabase dashboard → Auth → SMTP Settings: host `smtp-relay.brevo.com`, port
+     587, the Brevo SMTP login + key, sender `no-reply@lanternword.com` (or
+     similar on the verified domain).
+  3. Then the agent can design the OTP + magic-link-fallback templates to match
+     the design system (warm cream, serif accents — NOT generic transactional)
+     and paste them into Supabase's template editor with `{{ .Token }}` for the
+     code. Template design is the agent's half; account/DNS is the owner's.
 
 - **Google OAuth — CODE READY, WAITING ON OAUTH CREDENTIALS.** The code path is
   built and verified as far as it can be locally: `signInWithGoogle()`
@@ -222,6 +243,20 @@ prioritized.
   origin to add to them, so **Google OAuth and magic links will fail in
   production until the deploy exists and its origin is allowlisted.** Do the
   deploy before, or with, the Google pass.
+
+  **Decided: Cloudflare Pages** (not Vercel — the SPA fallback `public/_redirects`
+  is already Cloudflare/Netlify format and the docs assume Pages; Vercel would
+  need a `vercel.json` rewrite and re-documentation for no gain). **Domain:
+  `lanternword.com`, registered at Spaceship** (cheaper than Cloudflare Registrar).
+  Registration and DNS can live in different places: register at Spaceship, then
+  add the domain to a free Cloudflare account and point Spaceship's nameservers at
+  the two Cloudflare provides. That puts DNS + the Pages custom domain + Brevo's
+  email records + OAuth all in one Cloudflare dashboard without moving the
+  registration. Setup: connect the `dnav0/lantern` GitHub repo to a new Pages
+  project, build `npm run build`, output `dist`, env vars `VITE_SUPABASE_URL` /
+  `VITE_SUPABASE_ANON_KEY`. Then add `https://lanternword.com` (and the
+  `*.pages.dev` preview origin) to Supabase Auth → URL Configuration, and update
+  `supabase/config.toml` `site_url` / `additional_redirect_urls` to match.
 
 ## Done
 

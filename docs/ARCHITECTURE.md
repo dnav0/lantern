@@ -430,12 +430,16 @@ Cloudflare Pages project has never been created (see BACKLOG); the app runs
 locally only, and auth redirect URLs are still localhost-only, so OAuth and magic
 links have no production origin to return to.
 
-The plan: Cloudflare Pages, auto-deploying from `main`. Build command
-`npm run build`, output directory `dist`, environment variables
-`VITE_SUPABASE_URL` /
-`VITE_SUPABASE_ANON_KEY`. `public/_redirects` (`/* /index.html 200`) makes the
-single-page app's client-side view state survive a hard reload or deep link on
-any path.
+The plan (decided, not yet executed): **Cloudflare Pages** auto-deploying from
+`main`, at **`lanternword.com`** (registered at Spaceship, DNS delegated to
+Cloudflare). Build command `npm run build`, output directory `dist`, environment
+variables `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`. `public/_redirects`
+(`/* /index.html 200`) makes the single-page app's client-side view state survive
+a hard reload or deep link on any path — this is the Cloudflare/Netlify format,
+one reason Pages was chosen over Vercel (which would need a `vercel.json`
+rewrite). Custom SMTP for auth email is **Brevo** on the same domain. See BACKLOG
+for the ordered setup steps and the auth-origin allowlisting that unblocks
+production OAuth and magic links.
 
 ## Responsive & touch (Phase 3)
 
