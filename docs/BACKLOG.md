@@ -63,6 +63,15 @@ prioritized.
   replaces. Needs conflict handling and last-write-wins (or better) reconciliation
   given client-set timestamps.
 
+- **Normalize the repo with Prettier, in its own commit (low priority).** The repo
+  was never formatted with the current Prettier config, so `npm run format`
+  reformats ~40 otherwise-untouched files (~2700 lines). That's a landmine: run it
+  as part of a feature change and the real diff drowns in reflow. Fix once, alone,
+  when no other chat is mid-change in the repo — a single `npm run format` +
+  `tsc --noEmit` + one commit. Until then, every contributor (human or agent) must
+  avoid running the formatter as a side effect. Deliberately deferred, not
+  forgotten.
+
 - **Landing page — leftovers from the build.** The page itself is done (see
   Done). Still open:
   - **Terms and Privacy pages don't exist.** The login card's spec fine print
@@ -247,12 +256,14 @@ prioritized.
   **Decided: Cloudflare Pages** (not Vercel — the SPA fallback `public/_redirects`
   is already Cloudflare/Netlify format and the docs assume Pages; Vercel would
   need a `vercel.json` rewrite and re-documentation for no gain). **Domain:
-  `lanternword.com`, registered at Spaceship** (cheaper than Cloudflare Registrar).
-  Registration and DNS can live in different places: register at Spaceship, then
-  add the domain to a free Cloudflare account and point Spaceship's nameservers at
-  the two Cloudflare provides. That puts DNS + the Pages custom domain + Brevo's
-  email records + OAuth all in one Cloudflare dashboard without moving the
-  registration. Setup: connect the `dnav0/lantern` GitHub repo to a new Pages
+  `lanternword.com`, registered at Cloudflare Registrar** (turned out cheaper than
+  Spaceship). Registration + DNS + the Pages custom domain + Brevo's email records
+  + OAuth therefore all live in one Cloudflare dashboard with no nameserver
+  delegation to arrange. (Name was reconsidered and kept: it's Psalm 119:105
+  compressed — *lamp/lantern* + *word* are the two nouns of the founding verse, and
+  the hero already quotes it. `lantern.study` was the only cleaner alternative but
+  is unlikely to be sold at Cloudflare's at-cost pricing.) Setup: connect the
+  `dnav0/lantern` GitHub repo to a new Pages
   project, build `npm run build`, output `dist`, env vars `VITE_SUPABASE_URL` /
   `VITE_SUPABASE_ANON_KEY`. Then add `https://lanternword.com` (and the
   `*.pages.dev` preview origin) to Supabase Auth → URL Configuration, and update

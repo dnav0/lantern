@@ -431,8 +431,8 @@ locally only, and auth redirect URLs are still localhost-only, so OAuth and magi
 links have no production origin to return to.
 
 The plan (decided, not yet executed): **Cloudflare Pages** auto-deploying from
-`main`, at **`lanternword.com`** (registered at Spaceship, DNS delegated to
-Cloudflare). Build command `npm run build`, output directory `dist`, environment
+`main`, at **`lanternword.com`** (registered at Cloudflare Registrar, so DNS and
+hosting share one dashboard). Build command `npm run build`, output directory `dist`, environment
 variables `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`. `public/_redirects`
 (`/* /index.html 200`) makes the single-page app's client-side view state survive
 a hard reload or deep link on any path — this is the Cloudflare/Netlify format,
