@@ -1,6 +1,17 @@
 # Without this file the SPA catch-all in public/_redirects served /robots.txt as
 # the app's HTML (200, <!DOCTYPE html>), i.e. an unparseable robots file. Static
 # files are served before the catch-all, so this shadows it correctly.
+#
+# Googlebot is called out explicitly as well as the wildcard: Google's OAuth
+# brand verification crawls the app homepage, and at least one reported case of a
+# stuck verification came down to Googlebot lacking an explicit Allow. Harmless
+# redundancy, so it stays.
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
 User-agent: *
 Allow: /
 
