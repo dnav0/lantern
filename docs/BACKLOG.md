@@ -193,6 +193,27 @@ prioritized.
      requested and which scopes (email + basic profile only, no Gmail/Drive/etc.,
      and that email OTP is an alternative), plus privacy/terms links. OWNER: set
      the Branding "Application home page" to that URL and re-submit.
+     FOURTH attempt (fresh `/about` URL) also failed. Further diagnosis ruled out
+     the remaining technical causes with evidence: fetching `/about` with a
+     Googlebot UA returns 200 + full content (so Cloudflare is NOT blocking the
+     crawler), there is no redirect, and publishing status is already
+     **In production / External** (not Testing). One real bug was found and fixed
+     along the way: `/robots.txt` was being served as the app's HTML by the SPA
+     catch-all — `public/robots.txt` + `public/sitemap.xml` now exist.
+     Two further findings that shape what to do next:
+     - **Full app verification is NOT required.** With only non-sensitive scopes
+       (email/profile/openid), Google's own docs say app verification is optional
+       and only *brand* verification is needed to show a name/logo. So do NOT
+       submit through the Verification Centre's "submit app for review" (that is
+       the heavy sensitive-scope path) despite the generic banner on the Audience
+       page prompting it. Brand verification is automated (minutes), falling back
+       to a 2-3 business day manual review.
+     - **Brand verification validates the name AND THE LOGO.** The uploaded OAuth
+       logo (the navy "L", `public/icon.svg` → `icon-192.png`) appeared NOWHERE on
+       the site — the public pages use a text wordmark only — so a checker
+       comparing consent screen to homepage found no matching logo. That logo is
+       now rendered next to the exact app name on both `public/about.html` and the
+       `index.html` fallback. Keep those in sync with whatever logo is uploaded.
      If that still fails, escalate via "request additional review" (human).
   Also fill the Branding form's homepage / privacy / terms URLs with
   `https://lanternword.com`, `/privacy`, `/terms` (now live). Then re-submit "I
