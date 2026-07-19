@@ -153,6 +153,25 @@ prioritized.
   that risk is gone, but it's why the button was kept off until the dashboard side
   was done.
 
+  **Consent-screen branding verification (IN PROGRESS, 2026-07-19).** Google shows
+  the raw `…supabase.co` host on the account picker (not "Lantern") until the
+  OAuth app's branding is verified — cosmetic, does NOT block sign-in. First
+  submission was rejected with three issues; status:
+  1. *"Homepage not registered to you"* — OWNER: verify `lanternword.com`
+     ownership in Google Search Console using the SAME Google account as the GCP
+     project (Domain property → TXT record in Cloudflare DNS), then ensure it's an
+     Authorised domain on the consent screen. Primary gate; still open.
+  2. *"Homepage does not explain the app's purpose"* + 3. *"App name doesn't match
+     homepage"* — FIXED & LIVE: the app is a client-rendered SPA whose raw
+     `index.html` was an empty shell, so a non-JS reviewer saw no name/purpose.
+     `index.html` now carries a descriptive `<title>`, `<meta name="description">`,
+     Open Graph tags, and a `<noscript>` fallback with the name + purpose
+     (verified live on production). Real users still get the full React landing.
+  Also fill the Branding form's homepage / privacy / terms URLs with
+  `https://lanternword.com`, `/privacy`, `/terms` (now live). Then re-submit "I
+  have fixed the issues". The alternative to verification entirely is the Supabase
+  Custom Auth Domain add-on (paid), which changes the shown host directly.
+
   Original rationale follows. Adds
   alongside email OTP; links automatically to the existing account via
   verified email, so no account-merge flow needed (already a low-risk addition
