@@ -926,8 +926,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
   font-size: var(--text-sm);
   color: var(--text-faint);
+}
+.ll-foot-links {
+  display: flex;
+  gap: 20px;
+}
+.ll-foot-links a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.ll-foot-links a:hover {
+  color: var(--accent);
+  text-decoration: underline;
 }
 
 /* ═══ LOGIN ═══ */

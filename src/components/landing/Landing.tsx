@@ -149,6 +149,12 @@ export default function Landing(): React.JSX.Element {
       <footer className="ll-footer">
         <div className="ll-wrap ll-foot">
           <Wordmark size={18} />
+          {/* Standalone static pages served by Cloudflare Pages (public/*.html),
+              so plain anchors that navigate away from the SPA. */}
+          <nav className="ll-foot-links" aria-label="Legal">
+            <a href="/terms">Terms</a>
+            <a href="/privacy">Privacy</a>
+          </nav>
           <div>Personal Bible study notes. © 2026</div>
         </div>
       </footer>
