@@ -41,41 +41,14 @@ body.dark .study-right::-webkit-scrollbar-thumb {
 body.dark .passage-heading-wrap {
   border-bottom-color: rgba(255, 255, 255, 0.06);
 }
-body.dark .passage-heading-input {
-  color: var(--text);
-}
-body.dark .passage-heading-input::placeholder {
-  color: var(--text-faint);
-}
-body.dark .passage-heading-hint {
-  color: var(--text-faint);
-}
 body.dark .notes-list::-webkit-scrollbar-thumb {
   background: var(--surface-2);
-}
-body.dark .note-richtext {
-  color: var(--text);
-}
-body.dark .note-richtext:empty::before {
-  color: var(--text-faint);
-}
-body.dark .note-input {
-  color: var(--text);
-}
-body.dark .note-input::placeholder {
-  color: var(--text-faint);
-}
-body.dark .note-bullet {
-  color: var(--text-faint);
 }
 body.dark .study-actions {
   border-top-color: rgba(255, 255, 255, 0.06);
 }
 body.dark .mobile-range-notes {
   border-top-color: rgba(255, 255, 255, 0.06);
-}
-body.dark .btn-save-read {
-  background: var(--accent);
 }
 body.dark .btn-save-next {
   color: var(--accent-hover);
@@ -87,40 +60,19 @@ body.dark .btn-save-next:hover:not(:disabled) {
 }
 
 /* ── Passage pane ── */
-body.dark .passage-pane-empty {
-  color: var(--text-faint);
-}
-body.dark .passage-pane-reference {
-  color: var(--text-faint);
-}
 body.dark .verse-text {
   color: var(--text-muted);
 }
-body.dark .verse-number {
-  color: var(--text-faint);
-}
 body.dark .reading-verse-row:hover .verse-number {
-  color: var(--accent-hover);
-}
-body.dark .reading-verse-row:active .verse-number {
   color: var(--accent-hover);
 }
 body.dark .reading-verse-row.selected .verse-number {
   color: var(--accent-hover);
 }
-body.dark .passage-verse.highlighted {
-  background: var(--accent-weak);
-}
-body.dark .passage-verse.highlighted .verse-text {
-  color: var(--text);
-}
 
 /* ── Reading mode ── */
 body.dark .reading-layout::-webkit-scrollbar-thumb {
   background: var(--surface-2);
-}
-body.dark .reading-heading h1 {
-  color: var(--text);
 }
 body.dark .reading-meta {
   color: var(--text-faint);
@@ -159,9 +111,6 @@ body.dark .rail-bracket.cat-application,
 body.dark .verse-span-bracket.cat-application { background: var(--cat-application); }
 body.dark .rail-bracket.cat-personal,
 body.dark .verse-span-bracket.cat-personal { background: var(--cat-personal); }
-body.dark .rail-passage-notes-label {
-  color: var(--text-faint);
-}
 body.dark .scripture-grid .rail-note-body .reading-note-card:hover,
 body.dark .scripture-grid .rail-note-body .reading-note-card.highlighted {
   background: var(--accent-weak);
@@ -169,12 +118,6 @@ body.dark .scripture-grid .rail-note-body .reading-note-card.highlighted {
 body.dark .note-range-chip {
   color: var(--accent-hover);
   background: var(--accent-soft);
-}
-body.dark .note-range-chip:hover {
-  background: var(--accent-soft);
-}
-body.dark .verse-add-btn {
-  background: var(--surface);
 }
 body.dark .inline-note-input {
   color: var(--text);
@@ -195,9 +138,6 @@ body.dark .verse-action-bar {
   background: var(--surface);
   border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-}
-body.dark .verse-action-ref {
-  color: var(--text-muted);
 }
 body.dark .verse-action-btn {
   background: var(--surface);
@@ -224,20 +164,8 @@ body.dark .verse-action-clear:hover {
 }
 
 /* ── Empty / welcome states ── */
-body.dark .empty-state-title {
-  color: var(--text-faint);
-}
-body.dark .empty-state-sub {
-  color: var(--text-faint);
-}
 body.dark .welcome-title {
   color: var(--text);
-}
-body.dark .welcome-sub {
-  color: var(--text-muted);
-}
-body.dark .welcome-cta {
-  background: var(--accent);
 }
 
 /* ── Reference autocomplete ── */
@@ -245,16 +173,6 @@ body.dark .ref-autocomplete-dropdown {
   background: var(--surface);
   border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-}
-body.dark .ref-autocomplete-item:hover,
-body.dark .ref-autocomplete-item.active {
-  background: var(--accent-weak);
-}
-body.dark .ref-ac-name {
-  color: var(--text);
-}
-body.dark .ref-ac-abbr {
-  color: var(--text-faint);
 }
 
 /* ── @ tag dropdown ── */
@@ -266,19 +184,12 @@ body.dark .tag-dropdown {
 body.dark .tag-dropdown-item {
   color: var(--text-muted);
 }
-body.dark .tag-dropdown-item:hover,
-body.dark .tag-dropdown-item.active {
-  background: var(--accent-weak);
-}
 
 /* ── Note discoverability ── */
 body.dark .note-hint-popover {
   background: var(--surface);
   border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-}
-body.dark .note-hint-text {
-  color: var(--text-muted);
 }
 body.dark .note-hint-text strong {
   color: var(--accent-hover);
@@ -314,16 +225,10 @@ body.dark .crossref-hover-card {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   color: var(--text-muted);
 }
-body.dark .crossref-hover-card .ref-label {
-  color: var(--text);
-}
 
 /* ── Bible library ── */
 body.dark .bible-library::-webkit-scrollbar-thumb {
   background: var(--surface-2);
-}
-body.dark .bible-library-title {
-  color: var(--text);
 }
 body.dark .bible-library-sub {
   color: var(--text-faint);
@@ -341,22 +246,10 @@ body.dark .bible-book-row.studied:hover {
 body.dark .bible-book-name {
   color: var(--text-faint);
 }
-body.dark .bible-book-row.studied .bible-book-name {
-  color: var(--text);
-}
-body.dark .bible-passage-item {
-  color: var(--text-muted);
-}
-body.dark .bible-passage-sessions {
-  color: var(--text-faint);
-}
 
 /* ── Book detail page ── */
 body.dark .book-detail-header {
   border-bottom-color: rgba(255, 255, 255, 0.06);
-}
-body.dark .book-detail-title {
-  color: var(--text);
 }
 body.dark .book-detail-meta {
   color: var(--text-faint);
@@ -386,12 +279,6 @@ body.dark .dialog-backdrop {
 body.dark .dialog-card {
   background: var(--surface);
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
-}
-body.dark .dialog-title {
-  color: var(--text);
-}
-body.dark .dialog-message {
-  color: var(--text-muted);
 }
 body.dark .dialog-btn-ghost {
   color: var(--text-muted);
@@ -435,9 +322,6 @@ body.dark .vault-change-btn:hover {
   background: var(--accent-weaker);
 }
 
-/* ── Version chip ── */
-body.dark .wn-version-chip {
-  color: var(--text-faint);
 }
 body.dark .wn-version-chip:hover {
   background: rgba(255, 255, 255, 0.05);
@@ -453,9 +337,6 @@ body.dark .wn-modal {
 body.dark .wn-header {
   border-bottom-color: rgba(255, 255, 255, 0.07);
 }
-body.dark .wn-subtitle {
-  color: var(--text);
-}
 body.dark .wn-close {
   color: var(--text-faint);
 }
@@ -466,7 +347,4 @@ body.dark .wn-close:hover {
 body.dark .wn-version {
   color: var(--accent-hover);
   background: var(--accent-soft);
-}
-body.dark .wn-notes li {
-  color: var(--text-muted);
 }
