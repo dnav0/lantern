@@ -10,15 +10,23 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <title>Lantern — personal Bible study notes</title>
-    <!-- Static name + purpose in the raw HTML. The app is a client-rendered SPA,
-         so without these a crawler or an OAuth-branding reviewer that doesn't run
-         JS sees an empty shell — which reads as "homepage doesn't explain the
-         app" and "app name doesn't match". Keep the name "Lantern" and the
-         purpose here in sync with the consent screen and the landing copy. -->
+    <!-- The app is a client-rendered SPA whose landing is a lazily-loaded chunk,
+         so the served HTML must state the app name and purpose WITHOUT depending
+         on JS — otherwise Google's OAuth branding reviewer (and crawlers) fetch an
+         empty #root and report "homepage does not explain the app" / "app name
+         does not match". Two layers handle that:
+           1. Explicit app-name signals below set to exactly "Lantern" (must match
+              the OAuth consent-screen app name).
+           2. A VISIBLE fallback inside #root (further down) — real, server-served
+              content that React replaces on mount. Not <noscript>: that is hidden
+              when JS runs, so a JS-executing-but-early reviewer would still see
+              nothing. Keep all of this in sync with the consent screen + landing. -->
+    <meta name="application-name" content="Lantern" />
     <meta
       name="description"
       content="Lantern is a personal Bible study notes app. Read a passage, capture what you notice — observation, history, application, reflection — and find your notes anchored to the verse the next time you open it."
     />
+    <meta property="og:site_name" content="Lantern" />
     <meta property="og:title" content="Lantern — personal Bible study notes" />
     <meta
       property="og:description"
@@ -29,19 +37,35 @@
   </head>
   <body>
     <div id="root">
-      <!-- Fallback shown only when JavaScript is unavailable (e.g. a reviewer or
-           crawler that doesn't execute the SPA). Real users get the full React
-           landing, which replaces #root's contents on mount. -->
-      <noscript>
-        <h1>Lantern — personal Bible study notes</h1>
-        <p>
-          Lantern is a calm reading Bible with a place to write. Read a passage,
-          capture what you see in it (observation, historical context,
-          application, personal reflection), and read those notes back later
-          anchored to the verses.
-        </p>
-        <p><a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms of Use</a></p>
-      </noscript>
+      <!-- Server-served, VISIBLE fallback: the app name and a plain description of
+           what Lantern does, plus the required policy links. React (createRoot)
+           replaces all of this on mount, so real users only glimpse it during the
+           brief landing-chunk load; crawlers and no-JS/early reviewers see real
+           content. Styled inline (no external CSS dependency) to match the brand. -->
+      <div
+        id="app-fallback"
+        style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f4f0e8;color:#201e1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;margin:0;"
+      >
+        <main style="max-width:560px;padding:32px 24px;text-align:center;">
+          <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:34px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;">
+            Lantern
+          </h1>
+          <p style="font-size:17px;line-height:1.6;color:#4a463d;margin:0 0 14px;">
+            Lantern is a personal Bible study notes app — a calm reading Bible with
+            a place to write.
+          </p>
+          <p style="font-size:15px;line-height:1.6;color:#6a6353;margin:0 0 24px;">
+            Read a passage, capture what you see in it (observation, historical
+            context, application, personal reflection), and read those notes back
+            later anchored to the verses, ready the next time you open the passage.
+          </p>
+          <p style="font-size:14px;color:#6a6353;margin:0;">
+            <a href="/privacy" style="color:#6b62d6;">Privacy</a>
+            &nbsp;&middot;&nbsp;
+            <a href="/terms" style="color:#6b62d6;">Terms of Use</a>
+          </p>
+        </main>
+      </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
