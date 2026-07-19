@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lantern — what it is and why it asks to sign in</title>
+<meta name="application-name" content="Lantern" />
+<meta name="description" content="Lantern is a personal Bible study notes app. Read a passage, capture what you notice, and find your notes anchored to the verse when you return. Google sign-in is used only to authenticate you." />
+<meta property="og:site_name" content="Lantern" />
+<meta property="og:title" content="Lantern — what it is and why it asks to sign in" />
+<link rel="icon" href="/icon.svg" />
+<!--
+  The app's "home page" for Google OAuth brand verification.
+
+  WHY THIS PAGE EXISTS (do not delete without reading):
+  Brand verification repeatedly rejected `https://lanternword.com` with "homepage
+  does not explain the purpose of your app" and "app name does not match", even
+  after the real content was made server-served and verified live. Two causes:
+
+    1. Google appears to CACHE a verdict per homepage URL. Once a URL fails, a
+       re-review does not re-crawl it, so fixing that URL can never clear it.
+       Multiple developers report the same symptom, and the fix that works is to
+       point the Branding "Application home page" at a URL Google has never
+       crawled before. This is that fresh URL.
+    2. A genuine gap: the requirements say the page must "explain with
+       transparency the purpose for which your app requests user data". The
+       marketing landing never said WHY Lantern asks for a Google account. This
+       page says so explicitly.
+
+  Keep the <h1> exactly "Lantern" — it must match the OAuth consent screen app
+  name. Standalone/self-contained on purpose (same rationale as privacy.html).
+-->
+<style>
+  :root {
+    --bg: #f4f0e8; --surface: #fbf9f4; --border: #e2dccf;
+    --text: #201e1a; --muted: #6a6353; --faint: #938a77;
+    --accent: #6b62d6; --accent-hover: #5b52c8;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--sans); font-size: 16px; line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+  nav.top { border-bottom: 1px solid var(--border); }
+  nav.top .wrap {
+    display: flex; align-items: center; justify-content: space-between; height: 64px;
+  }
+  .wordmark {
+    font-family: var(--serif); font-weight: 700; font-size: 22px;
+    letter-spacing: -0.01em; color: var(--text); text-decoration: none;
+  }
+  .back { font-size: 14px; color: var(--accent); text-decoration: none; }
+  .back:hover { color: var(--accent-hover); text-decoration: underline; }
+  main { padding: 56px 0 72px; }
+  h1 {
+    font-family: var(--serif); font-weight: 700; font-size: 40px;
+    line-height: 1.15; margin: 0 0 12px;
+  }
+  .lead { font-size: 18px; color: var(--muted); margin: 0 0 8px; }
+  h2 {
+    font-family: var(--serif); font-weight: 700; font-size: 21px;
+    margin: 40px 0 10px;
+  }
+  p, li { color: #3a352c; }
+  a { color: var(--accent); }
+  a:hover { color: var(--accent-hover); }
+  ul { padding-left: 22px; }
+  li { margin: 6px 0; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px 24px; margin-top: 16px;
+  }
+  footer {
+    border-top: 1px solid var(--border); padding: 26px 0;
+    color: var(--faint); font-size: 13px;
+  }
+  footer .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  footer .wordmark { font-size: 16px; }
+  .links a { margin-right: 18px; }
+</style>
+</head>
+<body>
+  <nav class="top">
+    <div class="wrap">
+      <a class="wordmark" href="/">Lantern</a>
+      <a class="back" href="/">Open the app →</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="wrap">
+      <h1>Lantern</h1>
+      <p class="lead">
+        Lantern is a personal Bible study notes app, at
+        <a href="https://lanternword.com">lanternword.com</a>.
+      </p>
+
+      <h2>What Lantern does</h2>
+      <p>
+        Lantern is a calm reading Bible with a place to write. You open a passage
+        of Scripture, and alongside the text you capture what you see in it. Your
+        notes are anchored to the specific verses they belong to, so when you come
+        back to that passage weeks or years later, your earlier study is still
+        sitting beside the verse where you left it.
+      </p>
+      <p>Notes are kept in four kinds, so a passage can be studied from several angles:</p>
+      <ul>
+        <li><strong>Observation</strong> — what the text actually says.</li>
+        <li><strong>Historical context</strong> — the background behind it.</li>
+        <li><strong>Application</strong> — what it asks of you.</li>
+        <li><strong>Personal reflection</strong> — what you want to remember.</li>
+      </ul>
+
+      <h2>Who it is for</h2>
+      <p>
+        Anyone who studies the Bible and wants their own notes to stay with the
+        text instead of scattered across notebooks and other apps. It is a private,
+        single-person study tool. Nothing you write is public, and there is nothing
+        to buy.
+      </p>
+
+      <h2>Why Lantern asks you to sign in with Google</h2>
+      <div class="card">
+        <p>
+          Lantern needs to know which account your notes belong to, so your study
+          is there the next time you open it on any device. Signing in is the only
+          reason Lantern uses your Google account.
+        </p>
+        <p>
+          When you choose <strong>Continue with Google</strong>, Lantern requests
+          only your basic sign-in information — your <strong>email address</strong>
+          and <strong>basic profile</strong> (your name). That is used to create and
+          identify your account, and to show your name in the app.
+        </p>
+        <p>
+          Lantern does <strong>not</strong> request access to Gmail, Drive,
+          Calendar, Contacts, or any other Google service, and it does not read,
+          send, or store anything from them. Google sign-in is optional — you can
+          sign in with a one-time code sent to your email address instead.
+        </p>
+      </div>
+
+      <h2>Your data</h2>
+      <p>
+        Your account and your notes are stored so the app can show them back to
+        you. They are not sold, not used for advertising, and not shared for
+        marketing. The full detail is in the
+        <a href="/privacy">Privacy policy</a>, and the
+        <a href="/terms">Terms of Use</a> cover the rest.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        Questions about Lantern? Email
+        <a href="mailto:hello@lanternword.com">hello@lanternword.com</a>.
+      </p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <a class="wordmark" href="/">Lantern</a>
+      <span class="links">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+      </span>
+    </div>
+  </footer>
+</body>
+</html>

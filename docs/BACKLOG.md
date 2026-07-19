@@ -173,9 +173,27 @@ prioritized.
      `application-name` and `og:site_name` = "Lantern" to match the consent-screen
      name. Real users still get the full React landing (verified: React replaces
      the fallback; crawlers/no-JS/early-capture see real content).
-     If a genuine re-review STILL fails, escalate via "request additional review"
-     (human) — the rendered homepage genuinely shows the name + purpose — or
-     prerender the landing route to static HTML.
+     THIRD attempt also failed with the identical two issues, which prompted
+     research beyond Google's own docs. Two findings, both now acted on:
+     - **Google caches a verification verdict PER HOMEPAGE URL.** Once a URL has
+       failed, re-review does not appear to re-crawl it, so no amount of fixing
+       that URL clears it. Multiple developers on the Google developer forums
+       report exactly this symptom ("everything confirmed matching", still
+       rejected); the fix that works for them is to point the Branding
+       "Application home page" at a URL Google has NEVER crawled, which then
+       passes almost immediately. See
+       discuss.google.dev/t/…/372022 (fresh `/about/` URL passed "within
+       seconds" after the original was stuck for a week) and …/381451.
+     - **A real content gap:** the requirements say the page must "explain with
+       transparency the purpose for which your app requests user data". The
+       marketing landing never explained WHY Lantern asks for a Google account.
+     Action: added `public/about.html` — a fresh, never-crawled URL
+     (`https://lanternword.com/about`) whose `<h1>` is exactly "Lantern" and which
+     states what the app does, who it is for, explicitly why Google sign-in is
+     requested and which scopes (email + basic profile only, no Gmail/Drive/etc.,
+     and that email OTP is an alternative), plus privacy/terms links. OWNER: set
+     the Branding "Application home page" to that URL and re-submit.
+     If that still fails, escalate via "request additional review" (human).
   Also fill the Branding form's homepage / privacy / terms URLs with
   `https://lanternword.com`, `/privacy`, `/terms` (now live). Then re-submit "I
   have fixed the issues". The alternative to verification entirely is the Supabase
