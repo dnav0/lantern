@@ -242,6 +242,19 @@ prioritized.
      inspect the ROOT `https://lanternword.com/` — if it is already known to
      Google, point Branding back at the root, which now also carries the logo,
      exact name and purpose in server-served HTML.
+     **A second genuine miss, found by re-reading the requirements literally
+     (support.google.com/cloud/answer/13807376):** the homepage must *"include a
+     link to your privacy policy (Note: this link should match the link you added
+     on your consent screen configuration)"*. The consent screen holds the
+     ABSOLUTE `https://lanternword.com/privacy`, but every policy link on our
+     pages was RELATIVE (`/privacy`) — a checker comparing hrefs against the
+     configured value would never match. Fixed: `/about`, the `index.html`
+     fallback and the landing footer now use absolute URLs. Also re-verified
+     against the literal list: homepage is static with **0 redirects** on `/`,
+     `/about` and `/privacy` (the docs require "static and cannot redirect"), not
+     a shortened URL, no login wall, on a Search-Console-verified domain.
+     With that, every documented requirement is now satisfied verbatim.
+
      Incidental finding: Cloudflare **Email Obfuscation** rewrites `mailto:` links
      on these static pages into `/cdn-cgi/l/email-protection` plus an injected
      decoder script, so the contact address is not plain text to a non-JS crawler.
