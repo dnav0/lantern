@@ -47,16 +47,6 @@ prioritized.
     and reconcile the library vs. journal vs. book-detail max-widths for a fully
     consistent measure across every page. Optional, skip for the deploy pass.
 
-- **Modifier-to-copy verse text (marquee escape hatch).** Desktop verse
-  selection is now a Windows-style marquee (click-drag draws a box that selects
-  the verses it covers), which deliberately takes over click-drag from native
-  browser text selection over verse text — the user chose selection over copy.
-  A future refinement: hold a modifier (e.g. Alt or Ctrl) on pointerdown to
-  suppress the marquee for that gesture and let native text selection/copy
-  happen. The hook (`src/utils/useVerseMarquee.ts`) already branches on
-  pointerdown, so this is a guard on `containerPointerDown` plus a visible hint,
-  no state-model change.
-
 - **Offline write outbox.** Queue failed mutations locally and replay them on
   reconnect. The `BereanApi` seam is the single place this slots in — phase-1
   behavior (catch a failed write, show a friendly message) is the stub it
@@ -358,10 +348,6 @@ prioritized.
   free vs paid, billing, quota enforcement. Design the free single-user
   experience so it never feels crippled.
 
-- **Modifier to restore verse-text copy under the marquee.** The desktop marquee
-  suppresses native text selection over verse text (drag = box-select). Add a
-  modifier (or an explicit select mode) so users can still drag-copy verse text.
-
 - **Cloudflare Pages deploy — project + domain live; one dashboard step left.**
   As of 2026-07-19 the owner confirmed the **Pages project exists with the custom
   domain attached**: `lanternword.com` is registered at Cloudflare, DNS is live
@@ -397,6 +383,21 @@ prioritized.
   `supabase/config.toml` `site_url` / `additional_redirect_urls` to match.
 
 ## Done
+
+- **Alt-modifier escape hatch so verse text can be copied (2026-07-19).** The
+  desktop marquee deliberately took click-drag away from native text selection
+  over verse text (drag = box-select). Now holding **Alt at pointerdown**
+  suppresses the marquee for that one gesture, so the browser's native text
+  selection runs and the verse text copies with Ctrl+C. The decision lives in a
+  pure, DOM-free `shouldStartMarquee()` predicate in
+  `src/utils/useVerseMarquee.ts` (unit-tested) that `containerPointerDown` calls
+  before touching `user-select`/`preventDefault` — the mode is fixed once at
+  pointerdown, so pressing/releasing Alt mid-drag can't flip it. Because the guard
+  is in the hook, both consumers (ReadingMode and BookDetailPage/ChapterView) get
+  it for free. A quiet inline hint ("Hold Alt and drag to select the text to
+  copy") sits inside the existing verse-selection action bar — not a new
+  persistent banner — and is hidden on the touch layout where Alt/marquee don't
+  apply. Replaces the two deferred "modifier-to-copy" entries.
 
 - **Terms + Privacy pages, login-card fine print, and prod deploy wiring
   (2026-07-19).** Three things that were gated on "the pages don't exist yet":

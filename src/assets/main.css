@@ -2094,6 +2094,17 @@ body.dark .search-backdrop {
   color: var(--text-muted);
   white-space: nowrap;
 }
+/* Quiet inline hint that the Alt escape hatch exists — sits inside the existing
+   verse-selection action bar (not a new persistent banner), so it only shows
+   while a selection is active and reads as reference detail, never as chrome.
+   Desktop-only: the marquee and Alt-drag are mouse gestures (hidden on the
+   touch layout below). */
+.verse-action-hint {
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  user-select: none;
+}
 .verse-action-btns {
   display: flex;
   gap: 8px;
@@ -4338,6 +4349,11 @@ body.dark .upd-popover-btn-ghost:hover {
   }
   .verse-action-ref {
     flex: 1;
+  }
+  /* Touch has no marquee and no Alt key — the escape-hatch hint is meaningless
+     here, so drop it rather than wrap it onto its own line. */
+  .verse-action-hint {
+    display: none;
   }
   .verse-action-btns {
     flex-basis: 100%;

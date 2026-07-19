@@ -18,8 +18,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 // marquee-select instead of native browser text selection/copy. We suppress
 // native text selection for the duration of an active marquee drag (`user-select:
 // none` on the container, restored on release) and `preventDefault` the
-// initiating pointerdown. A modifier-to-copy escape hatch is a future refinement
-// (see BACKLOG "Deferred").
+// initiating pointerdown. The escape hatch: holding Alt at pointerdown suppresses
+// the marquee for that one gesture (see `shouldStartMarquee`), so native text
+// selection runs and the verse text can be copied with Ctrl+C.
 //
 // Robustness / no stale state across gestures: per-gesture state
 // (`dragMoved`/`justDragged`/rects) is reset at the START of every new
@@ -35,6 +36,40 @@ export interface MarqueeRect {
   top: number
   width: number
   height: number
+}
+
+// The one input a pointerdown needs to decide whether it begins a marquee.
+// Kept as a plain data shape (not a PointerEvent) so the decision is pure and
+// DOM-free — unit-testable, and impossible to accidentally re-read from a live
+// event whose modifier state changed mid-drag.
+export interface MarqueeGestureInput {
+  // 'mouse' | 'pen' | 'touch' — from PointerEvent.pointerType.
+  pointerType: string
+  // PointerEvent.button (0 = primary).
+  button: number
+  // PointerEvent.altKey AT pointerdown — the copy escape hatch.
+  altKey: boolean
+  // Whether the press landed on an interactive child / note surface that keeps
+  // its own handling (computed by the caller via target.closest).
+  onInteractiveTarget: boolean
+}
+
+// Should this pointerdown START a marquee box-selection, or fall through to the
+// browser's native behaviour? The mode is decided ONCE, here, from the event's
+// own state — so pressing or releasing Alt part-way through a drag can never
+// switch modes mid-gesture (the marquee, once started, ignores modifiers).
+//
+//   - touch keeps the tap-anchor/tap-extend gesture (never a marquee)
+//   - only a primary-button press starts a marquee
+//   - holding Alt is the escape hatch: it suppresses the marquee so native text
+//     selection runs and the verse text can be copied (Ctrl+C)
+//   - interactive children / note surfaces keep their own handling
+export function shouldStartMarquee(g: MarqueeGestureInput): boolean {
+  if (g.pointerType === 'touch') return false
+  if (g.button !== 0) return false
+  if (g.altKey) return false
+  if (g.onInteractiveTarget) return false
+  return true
 }
 
 export function useVerseMarquee(
@@ -156,19 +191,25 @@ export function useVerseMarquee(
   }, [])
 
   const containerPointerDown = useCallback((e: React.PointerEvent) => {
-    // Only mouse/pen initiate a marquee; touch keeps the tap gesture.
-    if (e.pointerType === 'touch') return
-    // Only a primary-button press starts a marquee.
-    if (e.button !== 0) return
     // Never start on interactive children or note surfaces — those keep their
     // own handling (a click on a note highlights; a drag from a note is not a
     // marquee). The origin is the full-width reading container, so drags that
     // begin in the side whitespace still start a selection.
     const target = e.target as HTMLElement
+    const onInteractiveTarget = !!target.closest(
+      'button, a, input, textarea, [contenteditable], [data-no-drag], .rail-note, .reading-note-card, .inline-verse-notes'
+    )
+    // Decide the mode once, from this event's own state. When it says no (touch,
+    // non-primary button, Alt held, or an interactive target) we bail out BEFORE
+    // touching user-select / preventDefault, so the browser's native gesture —
+    // including Alt-drag text selection for copy — runs untouched.
     if (
-      target.closest(
-        'button, a, input, textarea, [contenteditable], [data-no-drag], .rail-note, .reading-note-card, .inline-verse-notes'
-      )
+      !shouldStartMarquee({
+        pointerType: e.pointerType,
+        button: e.button,
+        altKey: e.altKey,
+        onInteractiveTarget
+      })
     )
       return
 

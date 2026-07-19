@@ -713,6 +713,7 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
       {selRange !== null && inlineVerse === null && (
         <div className="verse-action-bar" role="toolbar" aria-label="Selection actions">
           <span className="verse-action-ref">{selReference}</span>
+          <span className="verse-action-hint">Hold Alt and drag to select the text to copy</span>
           <div className="verse-action-btns">
             <button className="verse-action-btn primary" onClick={handleQuickNoteFromSelection}>
               Quick note
