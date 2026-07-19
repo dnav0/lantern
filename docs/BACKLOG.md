@@ -214,7 +214,24 @@ prioritized.
        comparing consent screen to homepage found no matching logo. That logo is
        now rendered next to the exact app name on both `public/about.html` and the
        `index.html` fallback. Keep those in sync with whatever logo is uploaded.
-     If that still fails, escalate via "request additional review" (human).
+     FIFTH attempt also failed. Further fixes + eliminations:
+     - **Logo file now byte-identical.** The logo uploaded to Google is
+       `icon-512.png`, but the pages rendered `icon-192.png` (same artwork,
+       different file). Brand verification compares the consent-screen logo to the
+       site, so both pages now serve `/icon-512.png`.
+     - **Googlebot allowed explicitly** in `robots.txt` (a reported stuck
+       verification came down to Googlebot lacking an explicit Allow).
+     - **Cloudflare caching RULED OUT** with evidence: `/about` returns
+       `cf-cache-status: DYNAMIC` and `Cache-Control: max-age=0, must-revalidate`,
+       so the edge never serves stale HTML.
+     NEXT, and the best remaining diagnostic: **Google Search Console → URL
+     Inspection** on `https://lanternword.com/about`. "Test live URL" shows
+     exactly what Googlebot fetches and renders right now (screenshot + any
+     resources that failed to load — that is how one forum case found a blocked
+     script), and "Request indexing" forces a recrawl, which is the only way to
+     refresh Google's own cached copy. If Test-live-URL renders the page
+     correctly, the page is provably fine and the failure is Google's pipeline —
+     which is the justification for escalating via "request additional review".
   Also fill the Branding form's homepage / privacy / terms URLs with
   `https://lanternword.com`, `/privacy`, `/terms` (now live). Then re-submit "I
   have fixed the issues". The alternative to verification entirely is the Supabase
