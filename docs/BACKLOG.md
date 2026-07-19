@@ -224,14 +224,29 @@ prioritized.
      - **Cloudflare caching RULED OUT** with evidence: `/about` returns
        `cf-cache-status: DYNAMIC` and `Cache-Control: max-age=0, must-revalidate`,
        so the edge never serves stale HTML.
-     NEXT, and the best remaining diagnostic: **Google Search Console → URL
-     Inspection** on `https://lanternword.com/about`. "Test live URL" shows
-     exactly what Googlebot fetches and renders right now (screenshot + any
-     resources that failed to load — that is how one forum case found a blocked
-     script), and "Request indexing" forces a recrawl, which is the only way to
-     refresh Google's own cached copy. If Test-live-URL renders the page
-     correctly, the page is provably fine and the failure is Google's pipeline —
-     which is the justification for escalating via "request additional review".
+     **ROOT CAUSE FOUND (Search Console URL Inspection).** `/about` reported
+     **"URL is unknown to Google", Last crawl: N/A** — Google had NEVER crawled
+     it. That is why every branding attempt failed identically no matter what the
+     page contained: the checker had nothing to read. It was never a content or
+     caching problem. Inspection also showed "No referring sitemaps detected" and
+     **"Referring page: None detected"** — `/about` was an orphan with nothing
+     linking to it, so Google had no way to discover it. Fixed: `/about` is now
+     linked from the landing footer, the `index.html` fallback, and the
+     privacy/terms pages; "Test live URL" passes ("URL is available to Google",
+     "Page can be indexed") and indexing has been requested.
+     Remaining: the page must actually get INDEXED before brand verification can
+     see it. Monitor via URL Inspection's **Google Index** tab (not Live Test)
+     until it stops saying "unknown to Google"; also submit
+     `https://lanternword.com/sitemap.xml` under Indexing → Sitemaps. Only re-run
+     brand verification once the page is genuinely indexed. Faster alternative:
+     inspect the ROOT `https://lanternword.com/` — if it is already known to
+     Google, point Branding back at the root, which now also carries the logo,
+     exact name and purpose in server-served HTML.
+     Incidental finding: Cloudflare **Email Obfuscation** rewrites `mailto:` links
+     on these static pages into `/cdn-cgi/l/email-protection` plus an injected
+     decoder script, so the contact address is not plain text to a non-JS crawler.
+     Harmless here, but it confirms Cloudflare mutates the served HTML — check
+     Rocket Loader is off if crawler rendering ever looks wrong.
   Also fill the Branding form's homepage / privacy / terms URLs with
   `https://lanternword.com`, `/privacy`, `/terms` (now live). Then re-submit "I
   have fixed the issues". The alternative to verification entirely is the Supabase
