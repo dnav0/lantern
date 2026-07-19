@@ -87,63 +87,58 @@ prioritized.
     go — deferred only so they stay diffable while the landing settles. They are
     in git history regardless.
 
-- **Custom SMTP for OTP code emails.** Supabase's default email template contains
-  only a magic link — the 6-digit code requires adding `{{ .Token }}` to the
-  template, which is gated behind custom SMTP + a verified sender domain. Until
-  then `detectSessionInUrl: true` accepts the link as the sign-in path; the
-  code-entry UI in `SignIn.tsx` already works the moment the template includes a
-  code. Revisit before any native wrapper (links are fragile there).
+- **Custom SMTP email templates — SMTP is LIVE, templates remain.** The Brevo
+  SMTP pipe is set up and verified (2026-07-19): a real sign-in email arrives from
+  `no-reply@lanternword.com`. Supabase Auth → SMTP Settings points at
+  `smtp-relay.brevo.com:587` with the Brevo login `b274a0001@smtp-brevo.com` and a
+  generated SMTP key (no-expiry; note Brevo keys still die after 90 days of *zero*
+  sending, so if auth email ever stops silently, regenerate the key first). Domain
+  `lanternword.com` is authenticated in Brevo (DKIM/SPF/DMARC via the automatic
+  Cloudflare DNS flow), branded subdomain `send.lanternword.com`.
 
-  **Provider decided: Brevo** (not Resend — its free tier is reserved for another
-  project). Reasoning: for Supabase *auth* email the pretty template is HTML in
-  Supabase's own template editor and the provider is just the send pipe, so the
-  provider choice is really about the *future* "email updates to users"
-  requirement — which is a broadcast job (contact list, campaigns, unsubscribe
-  compliance), not transactional. Brevo does both transactional SMTP relay and a
-  full marketing/campaign side in one free account (300/day, simple SPF/DKIM),
-  so auth-now + newsletters-later needs no second tool. Mailtrap (4k/mo, cleaner
-  DX, a Claude Code MCP) was the runner-up but is transactional-first; its edge
-  on deliverability is marginal and covered by proper DNS auth. Owner-only setup:
-  1. Brevo account, verify the sender domain (`lanternword.com`), add the SPF +
-     DKIM (and ideally DMARC) records Brevo prints. If DNS is delegated to
-     Cloudflare (see the deploy item), add them there.
-  2. Supabase dashboard → Auth → SMTP Settings: host `smtp-relay.brevo.com`, port
-     587, the Brevo SMTP login + key, sender `no-reply@lanternword.com` (or
-     similar on the verified domain).
-  3. Then the agent can design the OTP + magic-link-fallback templates to match
-     the design system (warm cream, serif accents — NOT generic transactional)
-     and paste them into Supabase's template editor with `{{ .Token }}` for the
-     code. Template design is the agent's half; account/DNS is the owner's.
+  **What's left is the agent's half: the templates.** Supabase's default template
+  still sends only a magic *link*, not the 6-digit code, so the code path in
+  `SignIn.tsx` (already built) won't show a code until the template includes
+  `{{ .Token }}`. Design the OTP email and the magic-link-fallback email to match
+  the design system (warm cream, serif accents, wordmark — NOT generic
+  transactional; see the landing and [[design-taste]]) and paste them into
+  Supabase's template editor. This can be built and tested entirely against
+  `npm run dev` on localhost — the email sends regardless of where the app runs.
 
-- **Google OAuth — CODE READY, WAITING ON OAUTH CREDENTIALS.** The code path is
-  built and verified as far as it can be locally: `signInWithGoogle()`
-  (`src/api/auth.ts`) is wired to the hero's "Continue with Google" and the
-  dialog's button, and clicking it drives the browser to
-  `<project>.supabase.co/auth/v1/authorize?provider=google&redirect_to=…`, which
-  answers `{"code":400,"error_code":"validation_failed","msg":"Unsupported
-  provider: provider is not enabled"}`. That error IS the proof the wiring is
-  right; the only thing missing is dashboard config. Two owner-only steps remain:
-  1. **Google Cloud** — create an OAuth 2.0 Client ID (Web application) and add
-     `https://<project-ref>.supabase.co/auth/v1/callback` as an Authorized
-     redirect URI. Copy the client id + secret.
-  2. **Supabase dashboard** — Auth > Providers > Google: enable, paste the client
-     id + secret. Then Auth > URL Configuration: add the production origin to the
-     allowlist (see the Cloudflare Pages item — there isn't one yet, and
-     `redirectTo` is `window.location.origin`, so production OAuth fails until
-     both exist).
+  (Provider rationale, kept for the record: **Brevo** over Resend — its free tier
+  is reserved for another project — and over Mailtrap, because the future "email
+  updates to users" need is a broadcast job, contact list + campaigns + unsubscribe
+  compliance, and Brevo does that plus the transactional relay in one free account.
+  For *auth* email the pretty template is HTML in Supabase's own editor and the
+  provider is just the send pipe, so the marketing side was the deciding factor.)
 
-  **Do not put the Google button in front of users until step 2 is done.**
-  `signInWithOAuth` does not validate the provider — supabase-js builds the URL
-  and hands the browser over with no round-trip, so a disabled provider strands
-  the user on a raw JSON error page with no way back. No client-side catch can
-  intercept that (verified); the button is only safe once the provider is live.
+- **Google OAuth — CREDENTIALS CONFIGURED, PENDING LIVE VERIFICATION.** The code
+  path (`signInWithGoogle()` in `src/api/auth.ts`, wired to the hero + dialog
+  buttons) was verified locally earlier via the "provider is not enabled" error.
+  As of 2026-07-19 the owner has done the dashboard setup: a Google Cloud OAuth
+  client (Web application, redirect URI
+  `https://dyfyxrcwxyvknupkugiv.supabase.co/auth/v1/callback`, consent screen with
+  non-sensitive scopes email/profile/openid so no verification/warning), and the
+  Supabase Google provider enabled with the client id + secret (Skip-nonce OFF,
+  Allow-users-without-email OFF — both deliberate; the email requirement is what
+  identity linking depends on).
 
-  **Verify once live:** sign in by email, sign out, sign in with Google on the
-  same address, and confirm the notes are still there and no second workspace
-  appeared. Identity linking is Supabase's automatic behaviour (matching
-  *verified* emails collapse into one `auth.users` row), which is what keeps the
-  signup trigger from minting a second personal workspace — but it has never been
-  exercised in this project.
+  **Still to do (agent, verify LIVE — can be done on localhost dev):**
+  1. Real flow end to end: click Continue with Google, complete Google, land
+     signed in.
+  2. **Identity-linking check, the important one:** sign in by email, sign out,
+     sign in with Google on the SAME address, and confirm the notes are still
+     there and NO second personal workspace was created. Supabase auto-links
+     identities sharing a *verified* email into one `auth.users` row; that is what
+     stops the signup trigger minting a duplicate workspace. Never exercised in
+     this project, so it is the acceptance test for Google. This would silently
+     corrupt a user's data if wrong.
+
+  Note `signInWithOAuth` does not validate the provider (supabase-js builds the URL
+  and hands the browser over with no round-trip), so before the provider was
+  enabled a click stranded the user on a raw JSON error page. Now that it's live
+  that risk is gone, but it's why the button was kept off until the dashboard side
+  was done.
 
   Original rationale follows. Adds
   alongside email OTP; links automatically to the existing account via
@@ -242,16 +237,20 @@ prioritized.
   suppresses native text selection over verse text (drag = box-select). Add a
   modifier (or an explicit select mode) so users can still drag-copy verse text.
 
-- **Cloudflare Pages deploy does not exist yet.** `docs/ARCHITECTURE.md` has
-  described the app as "Cloudflare Pages, auto-deploying from `main`" since the
-  PWA pass, but the project was never actually created (confirmed with the owner
-  during the landing build; ARCHITECTURE now says so). This blocks more than
-  hosting: Supabase auth redirect URLs are localhost-only today
-  (`supabase/config.toml` `site_url = http://localhost:5173`, plus the hosted
-  project's Auth > URL Configuration allowlist), and there is no production
-  origin to add to them, so **Google OAuth and magic links will fail in
-  production until the deploy exists and its origin is allowlisted.** Do the
-  deploy before, or with, the Google pass.
+- **Cloudflare Pages deploy — domain + DNS done, the Pages project may not be.**
+  As of 2026-07-19 `lanternword.com` is registered at Cloudflare and its DNS is
+  live on Cloudflare (proven: Brevo's DKIM/SPF authenticated through it and auth
+  email sends). The **Pages project itself** (connect `dnav0/lantern`, build,
+  attach the custom domain) was mid-setup and may not be finished — confirm with
+  the owner. Gotcha logged during setup: Cloudflare's Git-import now defaults to
+  the **Workers** flow (`npx wrangler deploy`, expects a Worker we don't have);
+  the correct path is the **Pages** product (build output `dist`, honours
+  `public/_redirects`). Until the deploy exists, `supabase/config.toml` `site_url`
+  is still localhost-only and there is no production origin to allowlist, so
+  **production** OAuth and magic links have nowhere to return. NOTE: this does NOT
+  block the remaining agent work — the Google live-verify and the SMTP templates
+  can both be exercised against `npm run dev` on localhost (localhost:5173 is
+  already in Supabase's redirect allowlist, and email sends regardless of origin).
 
   **Decided: Cloudflare Pages** (not Vercel — the SPA fallback `public/_redirects`
   is already Cloudflare/Netlify format and the docs assume Pages; Vercel would
