@@ -162,11 +162,20 @@ prioritized.
      project (Domain property → TXT record in Cloudflare DNS), then ensure it's an
      Authorised domain on the consent screen. Primary gate; still open.
   2. *"Homepage does not explain the app's purpose"* + 3. *"App name doesn't match
-     homepage"* — FIXED & LIVE: the app is a client-rendered SPA whose raw
-     `index.html` was an empty shell, so a non-JS reviewer saw no name/purpose.
-     `index.html` now carries a descriptive `<title>`, `<meta name="description">`,
-     Open Graph tags, and a `<noscript>` fallback with the name + purpose
-     (verified live on production). Real users still get the full React landing.
+     homepage"* — the app is a client-rendered SPA whose landing is a lazily-loaded
+     chunk, so the served `index.html` had an empty `#root`. First fix (meta +
+     `<noscript>`) was INSUFFICIENT and it re-flagged: Google's reviewer runs JS
+     (so `<noscript>` is hidden) but captures before the landing chunk paints, and
+     it doesn't count `<meta>`/`<title>` as homepage content (confirmed against the
+     support articles answer/13807376 + answer/13804963). SECOND fix, live: a
+     VISIBLE server-served fallback inside `#root` (app name "Lantern" + a plain
+     description + policy links) that `createRoot` replaces on mount, plus explicit
+     `application-name` and `og:site_name` = "Lantern" to match the consent-screen
+     name. Real users still get the full React landing (verified: React replaces
+     the fallback; crawlers/no-JS/early-capture see real content).
+     If a genuine re-review STILL fails, escalate via "request additional review"
+     (human) — the rendered homepage genuinely shows the name + purpose — or
+     prerender the landing route to static HTML.
   Also fill the Branding form's homepage / privacy / terms URLs with
   `https://lanternword.com`, `/privacy`, `/terms` (now live). Then re-submit "I
   have fixed the issues". The alternative to verification entirely is the Supabase
