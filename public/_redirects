@@ -1,6 +1,8 @@
-# Extensionless URLs for the standalone legal pages (must come before the SPA
-# catch-all — first match wins). The .html files also serve directly.
-/terms      /terms.html     200
-/privacy    /privacy.html   200
-# SPA fallback: every other path renders the app shell.
+# SPA fallback: every path with no matching static file renders the app shell.
+# NOTE: do NOT add explicit /terms -> /terms.html or /privacy -> /privacy.html
+# rewrites here. Cloudflare Pages serves static files first and exposes them at
+# their extensionless URL automatically (/privacy.html is reachable at /privacy),
+# and it 308-redirects /privacy.html -> /privacy on its own. An explicit
+# /privacy -> /privacy.html rewrite fights that auto-redirect and causes an
+# infinite 308 loop. Static-first + the catch-all below is all that's needed.
 /*    /index.html   200
