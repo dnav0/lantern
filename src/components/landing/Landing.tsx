@@ -151,7 +151,12 @@ export default function Landing(): React.JSX.Element {
           <Wordmark size={18} />
           {/* Standalone static pages served by Cloudflare Pages (public/*.html),
               so plain anchors that navigate away from the SPA. */}
-          <nav className="ll-foot-links" aria-label="Legal">
+          {/* /about is also the URL configured as the OAuth "Application home
+              page", and Search Console reported it with "Referring page: None
+              detected" — an orphan page Google never discovered. Linking it from
+              the landing gives it a referring page. */}
+          <nav className="ll-foot-links" aria-label="Footer">
+            <a href="/about">About</a>
             <a href="/terms">Terms</a>
             <a href="/privacy">Privacy</a>
           </nav>
