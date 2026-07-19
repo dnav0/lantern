@@ -69,11 +69,15 @@
             later anchored to the verses, ready the next time you open the passage.
           </p>
           <p style="font-size:14px;color:#6a6353;margin:0;">
-            <a href="/about" style="color:#6b62d6;">About</a>
+            <!-- Absolute URLs on purpose: the homepage requirement says the
+                 privacy link must MATCH the link configured on the OAuth consent
+                 screen, which is absolute. A relative /privacy would not match a
+                 checker comparing hrefs against that value. -->
+            <a href="https://lanternword.com/about" style="color:#6b62d6;">About</a>
             &nbsp;&middot;&nbsp;
-            <a href="/privacy" style="color:#6b62d6;">Privacy</a>
+            <a href="https://lanternword.com/privacy" style="color:#6b62d6;">Privacy</a>
             &nbsp;&middot;&nbsp;
-            <a href="/terms" style="color:#6b62d6;">Terms of Use</a>
+            <a href="https://lanternword.com/terms" style="color:#6b62d6;">Terms of Use</a>
           </p>
         </main>
       </div>

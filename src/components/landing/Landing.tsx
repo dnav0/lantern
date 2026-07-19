@@ -155,10 +155,14 @@ export default function Landing(): React.JSX.Element {
               page", and Search Console reported it with "Referring page: None
               detected" — an orphan page Google never discovered. Linking it from
               the landing gives it a referring page. */}
+          {/* Absolute URLs on purpose: Google's app-homepage requirement says the
+              privacy link on the homepage must MATCH the link configured on the
+              OAuth consent screen, which is absolute. A relative "/privacy" does
+              not match a checker comparing hrefs against that exact value. */}
           <nav className="ll-foot-links" aria-label="Footer">
-            <a href="/about">About</a>
-            <a href="/terms">Terms</a>
-            <a href="/privacy">Privacy</a>
+            <a href="https://lanternword.com/about">About</a>
+            <a href="https://lanternword.com/terms">Terms</a>
+            <a href="https://lanternword.com/privacy">Privacy</a>
           </nav>
           <div>Personal Bible study notes. © 2026</div>
         </div>
