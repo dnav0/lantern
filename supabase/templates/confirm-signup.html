@@ -1,0 +1,106 @@
+<!--
+  Lantern &mdash; auth email: "Confirm signup" template (defensive).
+
+  This is the template Supabase sends for signInWithOtp (email OTP) with
+  enable_confirmations = false &mdash; it fires for BOTH new and returning users, so
+  it is the one template the code-first sign-in in src/components/SignIn.tsx
+  depends on. It leads with the 6-digit {{ .Token }} (what the app's code screen
+  asks for) and offers the magic link {{ .ConfirmationURL }} as the secondary
+  path, matching the app copy ("enter the code, or open the link").
+
+  Paste into: Supabase → Authentication → Emails → Templates → "Confirm signup".
+  With enable_confirmations=false the OTP flow uses "Magic Link", not this one,
+  so this is belt-and-suspenders: it only matters if a signup path ever routes
+  here, and guarantees a new user still gets the branded code email, not
+  Supabase's default. The subject is set in the
+  field above the body &mdash; suggested: "Your Lantern sign-in code".
+
+  Email-client constraints this file respects on purpose:
+    - Table layout + fully inline styles (Gmail/Outlook strip <style> and
+      external CSS).
+    - Georgia for the serif voice &mdash; Lantern's self-hosted Source Serif 4 can't
+      load in an inbox, and Georgia is the app's own documented serif fallback.
+    - Fixed light palette (the Berean cream/indigo tokens as literal hex); email
+      dark-mode handling is inconsistent across clients, so we don't chase it.
+    - No web fonts, no background images, ~600px max width.
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0;padding:0;background-color:#f4f0e8;">
+  <tr>
+    <td align="center" style="padding:32px 16px 40px;">
+
+      <!-- Wordmark -->
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:100%;">
+        <tr>
+          <td align="center" style="padding:8px 0 24px;">
+            <span style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:700;letter-spacing:-0.01em;color:#201e1a;">Lantern</span>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Card -->
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:100%;background-color:#fbf9f4;border:1px solid #e2dccf;border-radius:18px;">
+        <tr>
+          <td style="padding:40px 44px 36px;">
+
+            <h1 style="margin:0 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:23px;line-height:1.3;font-weight:700;color:#201e1a;">
+              Your sign-in code
+            </h1>
+            <p style="margin:0 0 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:15px;line-height:1.6;color:#6a6353;">
+              Enter this code in Lantern to finish signing in.
+            </p>
+
+            <!-- Code -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td align="center" style="padding:6px 0 8px;background-color:#f1eff9;border:1px solid #ddd8f4;border-radius:12px;">
+                  <div style="font-family:'Courier New',Courier,monospace;font-size:38px;font-weight:700;letter-spacing:0.22em;color:#5b52c8;padding:18px 0 18px 0.22em;">{{ .Token }}</div>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:16px 0 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:13px;line-height:1.6;color:#938a77;">
+              This code expires in 60 minutes and can be used once.
+            </p>
+
+            <!-- Divider -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:30px 0 26px;">
+              <tr>
+                <td style="border-top:1px solid #e2dccf;font-size:0;line-height:0;">&nbsp;</td>
+                <td width="130" align="center" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:12px;letter-spacing:0.04em;color:#938a77;white-space:nowrap;padding:0 8px;">on this device</td>
+                <td style="border-top:1px solid #e2dccf;font-size:0;line-height:0;">&nbsp;</td>
+              </tr>
+            </table>
+
+            <!-- Magic link fallback -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td align="center">
+                  <a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:15px;font-weight:600;color:#ffffff;background-color:#6b62d6;text-decoration:none;padding:13px 30px;border-radius:10px;">Open Lantern &amp; sign in</a>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:18px 0 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:12px;line-height:1.6;color:#938a77;text-align:center;">
+              The button only works in the browser you started signing in from.
+            </p>
+
+          </td>
+        </tr>
+      </table>
+
+      <!-- Footer -->
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:100%;">
+        <tr>
+          <td style="padding:26px 44px 8px;">
+            <p style="margin:0 0 10px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:12px;line-height:1.6;color:#938a77;">
+              Someone entered this address to sign in to Lantern. If it wasn't you, no account was created and you can safely ignore this email &mdash; nothing happens until the code or link is used.
+            </p>
+            <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:12px;font-style:italic;line-height:1.6;color:#a79f8d;">
+              &ldquo;Your word is a lamp to my feet and a light to my path.&rdquo; &mdash; Psalm 119:105
+            </p>
+          </td>
+        </tr>
+      </table>
+
+    </td>
+  </tr>
+</table>

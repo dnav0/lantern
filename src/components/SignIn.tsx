@@ -138,6 +138,20 @@ export default function SignIn({ onClose, emailFirst = false }: SignInProps): Re
                 {busy ? 'Sending…' : 'Send me a sign-in code'}
               </button>
             </form>
+            {/* Standalone pages served by Cloudflare Pages (public/terms.html,
+                public/privacy.html), so plain anchors, opened in a new tab to
+                keep the sign-in flow intact. */}
+            <p className="ll-legal">
+              By continuing you agree to the{' '}
+              <a href="/terms" target="_blank" rel="noopener noreferrer">
+                Terms
+              </a>{' '}
+              and{' '}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer">
+                Privacy Policy
+              </a>
+              .
+            </p>
           </>
         ) : (
           <>

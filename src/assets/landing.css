@@ -1035,6 +1035,25 @@
   background: var(--border);
 }
 
+/* Spec fine print under the sign-in actions. Held back until /terms and
+   /privacy existed (a legal claim linking nowhere is worse than none); now that
+   they ship as standalone pages, the line goes back on the card. */
+.ll-legal {
+  margin: 16px 2px 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-faint);
+  text-align: center;
+}
+.ll-legal a {
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ll-legal a:hover {
+  color: var(--accent);
+}
+
 .ll-form {
   margin-top: 24px;
   display: flex;

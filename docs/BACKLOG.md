@@ -74,13 +74,6 @@ prioritized.
 
 - **Landing page — leftovers from the build.** The page itself is done (see
   Done). Still open:
-  - **Terms and Privacy pages don't exist.** The login card's spec fine print
-    ("By continuing you agree to the Terms and Privacy Policy", both `href="#"`)
-    was NOT ported: shipping a legal claim that links nowhere is worse than
-    shipping neither. Needed before any real public launch, at which point the
-    line goes back on the card. Now slightly more pointed than when first
-    deferred: the page says "Nothing to buy. Your notes stay private to you." and
-    "The name" section calls the tool private. A privacy page should back those.
   - **Delete the design/ specs.** `design/README.md` says the three committed
     specs are temporary and should be deleted once ported. All three now are
     (hero, features, and the mockup's layout/copy/login direction), so they can
@@ -96,14 +89,34 @@ prioritized.
   `lanternword.com` is authenticated in Brevo (DKIM/SPF/DMARC via the automatic
   Cloudflare DNS flow), branded subdomain `send.lanternword.com`.
 
-  **What's left is the agent's half: the templates.** Supabase's default template
-  still sends only a magic *link*, not the 6-digit code, so the code path in
-  `SignIn.tsx` (already built) won't show a code until the template includes
-  `{{ .Token }}`. Design the OTP email and the magic-link-fallback email to match
-  the design system (warm cream, serif accents, wordmark — NOT generic
-  transactional; see the landing and [[design-taste]]) and paste them into
-  Supabase's template editor. This can be built and tested entirely against
-  `npm run dev` on localhost — the email sends regardless of where the app runs.
+  **Templates are BUILT (2026-07-19), pending two steps.** Live in the repo at
+  `supabase/templates/magic-link.html` (the one that matters — `signInWithOtp`
+  with `enable_confirmations = false` routes through the "Magic Link" template
+  for both new and returning users) and `supabase/templates/confirm-signup.html`
+  (defensive duplicate). Both lead with the 6-digit `{{ .Token }}` and offer
+  `{{ .ConfirmationURL }}` as the secondary path, matching `SignIn.tsx`'s code
+  screen. Design-verified in-browser against the tokens (card `#fbf9f4`, indigo
+  code, accent button, Georgia serif wordmark + Psalm 119:105, table layout, all
+  inline styles, entities for curly quotes).
+
+  **VERIFIED LIVE (2026-07-19):** owner pasted the template; a real sign-in email
+  arrives from `no-reply@lanternword.com` (subject "Your Lantern sign-in code")
+  and renders exactly as designed in a real Gmail inbox (curly quotes intact, no
+  mojibake). `verifyOtp` succeeds and the app signs in — the template + delivery +
+  verify loop all work.
+
+  **OTP length mismatch — CAUGHT AND RESOLVED (2026-07-19).** The first live run
+  exposed that the HOSTED Supabase project was issuing an **8-digit** code while
+  `SignIn.tsx` caps the code field at `maxLength={6}`, so a real user typing the
+  code could only enter 6 of 8 and sign-in would fail (the first test only passed
+  because the full code was injected programmatically, bypassing the typing cap).
+  `config.toml` (`otp_length = 6`) and the app copy both say 6, so the hosted
+  project was the outlier. Fixed at the source: owner set the hosted Email OTP
+  length to 6 (dashboard; config.toml drives only the local CLI). No code change.
+  **Re-verified clean:** a fresh sign-in emailed a 6-digit code, it fit the
+  field's own cap, and `verifyOtp` signed in with no bypass. **This item is now
+  fully DONE** — templates built, pasted, rendered correctly in a real inbox, and
+  the OTP code path works end to end for a real user.
 
   (Provider rationale, kept for the record: **Brevo** over Resend — its free tier
   is reserved for another project — and over Mailtrap, because the future "email
@@ -237,20 +250,23 @@ prioritized.
   suppresses native text selection over verse text (drag = box-select). Add a
   modifier (or an explicit select mode) so users can still drag-copy verse text.
 
-- **Cloudflare Pages deploy — domain + DNS done, the Pages project may not be.**
-  As of 2026-07-19 `lanternword.com` is registered at Cloudflare and its DNS is
-  live on Cloudflare (proven: Brevo's DKIM/SPF authenticated through it and auth
-  email sends). The **Pages project itself** (connect `dnav0/lantern`, build,
-  attach the custom domain) was mid-setup and may not be finished — confirm with
-  the owner. Gotcha logged during setup: Cloudflare's Git-import now defaults to
-  the **Workers** flow (`npx wrangler deploy`, expects a Worker we don't have);
-  the correct path is the **Pages** product (build output `dist`, honours
-  `public/_redirects`). Until the deploy exists, `supabase/config.toml` `site_url`
-  is still localhost-only and there is no production origin to allowlist, so
-  **production** OAuth and magic links have nowhere to return. NOTE: this does NOT
-  block the remaining agent work — the Google live-verify and the SMTP templates
-  can both be exercised against `npm run dev` on localhost (localhost:5173 is
-  already in Supabase's redirect allowlist, and email sends regardless of origin).
+- **Cloudflare Pages deploy — project + domain live; one dashboard step left.**
+  As of 2026-07-19 the owner confirmed the **Pages project exists with the custom
+  domain attached**: `lanternword.com` is registered at Cloudflare, DNS is live
+  (proven: Brevo's DKIM/SPF authenticated through it and auth email sends), and
+  the `*.pages.dev` origin is **`lantern-5jf.pages.dev`**. `supabase/config.toml`
+  is now wired to production: `site_url = https://lanternword.com` and
+  `additional_redirect_urls` = production + the pages.dev preview + localhost.
+  Gotcha logged during setup, kept for the record: Cloudflare's Git-import now
+  defaults to the **Workers** flow (`npx wrangler deploy`, expects a Worker we
+  don't have); the correct path is the **Pages** product (build output `dist`,
+  honours `public/_redirects`).
+
+  **Remaining (owner, dashboard):** confirm the HOSTED Supabase project's Auth →
+  URL Configuration allowlist lists `https://lanternword.com` and
+  `https://lantern-5jf.pages.dev` (config.toml drives only the local CLI, not the
+  hosted project). Until then, production OAuth/magic-link returns may be rejected
+  by the hosted allowlist even though the code points at the right origins.
 
   **Decided: Cloudflare Pages** (not Vercel — the SPA fallback `public/_redirects`
   is already Cloudflare/Netlify format and the docs assume Pages; Vercel would
@@ -269,6 +285,39 @@ prioritized.
   `supabase/config.toml` `site_url` / `additional_redirect_urls` to match.
 
 ## Done
+
+- **Terms + Privacy pages, login-card fine print, and prod deploy wiring
+  (2026-07-19).** Three things that were gated on "the pages don't exist yet":
+  - **Standalone legal pages.** `public/terms.html` and `public/privacy.html` —
+    self-contained (own inline CSS, no build step, no app bundle) so they render
+    identically regardless of the SPA and give stable, crawlable URLs for a
+    future Google OAuth app verification. Styled to the landing's language: warm
+    cream canvas, Georgia serif headings/wordmark (the app's documented fallback
+    for the self-hosted Source Serif 4, which a standalone page can't load),
+    indigo accent, Psalm 119:105 footer. Content is grounded in the ACTUAL
+    architecture (Supabase auth by email/Google, notes stored with per-account
+    RLS, Brevo for sign-in email, Cloudflare hosting, BSB via
+    bible.helloao.org cached locally; no ads, no third-party tracking).
+    `public/_redirects` gained explicit `/terms`→`/terms.html` and
+    `/privacy`→`/privacy.html` rules above the SPA catch-all so the extensionless
+    URLs resolve deterministically. Verified live (dev server) light mode, desktop
+    + mobile: correct palette, 9/10 sections, cross-links, no mojibake, no
+    horizontal overflow. **Owner still to review the substance** before public
+    launch: contact address (`hello@lanternword.com` — ensure it routes), the
+    governing-law line, and the effective date; flagged in each file's header
+    comment.
+  - **Login-card fine print restored.** `SignIn.tsx`'s email step now shows "By
+    continuing you agree to the Terms and Privacy Policy" (new `.ll-legal` style
+    in `landing.css`), linking to `/terms` and `/privacy` in a new tab. Held back
+    originally because the links went nowhere; now they don't. Verified rendering
+    in the live dialog.
+  - **Prod deploy wiring.** `supabase/config.toml` `site_url` /
+    `additional_redirect_urls` moved off localhost to
+    `https://lanternword.com` + `https://lantern-5jf.pages.dev` + localhost. The
+    hosted-dashboard allowlist confirmation remains an owner step (see the
+    Cloudflare Pages item under Deferred).
+  Build (`tsc --noEmit` + vite) clean; `dist` emits both html pages + the updated
+  `_redirects`.
 
 - **PWA PNG icons regenerated from the new mark, plus a browser favicon.** The
   three manifest icons (`public/icon-192.png`, `icon-512.png`,

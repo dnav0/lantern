@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Privacy — Lantern</title>
+<meta name="description" content="How Lantern handles your account and your study notes." />
+<link rel="icon" href="/icon.svg" />
+<!--
+  Standalone legal page (not part of the React app). Served directly by
+  Cloudflare Pages at /privacy and /privacy.html (see public/_redirects). Kept
+  self-contained on purpose: no build step, no shared CSS, so it renders
+  identically regardless of the app bundle and gives a stable, crawlable URL for
+  a future Google OAuth app verification.
+
+  Visual language matches the landing (src/assets/landing.css + tokens.css):
+  warm cream canvas, indigo accent, Georgia as the serif voice (the app's own
+  documented fallback for the self-hosted Source Serif 4, which a standalone page
+  can't load).
+
+  OWNER REVIEW BEFORE PUBLIC LAUNCH — these need your confirmation:
+    - Contact address (currently hello@lanternword.com). Make sure it routes to
+      you (Cloudflare Email Routing), or change it.
+    - Governing-law / jurisdiction line in the Terms page.
+    - The "no analytics / no third-party tracking" claim below is TRUE only as
+      long as the app ships none. If you add analytics later, update this.
+    - Effective date is set to first-draft date; bump it whenever you change the
+      substance.
+-->
+<style>
+  :root {
+    --bg: #f4f0e8; --surface: #fbf9f4; --border: #e2dccf;
+    --text: #201e1a; --muted: #6a6353; --faint: #938a77;
+    --accent: #6b62d6; --accent-hover: #5b52c8;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--sans); font-size: 16px; line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+  nav.top {
+    border-bottom: 1px solid var(--border);
+  }
+  nav.top .wrap {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+  }
+  .wordmark {
+    font-family: var(--serif); font-weight: 700; font-size: 22px;
+    letter-spacing: -0.01em; color: var(--text); text-decoration: none;
+  }
+  .back { font-size: 14px; color: var(--accent); text-decoration: none; }
+  .back:hover { color: var(--accent-hover); text-decoration: underline; }
+  main { padding: 56px 0 72px; }
+  h1 {
+    font-family: var(--serif); font-weight: 700; font-size: 34px;
+    line-height: 1.2; margin: 0 0 8px;
+  }
+  .updated { color: var(--faint); font-size: 14px; margin: 0 0 40px; }
+  h2 {
+    font-family: var(--serif); font-weight: 700; font-size: 21px;
+    margin: 40px 0 10px;
+  }
+  p, li { color: #3a352c; }
+  a { color: var(--accent); }
+  a:hover { color: var(--accent-hover); }
+  ul { padding-left: 22px; }
+  li { margin: 6px 0; }
+  .lead { font-size: 17px; color: var(--muted); }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 4px 26px 22px;
+  }
+  footer {
+    border-top: 1px solid var(--border); padding: 26px 0;
+    color: var(--faint); font-size: 13px;
+  }
+  footer .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  footer .wordmark { font-size: 16px; }
+  .verse { font-family: var(--serif); font-style: italic; color: var(--faint); }
+</style>
+</head>
+<body>
+  <nav class="top">
+    <div class="wrap">
+      <a class="wordmark" href="/">Lantern</a>
+      <a class="back" href="/">← Back to Lantern</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="wrap">
+      <h1>Privacy</h1>
+      <p class="updated">Last updated July 19, 2026</p>
+
+      <p class="lead">
+        Lantern is a personal Bible-study notes app. This page explains what it
+        collects, why, and what it does not do. The short version: it keeps your
+        account and your notes so it can show them back to you, and nothing more.
+      </p>
+
+      <h2>What Lantern stores</h2>
+      <ul>
+        <li><strong>Your email address.</strong> Used to sign you in and to send
+          your sign-in code. If you sign in with Google, Lantern receives the
+          email address and basic profile (name) tied to that Google account.</li>
+        <li><strong>Your study content.</strong> The notes, observations,
+          journal entries, and passage references you write. This is yours; it is
+          stored so you can read it back the next time you open a passage.</li>
+        <li><strong>Basic technical data.</strong> Ordinary server and security
+          logs (such as timestamps and error records) needed to run the service
+          and keep accounts safe.</li>
+      </ul>
+
+      <h2>What it does not do</h2>
+      <ul>
+        <li>It does not sell or rent your data to anyone.</li>
+        <li>It does not show ads.</li>
+        <li>It does not run third-party advertising or behavioral tracking, and
+          it does not build a profile of you for marketing.</li>
+      </ul>
+
+      <h2>Who processes your data</h2>
+      <p>
+        Lantern is a small app built on a few trusted services. They process data
+        only to make the app work:
+      </p>
+      <ul>
+        <li><strong>Supabase</strong> hosts the database and authentication.
+          Your notes and account live here, protected so that each account can
+          only reach its own rows.</li>
+        <li><strong>Brevo</strong> delivers sign-in emails (the 6-digit code and
+          sign-in link).</li>
+        <li><strong>Google</strong> handles sign-in only if you choose "Continue
+          with Google."</li>
+        <li><strong>Cloudflare</strong> serves the website and its network.</li>
+        <li><strong>bible.helloao.org</strong> provides the scripture text
+          (Berean Standard Bible), which your browser fetches and caches locally.
+          Your notes are never sent to it.</li>
+      </ul>
+
+      <h2>Where your notes are cached</h2>
+      <p>
+        To work quickly and offline, Lantern caches scripture and a mirror of
+        your recent data in your own browser's storage. Clearing your browser
+        storage removes that local copy; your account data remains on the server.
+      </p>
+
+      <h2>Security</h2>
+      <p>
+        Data is sent over encrypted connections (HTTPS). Access to your notes is
+        enforced per account at the database level, so one account cannot read
+        another's data. No system is perfectly secure, but the design keeps the
+        surface small: there is no public sharing and no ad network in the mix.
+      </p>
+
+      <h2>Keeping and deleting your data</h2>
+      <p>
+        Your data is kept while your account is active. You can delete individual
+        notes and studies at any time inside the app. To delete your entire
+        account and its data, contact <a href="mailto:hello@lanternword.com">hello@lanternword.com</a>
+        and it will be removed.
+      </p>
+
+      <h2>Children</h2>
+      <p>
+        Lantern is not directed to children under 13, and does not knowingly
+        collect data from them.
+      </p>
+
+      <h2>Changes</h2>
+      <p>
+        If this policy changes in a meaningful way, the date above will change.
+        Continuing to use Lantern after an update means you accept the revised
+        policy.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        Questions about privacy? Email
+        <a href="mailto:hello@lanternword.com">hello@lanternword.com</a>.
+      </p>
+
+      <p style="margin-top:40px"><a href="/terms">Read the Terms of Use →</a></p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <a class="wordmark" href="/">Lantern</a>
+      <span class="verse">"A lamp to my feet." — Psalm 119:105</span>
+    </div>
+  </footer>
+</body>
+</html>

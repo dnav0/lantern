@@ -1,1 +1,6 @@
+# Extensionless URLs for the standalone legal pages (must come before the SPA
+# catch-all — first match wins). The .html files also serve directly.
+/terms      /terms.html     200
+/privacy    /privacy.html   200
+# SPA fallback: every other path renders the app shell.
 /*    /index.html   200
