@@ -298,11 +298,17 @@ prioritized.
     architecture (Supabase auth by email/Google, notes stored with per-account
     RLS, Brevo for sign-in email, Cloudflare hosting, BSB via
     bible.helloao.org cached locally; no ads, no third-party tracking).
-    `public/_redirects` gained explicit `/terms`→`/terms.html` and
-    `/privacy`→`/privacy.html` rules above the SPA catch-all so the extensionless
-    URLs resolve deterministically. Verified live (dev server) light mode, desktop
-    + mobile: correct palette, 9/10 sections, cross-links, no mojibake, no
-    horizontal overflow. **Owner still to review the substance** before public
+    The extensionless URLs (`/terms`, `/privacy`) come from Cloudflare Pages'
+    native static-first + clean-URL handling — NOT from `_redirects`. A first
+    attempt DID add explicit `/privacy`→`/privacy.html 200` rewrites, which caused
+    an infinite 308 loop on the deployed pages: Pages auto-redirects
+    `/privacy.html`→`/privacy` while the rewrite sent `/privacy`→`/privacy.html`.
+    Removed; `public/_redirects` now holds only the SPA catch-all, with a comment
+    warning against re-adding those rewrites. Verified live BOTH on the dev server
+    (light mode, desktop + mobile: correct palette, 9/10 sections, cross-links, no
+    mojibake, no horizontal overflow) AND on production after deploy
+    (`lanternword.com/privacy` and `/terms` serve real content, 200, no loop; the
+    app root and SPA fallback still work). **Owner still to review the substance** before public
     launch: contact address (`hello@lanternword.com` — ensure it routes), the
     governing-law line, and the effective date; flagged in each file's header
     comment.
