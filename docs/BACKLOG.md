@@ -49,14 +49,6 @@ prioritized.
   replaces. Needs conflict handling and last-write-wins (or better) reconciliation
   given client-set timestamps.
 
-- **Landing page — leftovers from the build.** The page itself is done (see
-  Done). Still open:
-  - **Delete the design/ specs.** `design/README.md` says the three committed
-    specs are temporary and should be deleted once ported. All three now are
-    (hero, features, and the mockup's layout/copy/login direction), so they can
-    go — deferred only so they stay diffable while the landing settles. They are
-    in git history regardless.
-
 - **KJV + translation switcher.** Second `BibleProvider` implementation plus a UI
   to pick translation. The provider interface already exists for this; note
   versification papercuts across translations (verse numbers mostly line up).
@@ -129,6 +121,19 @@ prioritized.
   experience so it never feels crippled.
 
 ## Done
+
+- **`design/` deleted (2026-07-20).** `design/README.md` always said the committed
+  specs were temporary and should go once ported, and all three are: `lantern-hero`
+  (the flythrough), `lantern-features` (the three clips), and `lantern-mockup`
+  (layout/copy/login direction). They remain in git history if a spec ever needs to
+  be re-read. Four *untracked* scratch files were removed at the same time
+  (`mockup.html`, `landing-mockup.html`, `lantern-anim.html`, `lantern-logo.html`)
+  — earlier-generation explorations, including the pictorial-mark study whose
+  conclusions are already written up in the Lantern rebrand entry below, so nothing
+  load-bearing was lost. Note for anyone re-reading the landing code: the loop
+  machinery in `useClipLoop.ts` was ported from these specs and the clone +
+  translateY compensation is load-bearing, so the *code* comments are now the only
+  live explanation of why it works that way.
 
 - **Repo normalized with Prettier (2026-07-20).** Done as its own commit, alone,
   exactly as this item required: `npm run format` rewrote **39 files
