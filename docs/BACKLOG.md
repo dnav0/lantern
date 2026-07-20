@@ -10,6 +10,18 @@ prioritized.
 
 ## Deferred
 
+- **Privacy page re-check after the analytics views (2026-07-20).** The new
+  read-only SQL views (see Done) compute aggregates over data the app already
+  stores for its own function (signup/note timestamps, book numbers) — no new
+  data collected, no third party, nothing queryable by the client (SELECT is
+  revoked from `anon`/`authenticated`; only the owner via `service_role` can
+  read them). CLAUDE.md's standing rule is "adding ANY analytics... means
+  updating the privacy page in the same change," but this task's scope
+  deliberately excluded `public/**`, so that review didn't happen here. Worth
+  a deliberate pass to confirm `public/privacy.html`'s "no analytics" claim
+  still reads accurately given these views exist, even though they don't
+  contradict it as written (internal-only, no SDK, no third party).
+
 - **Lantern rebrand — remaining bits.** The user-visible rebrand landed (see
   Done). Left over:
   - **Outline the wordmark to SVG paths.** `Wordmark.tsx` renders live text in
@@ -121,6 +133,30 @@ prioritized.
   experience so it never feels crippled.
 
 ## Done
+
+- **Product usage analytics — read-only SQL views (2026-07-20).**
+  `supabase/migrations/0002_analytics_views.sql` adds six views for the app
+  owner: `analytics_total_signups`, `analytics_signups_per_week`,
+  `analytics_notes_per_user`, `analytics_active_days_per_user`,
+  `analytics_week2_retention` (per-signup-week retention, active = a note
+  created in days 7-14 after signup), and `analytics_most_studied_books`
+  (notes per USFM `book_number`, names mapped inline from
+  `src/utils/bibleBooks.ts`'s order — deliberately not a table). No existing
+  table/policy/trigger/function touched; no row written; every view uses
+  `create or replace` so the migration is idempotent. **Security (the point of
+  the task):** every view has `security_invoker = on` (so a BYPASSRLS
+  migration-role owner can't silently bypass `notes`'/`profiles`' RLS for
+  callers) AND has `select` explicitly revoked from `anon`/`authenticated` —
+  belt-and-suspenders, since Supabase's default privileges would otherwise
+  auto-grant `anon`/`authenticated` `select` on any new relation. Verified
+  against a real local Postgres via `supabase db reset` (Docker), not just
+  parsed: seeded two users with notes across two books, ran every view as the
+  seeding role and got real, correct rows; then ran the same six `select`s as
+  an authenticated non-owner JWT via PostgREST and got `permission denied`
+  (`42501`) on all six, confirmed again after a legitimate
+  `grant select ... to authenticated` to rule out a false-negative RLS
+  masking bug. See `docs/BACKLOG.md` Deferred for the one follow-up this
+  surfaced (a privacy-page re-check, out of this task's scope).
 
 - **`design/` deleted (2026-07-20).** `design/README.md` always said the committed
   specs were temporary and should go once ported, and all three are: `lantern-hero`
