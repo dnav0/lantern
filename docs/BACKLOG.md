@@ -66,212 +66,48 @@ prioritized.
     go — deferred only so they stay diffable while the landing settles. They are
     in git history regardless.
 
-- **Custom SMTP email templates — SMTP is LIVE, templates remain.** The Brevo
-  SMTP pipe is set up and verified (2026-07-19): a real sign-in email arrives from
-  `no-reply@lanternword.com`. Supabase Auth → SMTP Settings points at
-  `smtp-relay.brevo.com:587` with the Brevo login `b274a0001@smtp-brevo.com` and a
-  generated SMTP key (no-expiry; note Brevo keys still die after 90 days of *zero*
-  sending, so if auth email ever stops silently, regenerate the key first). Domain
-  `lanternword.com` is authenticated in Brevo (DKIM/SPF/DMARC via the automatic
-  Cloudflare DNS flow), branded subdomain `send.lanternword.com`.
+- **`hello@lanternword.com` does not route yet.** The LIVE `/privacy`, `/terms`
+  and `/about` pages all publish this as the contact address, so mail sent to it
+  currently goes nowhere — a broken contact on public legal pages. Fix is free and
+  quick: Cloudflare dashboard → the domain → Email → **Email Routing** → enable,
+  add a custom address `hello@` forwarding to the owner's Gmail, confirm the
+  destination via the verification email; Cloudflare adds the MX/SPF records
+  itself. Receive-only: to *reply* as `hello@`, add Gmail "Send mail as" using the
+  existing Brevo SMTP credentials. No conflict with Brevo — Brevo sending uses
+  TXT (SPF/DKIM/DMARC) and `send.lanternword.com`; routing uses MX.
 
-  **Templates are BUILT (2026-07-19), pending two steps.** Live in the repo at
-  `supabase/templates/magic-link.html` (the one that matters — `signInWithOtp`
-  with `enable_confirmations = false` routes through the "Magic Link" template
-  for both new and returning users) and `supabase/templates/confirm-signup.html`
-  (defensive duplicate). Both lead with the 6-digit `{{ .Token }}` and offer
-  `{{ .ConfirmationURL }}` as the secondary path, matching `SignIn.tsx`'s code
-  screen. Design-verified in-browser against the tokens (card `#fbf9f4`, indigo
-  code, accent button, Georgia serif wordmark + Psalm 119:105, table layout, all
-  inline styles, entities for curly quotes).
+- **Legal-page substance needs an owner review before any real public launch.**
+  `public/privacy.html` and `public/terms.html` are written from the actual
+  architecture, but three things are placeholders/assumptions flagged in each
+  file's header comment: the contact address (see the item above), the
+  **governing-law / jurisdiction** line (deliberately left neutral — fill in a
+  specific venue if wanted), and the effective date (bump on any substantive
+  change). Also: the "no third-party tracking" claim is only true while the app
+  ships no analytics — revisit if that ever changes. Not legal advice; a pass by
+  someone qualified is worth it before a real launch.
 
-  **VERIFIED LIVE (2026-07-19):** owner pasted the template; a real sign-in email
-  arrives from `no-reply@lanternword.com` (subject "Your Lantern sign-in code")
-  and renders exactly as designed in a real Gmail inbox (curly quotes intact, no
-  mojibake). `verifyOtp` succeeds and the app signs in — the template + delivery +
-  verify loop all work.
+- **`prefers-reduced-motion` resting states never verified live.** Every motion
+  rule in `motion.css` is wrapped in `@media (prefers-reduced-motion:
+  no-preference)` with a global kill-switch backstop, and each landing clip has a
+  static resting state by construction — but nobody has actually looked at them
+  with the setting on. The available browser tooling can't emulate the query and
+  the flag is read at mount, so it can't be toggled in-page: this needs a manual
+  pass with the OS setting enabled, eyeballing each of the hero flythrough and the
+  three feature clips.
 
-  **OTP length mismatch — CAUGHT AND RESOLVED (2026-07-19).** The first live run
-  exposed that the HOSTED Supabase project was issuing an **8-digit** code while
-  `SignIn.tsx` caps the code field at `maxLength={6}`, so a real user typing the
-  code could only enter 6 of 8 and sign-in would fail (the first test only passed
-  because the full code was injected programmatically, bypassing the typing cap).
-  `config.toml` (`otp_length = 6`) and the app copy both say 6, so the hosted
-  project was the outlier. Fixed at the source: owner set the hosted Email OTP
-  length to 6 (dashboard; config.toml drives only the local CLI). No code change.
-  **Re-verified clean:** a fresh sign-in emailed a 6-digit code, it fit the
-  field's own cap, and `verifyOtp` signed in with no bypass. **This item is now
-  fully DONE** — templates built, pasted, rendered correctly in a real inbox, and
-  the OTP code path works end to end for a real user.
-
-  (Provider rationale, kept for the record: **Brevo** over Resend — its free tier
-  is reserved for another project — and over Mailtrap, because the future "email
-  updates to users" need is a broadcast job, contact list + campaigns + unsubscribe
-  compliance, and Brevo does that plus the transactional relay in one free account.
-  For *auth* email the pretty template is HTML in Supabase's own editor and the
-  provider is just the send pipe, so the marketing side was the deciding factor.)
-
-- **Google OAuth — CREDENTIALS CONFIGURED, PENDING LIVE VERIFICATION.** The code
-  path (`signInWithGoogle()` in `src/api/auth.ts`, wired to the hero + dialog
-  buttons) was verified locally earlier via the "provider is not enabled" error.
-  As of 2026-07-19 the owner has done the dashboard setup: a Google Cloud OAuth
-  client (Web application, redirect URI
-  `https://dyfyxrcwxyvknupkugiv.supabase.co/auth/v1/callback`, consent screen with
-  non-sensitive scopes email/profile/openid so no verification/warning), and the
-  Supabase Google provider enabled with the client id + secret (Skip-nonce OFF,
-  Allow-users-without-email OFF — both deliberate; the email requirement is what
-  identity linking depends on).
-
-  **Still to do (agent, verify LIVE — can be done on localhost dev):**
-  1. Real flow end to end: click Continue with Google, complete Google, land
-     signed in.
-  2. **Identity-linking check, the important one:** sign in by email, sign out,
-     sign in with Google on the SAME address, and confirm the notes are still
-     there and NO second personal workspace was created. Supabase auto-links
-     identities sharing a *verified* email into one `auth.users` row; that is what
-     stops the signup trigger minting a duplicate workspace. Never exercised in
-     this project, so it is the acceptance test for Google. This would silently
-     corrupt a user's data if wrong.
-
-  Note `signInWithOAuth` does not validate the provider (supabase-js builds the URL
-  and hands the browser over with no round-trip), so before the provider was
-  enabled a click stranded the user on a raw JSON error page. Now that it's live
-  that risk is gone, but it's why the button was kept off until the dashboard side
-  was done.
-
-  **Consent-screen branding verification (IN PROGRESS, 2026-07-19).** Google shows
-  the raw `…supabase.co` host on the account picker (not "Lantern") until the
-  OAuth app's branding is verified — cosmetic, does NOT block sign-in. First
-  submission was rejected with three issues; status:
-  1. *"Homepage not registered to you"* — OWNER: verify `lanternword.com`
-     ownership in Google Search Console using the SAME Google account as the GCP
-     project (Domain property → TXT record in Cloudflare DNS), then ensure it's an
-     Authorised domain on the consent screen. Primary gate; still open.
-  2. *"Homepage does not explain the app's purpose"* + 3. *"App name doesn't match
-     homepage"* — the app is a client-rendered SPA whose landing is a lazily-loaded
-     chunk, so the served `index.html` had an empty `#root`. First fix (meta +
-     `<noscript>`) was INSUFFICIENT and it re-flagged: Google's reviewer runs JS
-     (so `<noscript>` is hidden) but captures before the landing chunk paints, and
-     it doesn't count `<meta>`/`<title>` as homepage content (confirmed against the
-     support articles answer/13807376 + answer/13804963). SECOND fix, live: a
-     VISIBLE server-served fallback inside `#root` (app name "Lantern" + a plain
-     description + policy links) that `createRoot` replaces on mount, plus explicit
-     `application-name` and `og:site_name` = "Lantern" to match the consent-screen
-     name. Real users still get the full React landing (verified: React replaces
-     the fallback; crawlers/no-JS/early-capture see real content).
-     THIRD attempt also failed with the identical two issues, which prompted
-     research beyond Google's own docs. Two findings, both now acted on:
-     - **Google caches a verification verdict PER HOMEPAGE URL.** Once a URL has
-       failed, re-review does not appear to re-crawl it, so no amount of fixing
-       that URL clears it. Multiple developers on the Google developer forums
-       report exactly this symptom ("everything confirmed matching", still
-       rejected); the fix that works for them is to point the Branding
-       "Application home page" at a URL Google has NEVER crawled, which then
-       passes almost immediately. See
-       discuss.google.dev/t/…/372022 (fresh `/about/` URL passed "within
-       seconds" after the original was stuck for a week) and …/381451.
-     - **A real content gap:** the requirements say the page must "explain with
-       transparency the purpose for which your app requests user data". The
-       marketing landing never explained WHY Lantern asks for a Google account.
-     Action: added `public/about.html` — a fresh, never-crawled URL
-     (`https://lanternword.com/about`) whose `<h1>` is exactly "Lantern" and which
-     states what the app does, who it is for, explicitly why Google sign-in is
-     requested and which scopes (email + basic profile only, no Gmail/Drive/etc.,
-     and that email OTP is an alternative), plus privacy/terms links. OWNER: set
-     the Branding "Application home page" to that URL and re-submit.
-     FOURTH attempt (fresh `/about` URL) also failed. Further diagnosis ruled out
-     the remaining technical causes with evidence: fetching `/about` with a
-     Googlebot UA returns 200 + full content (so Cloudflare is NOT blocking the
-     crawler), there is no redirect, and publishing status is already
-     **In production / External** (not Testing). One real bug was found and fixed
-     along the way: `/robots.txt` was being served as the app's HTML by the SPA
-     catch-all — `public/robots.txt` + `public/sitemap.xml` now exist.
-     Two further findings that shape what to do next:
-     - **Full app verification is NOT required.** With only non-sensitive scopes
-       (email/profile/openid), Google's own docs say app verification is optional
-       and only *brand* verification is needed to show a name/logo. So do NOT
-       submit through the Verification Centre's "submit app for review" (that is
-       the heavy sensitive-scope path) despite the generic banner on the Audience
-       page prompting it. Brand verification is automated (minutes), falling back
-       to a 2-3 business day manual review.
-     - **Brand verification validates the name AND THE LOGO.** The uploaded OAuth
-       logo (the navy "L", `public/icon.svg` → `icon-192.png`) appeared NOWHERE on
-       the site — the public pages use a text wordmark only — so a checker
-       comparing consent screen to homepage found no matching logo. That logo is
-       now rendered next to the exact app name on both `public/about.html` and the
-       `index.html` fallback. Keep those in sync with whatever logo is uploaded.
-     FIFTH attempt also failed. Further fixes + eliminations:
-     - **Logo file now byte-identical.** The logo uploaded to Google is
-       `icon-512.png`, but the pages rendered `icon-192.png` (same artwork,
-       different file). Brand verification compares the consent-screen logo to the
-       site, so both pages now serve `/icon-512.png`.
-     - **Googlebot allowed explicitly** in `robots.txt` (a reported stuck
-       verification came down to Googlebot lacking an explicit Allow).
-     - **Cloudflare caching RULED OUT** with evidence: `/about` returns
-       `cf-cache-status: DYNAMIC` and `Cache-Control: max-age=0, must-revalidate`,
-       so the edge never serves stale HTML.
-     **ROOT CAUSE FOUND (Search Console URL Inspection).** `/about` reported
-     **"URL is unknown to Google", Last crawl: N/A** — Google had NEVER crawled
-     it. That is why every branding attempt failed identically no matter what the
-     page contained: the checker had nothing to read. It was never a content or
-     caching problem. Inspection also showed "No referring sitemaps detected" and
-     **"Referring page: None detected"** — `/about` was an orphan with nothing
-     linking to it, so Google had no way to discover it. Fixed: `/about` is now
-     linked from the landing footer, the `index.html` fallback, and the
-     privacy/terms pages; "Test live URL" passes ("URL is available to Google",
-     "Page can be indexed") and indexing has been requested.
-     Remaining: the page must actually get INDEXED before brand verification can
-     see it. Monitor via URL Inspection's **Google Index** tab (not Live Test)
-     until it stops saying "unknown to Google"; also submit
-     `https://lanternword.com/sitemap.xml` under Indexing → Sitemaps. Only re-run
-     brand verification once the page is genuinely indexed. Faster alternative:
-     inspect the ROOT `https://lanternword.com/` — if it is already known to
-     Google, point Branding back at the root, which now also carries the logo,
-     exact name and purpose in server-served HTML.
-     **A second genuine miss, found by re-reading the requirements literally
-     (support.google.com/cloud/answer/13807376):** the homepage must *"include a
-     link to your privacy policy (Note: this link should match the link you added
-     on your consent screen configuration)"*. The consent screen holds the
-     ABSOLUTE `https://lanternword.com/privacy`, but every policy link on our
-     pages was RELATIVE (`/privacy`) — a checker comparing hrefs against the
-     configured value would never match. Fixed: `/about`, the `index.html`
-     fallback and the landing footer now use absolute URLs. Also re-verified
-     against the literal list: homepage is static with **0 redirects** on `/`,
-     `/about` and `/privacy` (the docs require "static and cannot redirect"), not
-     a shortened URL, no login wall, on a Search-Console-verified domain.
-     With that, every documented requirement is now satisfied verbatim.
-
-     Incidental finding: Cloudflare **Email Obfuscation** rewrites `mailto:` links
-     on these static pages into `/cdn-cgi/l/email-protection` plus an injected
-     decoder script, so the contact address is not plain text to a non-JS crawler.
-     Harmless here, but it confirms Cloudflare mutates the served HTML — check
-     Rocket Loader is off if crawler rendering ever looks wrong.
-  Also fill the Branding form's homepage / privacy / terms URLs with
-  `https://lanternword.com`, `/privacy`, `/terms` (now live). Then re-submit "I
-  have fixed the issues". The alternative to verification entirely is the Supabase
-  Custom Auth Domain add-on (paid), which changes the shown host directly.
-
-  Original rationale follows. Adds
-  alongside email OTP; links automatically to the existing account via
-  verified email, so no account-merge flow needed (already a low-risk addition
-  per the existing architecture). Worth it for a public launch: one-click
-  sign-in removes the OTP-code/magic-link friction entirely for most visitors,
-  and Google sign-in is a highly familiar, trusted pattern for a general
-  (not especially technical) audience — exactly the kind of friction that
-  determines whether a first-time visitor actually creates an account. Do this
-  at the same time as the login redesign, not as a separate pass — same
-  screen, same testing surface. **Decided: keep both Google and email, not
-  Google-only** — Google as the prominent one-click default, email kept as
-  the fallback ("or continue with email"). Reasons to not drop email
-  entirely: account-lockout risk if something goes wrong on Google's side
-  (no way back into the app's own data); a real minority of users
-  specifically avoid Google-linked sign-in for a personal spiritual-journal
-  app; and Apple's App Store guidelines require offering Sign in with Apple
-  as a parallel option if Google/Facebook sign-in is offered — a Google-only
-  app today would force adding a *third* auth method later just to ship on
-  iOS (the "Capacitor mobile wrap" item below), whereas keeping email as the
-  neutral fallback avoids that trigger.
-
+- **Google OAuth — identity-linking acceptance test NEVER RUN.** Everything else
+  about Google sign-in is done and verified live (see Done): the provider works
+  end to end and consent-screen branding is verified. What was never exercised is
+  the acceptance test that matters most: **sign in by email, sign out, then sign
+  in with Google on the SAME address, and confirm the notes are still there and NO
+  second personal workspace was created.** Supabase auto-links identities sharing
+  a *verified* email into one `auth.users` row; that is what stops the signup
+  trigger (`supabase/migrations/0001_init.sql`) minting a duplicate workspace. If
+  linking ever fails, a user's data silently splits across two workspaces, which
+  is why this is the gate. Practical test: the marker note created under the email
+  session must still be visible after the Google sign-in; confirm in Supabase →
+  Authentication → Users that the address is ONE user with TWO identities.
+  Needs the owner to drive (it requires entering a real Google password).
 
 - **KJV + translation switcher.** Second `BibleProvider` implementation plus a UI
   to pick translation. The provider interface already exists for this; note
@@ -344,41 +180,87 @@ prioritized.
   free vs paid, billing, quota enforcement. Design the free single-user
   experience so it never feels crippled.
 
-- **Cloudflare Pages deploy — project + domain live; one dashboard step left.**
-  As of 2026-07-19 the owner confirmed the **Pages project exists with the custom
-  domain attached**: `lanternword.com` is registered at Cloudflare, DNS is live
-  (proven: Brevo's DKIM/SPF authenticated through it and auth email sends), and
-  the `*.pages.dev` origin is **`lantern-5jf.pages.dev`**. `supabase/config.toml`
-  is now wired to production: `site_url = https://lanternword.com` and
-  `additional_redirect_urls` = production + the pages.dev preview + localhost.
-  Gotcha logged during setup, kept for the record: Cloudflare's Git-import now
-  defaults to the **Workers** flow (`npx wrangler deploy`, expects a Worker we
-  don't have); the correct path is the **Pages** product (build output `dist`,
-  honours `public/_redirects`).
-
-  **Remaining (owner, dashboard):** confirm the HOSTED Supabase project's Auth →
-  URL Configuration allowlist lists `https://lanternword.com` and
-  `https://lantern-5jf.pages.dev` (config.toml drives only the local CLI, not the
-  hosted project). Until then, production OAuth/magic-link returns may be rejected
-  by the hosted allowlist even though the code points at the right origins.
-
-  **Decided: Cloudflare Pages** (not Vercel — the SPA fallback `public/_redirects`
-  is already Cloudflare/Netlify format and the docs assume Pages; Vercel would
-  need a `vercel.json` rewrite and re-documentation for no gain). **Domain:
-  `lanternword.com`, registered at Cloudflare Registrar** (turned out cheaper than
-  Spaceship). Registration + DNS + the Pages custom domain + Brevo's email records
-  + OAuth therefore all live in one Cloudflare dashboard with no nameserver
-  delegation to arrange. (Name was reconsidered and kept: it's Psalm 119:105
-  compressed — *lamp/lantern* + *word* are the two nouns of the founding verse, and
-  the hero already quotes it. `lantern.study` was the only cleaner alternative but
-  is unlikely to be sold at Cloudflare's at-cost pricing.) Setup: connect the
-  `dnav0/lantern` GitHub repo to a new Pages
-  project, build `npm run build`, output `dist`, env vars `VITE_SUPABASE_URL` /
-  `VITE_SUPABASE_ANON_KEY`. Then add `https://lanternword.com` (and the
-  `*.pages.dev` preview origin) to Supabase Auth → URL Configuration, and update
-  `supabase/config.toml` `site_url` / `additional_redirect_urls` to match.
-
 ## Done
+
+- **Google OAuth live + consent-screen branding verified (2026-07-20).** Google
+  sign-in works end to end, and brand verification finally PASSED, so the consent
+  screen shows "Lantern" and the logo instead of the raw `…supabase.co` host.
+  Getting there took six rejections; the durable lessons, because they are not
+  obvious and cost a lot of time:
+  - **A client-rendered SPA is invisible to the checker.** The served
+    `index.html` was an empty `#root`, so the reviewer saw no app name and no
+    purpose. `<meta>`/`<title>` do NOT count as homepage content, and
+    `<noscript>` is hidden whenever JS runs. The fix that works is REAL visible
+    markup in the served HTML (now a fallback inside `#root` that `createRoot`
+    replaces on mount), plus a static page — `public/about.html` — that never
+    depends on JS at all.
+  - **The privacy link on the homepage must be ABSOLUTE and byte-match the
+    consent-screen value.** The requirement says the link "should match the link
+    you added on your consent screen configuration"; every link on our pages was
+    relative (`/privacy`) so it never matched `https://lanternword.com/privacy`.
+    This was the last blocker and the least obvious one.
+  - **An orphan page is never crawled.** `/about` reported "URL is unknown to
+    Google, Last crawl: N/A" with "Referring page: None detected" — nothing
+    linked to it, so the checker had nothing to read no matter what it contained.
+    Search Console → **URL Inspection** is the tool that reveals this, and should
+    be the FIRST diagnostic next time, not the last.
+  - **Brand verification checks the name AND the logo**, and the logo must be the
+    same file that was uploaded (`icon-512.png`), rendered on the page next to the
+    exact app name.
+  - **Full app verification is NOT required** for non-sensitive scopes
+    (email/profile/openid) — only the lightweight *brand* verification. Ignore the
+    Audience page's generic "submit your app for review" banner; that is the heavy
+    sensitive-scope path.
+  - Also fixed along the way: `/robots.txt` was being served as the app's HTML by
+    the SPA catch-all (`public/robots.txt` + `public/sitemap.xml` now exist).
+  Incidental: Cloudflare **Email Obfuscation** rewrites `mailto:` links on the
+  static pages into `/cdn-cgi/l/email-protection` plus a decoder script — harmless,
+  but proof Cloudflare mutates served HTML; check Rocket Loader is off if crawler
+  rendering ever looks wrong. Full blow-by-blow is in git history.
+
+  **Standing decision — keep BOTH Google and email, not Google-only.** Google is
+  the prominent one-click default; email OTP stays as the fallback ("or continue
+  with email"). Do not "simplify" this away: (1) account-lockout risk — if
+  something goes wrong on Google's side there would be no way back into the app's
+  own data; (2) a real minority of users specifically avoid Google-linked sign-in
+  for a personal spiritual-journal app; and (3) Apple's App Store guidelines
+  require offering Sign in with Apple as a parallel option if Google sign-in is
+  offered, so a Google-only app would be forced to add a *third* auth method just
+  to ship on iOS (see the Capacitor mobile wrap item), whereas keeping email as the
+  neutral fallback never trips that rule.
+
+- **Custom SMTP auth email templates (2026-07-19).** `supabase/templates/
+  magic-link.html` (the one that matters — `signInWithOtp` with
+  `enable_confirmations = false` routes through the "Magic Link" template for both
+  new and returning users) and `confirm-signup.html` (defensive duplicate). Both
+  lead with the 6-digit `{{ .Token }}` and offer `{{ .ConfirmationURL }}` as the
+  fallback, matching `SignIn.tsx`'s code screen; styled to the design tokens
+  (table layout, all-inline styles, Georgia serif, Psalm 119:105, entities for
+  curly quotes so no mojibake). Verified live end to end: a real email arrives from
+  `no-reply@lanternword.com`, renders correctly in a real Gmail inbox, and the code
+  signs in. **Bug the live test caught:** the hosted Supabase project was issuing
+  an **8-digit** OTP while `SignIn.tsx` caps the field at `maxLength={6}`, so a
+  real user could only type 6 of 8 and sign-in would fail. Fixed at the source
+  (owner set the hosted Email OTP length to 6 — `config.toml` drives only the local
+  CLI) and re-verified with no bypass. Brevo remains the send pipe; note Brevo SMTP
+  keys die after 90 days of *zero* sending, so if auth email ever stops silently,
+  regenerate the key first.
+
+- **Cloudflare Pages deploy — live (2026-07-19).** `lanternword.com` is registered
+  at Cloudflare Registrar with DNS, the Pages project builds `dnav0/lantern`
+  (`npm run build` → `dist`), the custom domain is attached, and the `*.pages.dev`
+  origin is `lantern-5jf.pages.dev`. `supabase/config.toml` `site_url` /
+  `additional_redirect_urls` point at production + preview + localhost, and the
+  hosted Supabase Auth → URL Configuration allowlist was confirmed to match.
+  **Decided: Pages, not Vercel** — `public/_redirects` is already Cloudflare/Netlify
+  format; Vercel would need a `vercel.json` rewrite for no gain. Gotchas worth
+  keeping: Cloudflare's Git-import defaults to the **Workers** flow
+  (`npx wrangler deploy`, expects a Worker we don't have) — the correct path is the
+  **Pages** product; and do NOT add explicit `/privacy` → `/privacy.html` rewrites
+  to `_redirects`, because Pages already serves static files at their extensionless
+  URL and 308-redirects `.html` → clean, so an explicit rewrite causes an infinite
+  redirect loop (this actually shipped and broke the live legal pages for a few
+  minutes).
 
 - **Alt-modifier escape hatch so verse text can be copied (2026-07-19).** The
   desktop marquee deliberately took click-drag away from native text selection
@@ -418,6 +300,7 @@ prioritized.
   block (`.study-scripture-toggle-hint`/`-chevron`) were kept conservatively. No
   change to `tokens.css`; deletion-only diff. Screenshot-verified the dark reader
   view is visually unchanged.
+
 - **Terms + Privacy pages, login-card fine print, and prod deploy wiring
   (2026-07-19).** Three things that were gated on "the pages don't exist yet":
   - **Standalone legal pages.** `public/terms.html` and `public/privacy.html` —
