@@ -9,7 +9,11 @@ Dennis picks/rewrites the copy.
 Driven live with Playwright against `npm run dev` (port 5173). No `.env` file
 exists in this checkout, so the dev server was already serving the in-memory
 stub — nothing to move aside. Screenshots are in this run's artifacts
-(`screenshots/01`–`11`); referenced by number below.
+(`screenshots/01`–`12`); referenced by number below. (A prior pass at this
+brief ran out of turns before its captures could be uploaded — runner
+artifacts don't survive between runs, only git commits do — so every
+screenshot referenced here was captured fresh in this run, clicking through
+the live app.)
 
 **Two things the verify plan assumed that turned out not to hold, and which are
 themselves findings:**
@@ -21,10 +25,10 @@ themselves findings:**
    only exist on the Supabase-backed path, which needs a real project and a
    real account to drive with Playwright; that isn't available in this sandbox
    and isn't something this brief's scope (`docs/proposals/**` only) can wire
-   up. Onboarding.tsx below is analyzed from source (quoted in full, it's 65
-   lines of plain conditional JSX with no dynamic behavior worth a live
-   capture) rather than screenshotted. Flagging this plainly rather than
-   quietly treating a source read as a live capture.
+   up. Onboarding.tsx below is analyzed from source (it's ~100 lines of plain
+   conditional JSX — three `step === n` blocks with no dynamic behavior worth
+   a live capture) rather than screenshotted. Flagging this plainly rather
+   than quietly treating a source read as a live capture.
 2. **The stub isn't a "genuinely empty account."** `seedMemoryApi()` seeds four
    passages (Genesis, John, Romans, Psalms) with real notes already on them —
    see screenshot 01. Every dev-mode session boots into a partially-studied
@@ -74,31 +78,48 @@ one — `docs/BACKLOG.md`'s 2026-07-19 entry shows the Alt-drag line was added
 deliberately, scoped to exactly this bar, "not a new persistent banner." It
 works. The gap is upstream of it: nothing gets you here in the first place.
 
-### First note (screenshot 04, inline quick-note; 05/06/07, full Study mode)
+### First note — two different editors, not one (screenshots 04–08)
 
-The inline quick-note editor and the full `+ Study` surface share the same
-`NoteEditor`, which already has real, working discoverability infrastructure
-(`docs/BACKLOG.md`, "Editor behaviors" workstream):
+Correcting an assumption from source-reading alone: the inline "Quick note"
+flow and the full `+ Study` surface are **not** the same component.
 
-- Every empty line placeholders `Type your note — @ for a category, v4 to tag
-  verse 4`.
-- A one-time popover (`berean.noteHintSeen`) fires on first note-line focus,
-  screenshot 07: "Tip: type @ to tag a category, or v4 to anchor a note to
-  verse 4. A reference like Matt 5:9 becomes a link."
-- A mobile chip row offers the same tags as tap targets.
+- **Quick note** (screenshots 04–07, `Mark 1:1`) is `QuickEditCard` wrapping
+  `InlineTagInput` — a plain single-line `<input class="inline-note-input">`
+  (`BookDetailPage.tsx:877`). Its only discoverability aid is a static,
+  always-visible footer legend, never a popover: `@ category · v4 verse · esc
+  cancel` (visible in screenshot 04). Pressing Enter **saves and closes the
+  note** (screenshot 07) — it does not add a second line. Category and verse
+  tagging work here (confirmed: typing `@`/`v4` is handled by
+  `InlineTagInput`), but multi-line, and therefore sub-notes, are
+  structurally impossible in this editor.
+- **Full Study mode** (screenshots 08–11, opened via "Study chapter") uses
+  the real multi-line `NoteEditor` (`class="note-input note-richtext"`,
+  contenteditable), which has its own, richer discoverability
+  infrastructure (`docs/BACKLOG.md`, "Editor behaviors" workstream):
+  - Empty-line placeholder: `Type your note — @ for a category, v4 to tag
+    verse 4` (screenshot 08).
+  - A one-time popover (`berean.noteHintSeen`, `NoteEditor.tsx:49`) fires on
+    first note-line focus, screenshot 08: "Tip: type @ to tag a category, or
+    v4 to anchor a note to verse 4. A reference like Matt 5:9 becomes a
+    link."
+  - A mobile chip row (`note-chip-row`, `NoteEditor.tsx:701`) offers the same
+    tags as tap targets.
 
-Category tagging and verse anchoring are **already handled.** This is not a
-gap.
+Category tagging and verse anchoring are **already handled in both editors.**
+This is not a gap. But it means Hint 2 below (sub-notes) can only ever be a
+full-Study-mode hint — quick notes never grow a second line to indent.
 
-### Sub-notes (screenshots 09/10)
+### Sub-notes (screenshots 10/11, full Study mode only)
 
 Pressing Tab on a line indents it one level (`◦` bullet, 24px padding,
 `NoteEditor.tsx:404-409`) — this is real and works (verified via DOM class,
-not just the screenshot: `note-line--indent-1` applies correctly). **It is
-mentioned nowhere** — not the placeholder, not the tip popover, not the chip
-row. It's the one real gap in an otherwise well-covered editor.
+not just the screenshot: `note-line--indent-1` applies correctly, screenshot
+11). **It is mentioned nowhere** — not the placeholder, not the tip popover,
+not the chip row — and it is **only reachable from full Study mode**, since
+quick notes (above) are single-line by construction. It's the one real gap in
+an otherwise well-covered editor.
 
-### Reading a study back (screenshot 11, `Psalm 23`)
+### Reading a study back (screenshot 12, `Psalm 23`)
 
 Past notes render inline under their verse, with a colored category label
 (`HISTORICAL`, `PERSONAL`). This is where "study" and "reading" visibly blur
@@ -126,11 +147,13 @@ below — this is why I don't think that distinction needs its own hint.
 
 ### 2. Tab indents a line as a sub-note (new)
 
-- **Trigger:** the first time a user's note ever grows past one line (line
-  count transitions 1 → 2 for the first time — a genuine point-of-use moment,
-  distinct from the existing first-focus tip which is already covering @/v4
-  and would be crowded by a third instruction). Flag e.g.
-  `berean.indentHintSeen`.
+- **Trigger:** the first time a note **in full Study mode** (`NoteEditor`)
+  grows past one line (line count transitions 1 → 2 for the first time — a
+  genuine point-of-use moment, distinct from the existing first-focus tip
+  which is already covering @/v4 and would be crowded by a third
+  instruction). Scoped to `NoteEditor` specifically — quick notes
+  (`InlineTagInput`) are single-line by construction and never reach this
+  state. Flag e.g. `berean.indentHintSeen`.
 - **Why here:** it's the only way the flat four-category model expresses "this
   is a smaller thought under that bigger one." Nothing else in the UI hints at
   hierarchy at all.
@@ -144,8 +167,9 @@ below — this is why I don't think that distinction needs its own hint.
 - **Alt-drag copy hint.** Already shipped (2026-07-19, see above), already
   scoped correctly (inside the action bar, not a banner), already hidden on
   touch. Adding anything here would be redundant.
-- **Category (`@`) / verse-anchor (`v4`) tagging hint.** Already shipped
-  (placeholder + `berean.noteHintSeen` popover + mobile chip row). Same
+- **Category (`@`) / verse-anchor (`v4`) tagging hint.** Already shipped in
+  both editors — a static footer legend in Quick note, a placeholder +
+  `berean.noteHintSeen` popover + mobile chip row in full Study mode. Same
   verdict.
 - **"Study mode vs. reading mode" explainer.** Considered and rejected. The
   action-bar buttons already name the distinction at the moment it matters
@@ -222,11 +246,12 @@ more for retention than front-loading two paragraphs of mode description.
 
 ## Working tree
 
-No `src/` changes were made for this brief. Proof (before this file was staged):
+No `src/` changes were made for this brief. Proof (before committing this
+revision):
 
 ```
 $ git status --short
-?? docs/proposals/
+ M docs/proposals/onboarding-hints.md
 ```
 
-Only this new proposal directory/file — nothing under `src/`.
+Only this proposal file — nothing under `src/`.
