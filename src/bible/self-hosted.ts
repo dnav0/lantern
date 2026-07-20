@@ -26,16 +26,30 @@ type BsbBundle = Record<string, Record<string, [number, string][]>>
 
 const BUNDLE_URL = '/bible/bsb.json.gz'
 
-// Fetch + gunzip + parse the bundle. Split out (and injectable via the
-// constructor) so the parsing/lookup logic can be unit-tested without a real
-// network fetch or a DecompressionStream.
+// Fetch + parse the bundle. Split out (and injectable via the constructor) so
+// the parsing/lookup logic can be unit-tested without a real network fetch or a
+// DecompressionStream.
+//
+// Decompression is decided by the BYTES we actually receive, never by headers or
+// the host's conventions — because hosts disagree about a `.gz` file. Vite's dev
+// server tags it `Content-Encoding: gzip`, so the browser transparently
+// decompresses and hands us plain JSON; other hosts (and Cloudflare Pages, when
+// serving a `.gz` opaquely) hand back the raw gzip stream untouched. Sniffing
+// the gzip magic number (1f 8b) — which JSON, always starting with `{` = 0x7b,
+// can never collide with — makes this correct in both cases instead of green
+// here and broken in production.
 async function fetchBundle(url: string): Promise<BsbBundle> {
   const res = await fetch(url)
-  if (!res.ok || !res.body) {
+  if (!res.ok) {
     throw new Error(`self-hosted BSB fetch failed: ${res.status} ${res.statusText}`)
   }
-  const decompressed = res.body.pipeThrough(new DecompressionStream('gzip'))
-  const json = await new Response(decompressed).text()
+  const bytes = new Uint8Array(await res.arrayBuffer())
+  const isGzip = bytes[0] === 0x1f && bytes[1] === 0x8b
+  const json = isGzip
+    ? await new Response(
+        new Response(bytes).body!.pipeThrough(new DecompressionStream('gzip'))
+      ).text()
+    : new TextDecoder().decode(bytes)
   return JSON.parse(json) as BsbBundle
 }
 
