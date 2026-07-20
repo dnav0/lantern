@@ -2,6 +2,12 @@ name: Lantern
 review_level: normal
 
 checks:
+  # The hourly health job only runs http_200 checks — a `command` check needs
+  # the repo checked out and installed, which is too heavy for it. So this is
+  # the one that actually produces an uptime signal.
+  - id: site
+    type: http_200
+    url: https://lanternword.com
   - id: test
     type: command
     run: npm test
