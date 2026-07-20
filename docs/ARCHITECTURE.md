@@ -281,10 +281,13 @@ Sign-in offers **two methods reaching one account**: Google OAuth
 (`signInWithOAuth({ provider: 'google' })`, the prominent one-click default) and
 **email OTP** (the fallback). Because first sign-in doubles as sign-up, there is
 only ever *one* action here — which is why the landing offers a choice of method
-rather than a "Get started"/"Sign in" pair. Google is code-complete but inert
-until its credentials are registered in the Supabase dashboard (see BACKLOG);
-note that `signInWithOAuth` hands the browser off without validating the
-provider, so the button must not face users until then.
+rather than a "Get started"/"Sign in" pair. **Both methods are live in
+production** (2026-07-20): the Google provider is configured in Supabase, and the
+OAuth consent screen's branding is verified, so users see "Lantern" and the app
+logo rather than the raw `…supabase.co` host. Note that `signInWithOAuth` hands
+the browser off *without validating the provider* — if the provider is ever
+disabled, the user lands on a raw JSON error page and the caller's `catch` never
+runs, so never ship that button against an unconfigured provider.
 
 The two methods do not fork the account: **Supabase automatically links
 identities that share a *verified* email** into one `auth.users` row. The OTP
@@ -293,6 +296,11 @@ email-then-Google (or the reverse) lands on the same user. This is load-bearing
 rather than incidental — the signup trigger creates a profile + personal
 workspace on *every* new `auth.users` row, so a second row would mean a second,
 empty workspace and split notes. Nothing in this codebase implements the linking.
+**Verified in production (2026-07-20):** signing in by email and then with Google
+on the same address returned the same notes, and the account holds exactly one
+`personal` workspace — so the linking behaves as relied upon here. Re-test this
+if the Supabase auth settings ever change (in particular, "Allow users without
+email" must stay OFF, since the email is what the linking keys on).
 
 Email OTP: the user enters an email, Supabase sends a 6-digit code,
 and the code is verified (`signInWithOtp({ shouldCreateUser: true })` →
@@ -425,21 +433,53 @@ stub), since it only calls interface methods.
 
 ## Deploy (Phase 4)
 
-**Not set up yet — this section is the plan, not the state of the world.** The
-Cloudflare Pages project has never been created (see BACKLOG); the app runs
-locally only, and auth redirect URLs are still localhost-only, so OAuth and magic
-links have no production origin to return to.
+**LIVE at [lanternword.com](https://lanternword.com) since 2026-07-19.**
+**Cloudflare Pages** auto-deploys from `main` (build `npm run build`, output
+`dist`, env `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`); the preview origin is
+`lantern-5jf.pages.dev`. The domain is registered at Cloudflare Registrar, so DNS,
+hosting, the Pages custom domain, Brevo's email records and the OAuth origins all
+live in one dashboard with no nameserver delegation. Pages was chosen over Vercel
+because `public/_redirects` is already the Cloudflare/Netlify format (Vercel would
+need a `vercel.json` rewrite). Auth email goes out over **Brevo** SMTP from
+`no-reply@lanternword.com`. Auth origins are allowlisted in BOTH
+`supabase/config.toml` (local CLI only) and the hosted project's
+Auth → URL Configuration — keep those in sync.
 
-The plan (decided, not yet executed): **Cloudflare Pages** auto-deploying from
-`main`, at **`lanternword.com`** (registered at Cloudflare Registrar, so DNS and
-hosting share one dashboard). Build command `npm run build`, output directory `dist`, environment
-variables `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`. `public/_redirects`
-(`/* /index.html 200`) makes the single-page app's client-side view state survive
-a hard reload or deep link on any path — this is the Cloudflare/Netlify format,
-one reason Pages was chosen over Vercel (which would need a `vercel.json`
-rewrite). Custom SMTP for auth email is **Brevo** on the same domain. See BACKLOG
-for the ordered setup steps and the auth-origin allowlisting that unblocks
-production OAuth and magic links.
+**Deploy-time gotchas, all learned the hard way:**
+
+- **Cloudflare's Git-import defaults to the Workers flow** (`npx wrangler deploy`,
+  expecting a Worker that does not exist here). The correct product is **Pages**.
+- **Do NOT add explicit `/privacy` → `/privacy.html` rewrites to `_redirects`.**
+  Pages already serves static files at their extensionless URL and 308-redirects
+  `.html` → clean; an explicit rewrite fights that and produces an **infinite
+  redirect loop**. This shipped once and broke the live legal pages. `_redirects`
+  should hold only the SPA catch-all, and it carries a comment saying so.
+- **Static files shadow the catch-all**, which is what makes `public/*.html`
+  (`about`, `privacy`, `terms`) work at clean URLs — and is why `/robots.txt` was
+  silently served as the app's HTML until a real `public/robots.txt` was added.
+- **Cloudflare mutates the served HTML.** Email Obfuscation rewrites `mailto:`
+  links into `/cdn-cgi/l/email-protection` plus a decoder script. Harmless here,
+  but if crawler rendering ever looks wrong, check that and Rocket Loader.
+
+**The public static pages exist for a reason beyond content.** `public/about.html`
+is the URL registered as the OAuth "Application home page", and `privacy.html` /
+`terms.html` back the claims the landing makes. Google's brand verification reads
+the *served* HTML, so several constraints are load-bearing and must not be
+"tidied" away:
+
+- The app is a client-rendered SPA whose landing is a lazily-loaded chunk, so
+  `index.html` carries a **visible** fallback inside `#root` (app name, purpose,
+  logo, policy links) that `createRoot` replaces on mount. `<meta>`/`<title>` do
+  not count as page content to the checker, and `<noscript>` is hidden whenever JS
+  runs — neither is sufficient on its own.
+- Policy links on those pages are **absolute** (`https://lanternword.com/privacy`),
+  because the requirement is that the homepage's privacy link *match the value
+  configured on the consent screen*. Relative hrefs silently fail that check.
+- The `<h1>` on `about.html` must stay exactly **"Lantern"** (matching the consent
+  screen app name) and the logo rendered there must be the same file uploaded as
+  the OAuth logo (`icon-512.png`).
+- Pages must be linked from somewhere: an orphan page is never crawled, and an
+  uncrawled page fails verification no matter what it contains.
 
 ## Responsive & touch (Phase 3)
 

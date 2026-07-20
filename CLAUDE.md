@@ -19,9 +19,16 @@ cached data. Don't "tidy" them. The brand identity is wordmark-only — see
 
 Plain Vite + React 18 + TypeScript (strict). No framework, no router — the app is
 a single-page tree with view state in `App.tsx`. Styling is hand-written CSS in
-`src/assets/`. Backend (Phase 1+) is Supabase (Postgres + auth + RLS); scripture
-(Phase 2+) comes from `bible.helloao.org`, cached in IndexedDB. None of that
-exists yet — Phase 0 runs entirely on an in-memory stub.
+`src/assets/`. Backend is Supabase (Postgres + auth + RLS); scripture comes from
+`bible.helloao.org`, cached in IndexedDB.
+
+**All of that is built and LIVE** at [lanternword.com](https://lanternword.com)
+(Cloudflare Pages, auto-deploying from `main`) — Supabase auth with Google OAuth
++ email OTP, real scripture, and the public landing/legal pages. The in-memory
+stub (`src/api/memory.ts`) still exists and is still useful: with no
+`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` in the environment the app falls
+back to it, so you can do pure-UI work with no backend by moving `.env` aside.
+Keep `.env` in place when you need to exercise the real auth/data path.
 
 ## Hard rules
 
@@ -54,10 +61,13 @@ interfaces. Understand these before changing data or scripture code.
   dropped.
 - `context.tsx` — `ApiProvider` + `useApi()`. `useApi()` throws outside a
   provider so a missing wiring fails loudly.
-- `memory.ts` — Phase 0 in-memory implementation. State lives in module maps and
-  resets on reload. Seeds one sample passage so the app isn't empty.
-- (Phase 1) `supabase.ts` / `berean-api.ts` — the real implementation swaps in at
-  `main.tsx` with zero component changes.
+- `memory.ts` — the in-memory stub. State lives in module maps and resets on
+  reload. Seeds one sample passage so the app isn't empty. Still the fallback
+  when Supabase env vars are absent, which makes it the fastest way to do pure-UI
+  work.
+- `supabase.ts` / `berean-api.ts` — the real, shipped implementation. It swaps in
+  at the bootstrap with zero component changes, which is the whole point of the
+  seam.
 
 Because every mutation funnels through one object, the future offline write
 outbox has exactly one place to live: a failed write is caught here and surfaced
@@ -65,12 +75,14 @@ as a friendly message today — that catch is the stub the outbox later replaces
 Cascade cleanup (delete note → delete empty session → delete empty passage) is
 done explicitly in the implementation, mirroring the old desktop behavior.
 
-### `BibleProvider` — the scripture source (`src/bible/`, Phase 2)
+### `BibleProvider` — the scripture source (`src/bible/`)
 
 `getChapter(bookNumber, chapter)` → verses in the `{ verse, text }` shape
 components already consume. `helloao.ts` implements BSB; a future ESV provider
 takes a user API key; a cache layer wraps any provider (chapters are immutable,
-so cache forever). Phase 0 fakes this inside `memory.ts.getBibleVerse`.
+so cache forever). The memory stub fakes this inside `memory.ts.getBibleVerse`;
+in dev a `FixtureBibleProvider` bundles a few chapters so contributors without
+network egress still see real verses (it tree-shakes out of production).
 
 ## Conventions
 
@@ -96,5 +108,6 @@ so cache forever). Phase 0 fakes this inside `memory.ts.getBibleVerse`.
 `src/components/` is the UI. `src/api/` is the data seam. `src/utils/` is pure
 logic (book metadata, note parsing, rich-text serialization, dark mode). Design,
 schema, and the decision log live in `docs/ARCHITECTURE.md`; deferred work in
-`docs/BACKLOG.md`. The overall migration plan is phased — Phase 0 is scaffold +
-stub; Supabase, scripture, mobile UI, and PWA/offline follow.
+`docs/BACKLOG.md`. The original phased migration (scaffold+stub → Supabase →
+scripture → mobile UI → PWA/offline → deploy) is complete; the app is live, so
+`docs/BACKLOG.md` is now the map of what's left rather than a phase plan.
