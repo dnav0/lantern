@@ -7,6 +7,7 @@ import InlineTagInput from './InlineTagInput'
 import RichEditInput from './RichEditInput'
 import InlineDeleteConfirm from './InlineDeleteConfirm'
 import CrossRefPill from './CrossRefPill'
+import ErrorBoundary from './ErrorBoundary'
 import ScriptureSkeleton from './ScriptureSkeleton'
 import QuickEditCard from './QuickEditCard'
 import { useVerseMarquee } from '../utils/useVerseMarquee'
@@ -1104,16 +1105,17 @@ export default function BookDetailPage({
       </div>
 
       <div className="book-detail-content">
-        <ChapterView
-          key={`${bibleBook.name}-${selectedChapter}`}
-          bookName={bibleBook.name}
-          chapter={selectedChapter}
-          notes={allNotes}
-          passages={bookPassages}
-          onStudyChapter={onStudy}
-          onOpenStudy={onOpenStudy}
-          onNotesChanged={reloadNotes}
-        />
+        <ErrorBoundary variant="pane" key={`${bibleBook.name}-${selectedChapter}`}>
+          <ChapterView
+            bookName={bibleBook.name}
+            chapter={selectedChapter}
+            notes={allNotes}
+            passages={bookPassages}
+            onStudyChapter={onStudy}
+            onOpenStudy={onOpenStudy}
+            onNotesChanged={reloadNotes}
+          />
+        </ErrorBoundary>
       </div>
     </div>
   )

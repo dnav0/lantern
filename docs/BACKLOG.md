@@ -140,6 +140,25 @@ prioritized.
 
 ## Done
 
+- **React error boundaries + recoverable failure UI (2026-07-20).** Found during
+  backlog triage on 2026-07-20: a render-time throw anywhere in the tree blanked
+  the whole app with no recovery. `src/components/ErrorBoundary.tsx` is a small
+  class component (the one place React still requires a class) with two
+  fallback variants, both built from existing design tokens only (no new color
+  literals): `variant="app"` is a full-screen calm recovery card wired around
+  both `Root.tsx` render paths (Supabase and memory-stub), with a "Reload"
+  button; `variant="pane"` is a smaller in-place fallback wrapping the two
+  scripture-rendering surfaces — `PassagePane` in `StudyMode` and `ChapterView`
+  in `BookDetailPage` — with a "Try again" retry, so a chapter-load render
+  failure degrades only that pane. Both boundaries are keyed on the data that
+  produced the render (passage reference / book+chapter) so navigating to a
+  different passage or chapter remounts a fresh boundary instead of getting
+  stuck showing a stale fallback. No telemetry or error-reporting SDK added —
+  out of scope by design, so `public/privacy.html`'s "no third-party tracking"
+  claim needed no change. Verified with a deliberately thrown test error,
+  screenshotted in light/dark at desktop/mobile widths, then reverted; `tsc
+  --noEmit` clean, tests pass.
+
 - **Self-hosted BSB fallback (2026-07-20).** `bible.helloao.org` is no longer a
   single point of failure on the scripture read path. `scripts/build-bsb-bundle.mjs`
   downloads the complete BSB from the publisher (`bereanbible.com/bsb.txt`,
