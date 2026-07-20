@@ -22,6 +22,10 @@ function toDraftLines(lines: LineData[]): DraftLine[] {
   return lines.map(l => ({ text: l.text, indent: l.indent, noteId: l.noteId }))
 }
 
+function fromDraftLines(draftLines: DraftLine[]): LineData[] {
+  return draftLines.map(l => ({ id: makeLineId(), text: l.text, indent: l.indent, noteId: l.noteId }))
+}
+
 // Same "does this diverge from what's already persisted" question the
 // per-line "saved Xh ago" timestamp answers (NoteEditor.tsx) — reused here to
 // decide whether there's a draft worth persisting at all, so a freshly
@@ -168,14 +172,11 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
       const baseline = toDraftLines(lines)
       void readDraft(draftStorageKey).then(draft => {
         if (draft && !draftLinesEqual(draft.lines, baseline)) {
-          setLines(
-            draft.lines.map(l => ({
-              id: makeLineId(),
-              text: l.text,
-              indent: l.indent,
-              noteId: l.noteId
-            }))
-          )
+          const restored = fromDraftLines(draft.lines)
+          setLines(restored)
+          // Focus the last restored line, cursor at the end, so the user can
+          // pick up typing immediately rather than having to click in first.
+          setFocusedLineId(restored[restored.length - 1].id)
           setDraftRestored(true)
         }
       })
@@ -235,14 +236,9 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
         const baseline: DraftLine[] =
           hydratedLines.length > 0 ? toDraftLines(hydratedLines) : [{ text: '', indent: 0 }]
         if (draft && !draftLinesEqual(draft.lines, baseline)) {
-          setLines(
-            draft.lines.map(l => ({
-              id: makeLineId(),
-              text: l.text,
-              indent: l.indent,
-              noteId: l.noteId
-            }))
-          )
+          const restored = fromDraftLines(draft.lines)
+          setLines(restored)
+          setFocusedLineId(restored[restored.length - 1].id)
           setDraftRestored(true)
         }
       }
@@ -306,14 +302,9 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
           const baseline = toDraftLines(lines)
           void readDraft(key).then(draft => {
             if (draft && !draftLinesEqual(draft.lines, baseline)) {
-              setLines(
-                draft.lines.map(l => ({
-                  id: makeLineId(),
-                  text: l.text,
-                  indent: l.indent,
-                  noteId: l.noteId
-                }))
-              )
+              const restored = fromDraftLines(draft.lines)
+              setLines(restored)
+              setFocusedLineId(restored[restored.length - 1].id)
               setDraftRestored(true)
             }
           })
