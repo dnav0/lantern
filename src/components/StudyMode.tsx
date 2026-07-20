@@ -255,10 +255,20 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
   // there's actual unsaved content (isLinesDirty); once the user backs out
   // their edits back to nothing (or to exactly what's already saved), the
   // stale draft is cleared instead of being kept around forever.
+  //
+  // draftSaveGenRef guards against a real race: a save can complete (and
+  // clearDraft) while a debounced write from just-before-the-click is still
+  // in flight. Without this, that stale timer fires after the clear and
+  // silently resurrects the draft it just erased. reconcileNotes bumps the
+  // generation on every successful clear; a timer only writes/clears if the
+  // generation is still what it was when the timer was scheduled.
+  const draftSaveGenRef = useRef(0)
   useEffect(() => {
     if (!draftStorageKey) return
     const dirty = isLinesDirty(lines, existingNotes)
+    const genAtSchedule = draftSaveGenRef.current
     const timer = setTimeout(() => {
+      if (draftSaveGenRef.current !== genAtSchedule) return
       if (dirty) {
         void writeDraft(draftStorageKey, { reference, lines: toDraftLines(lines) })
       } else {
@@ -393,6 +403,7 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
     // (and would otherwise resurface later and overwrite newer server state).
     if (draftStorageKey) {
       await clearDraft(draftStorageKey)
+      draftSaveGenRef.current += 1
       setDraftRestored(false)
     }
   }
