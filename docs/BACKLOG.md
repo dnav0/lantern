@@ -94,10 +94,20 @@ prioritized.
   the missing chapter. What remains of *this* item is the **prefetch** proper:
   the bundle already exists, so guaranteed up-front offline reading is now reduced
   to hydrating the IndexedDB cache from that bundle (decompress once, populate
-  `berean-bible-cache`) instead of downloading anything new. Also still owed: the
-  BSB attribution line in the UI (public-domain, so not legally required, but
-  correct) — deferred here because every UI surface was out of scope for the
-  fallback task.
+  `berean-bible-cache`) instead of downloading anything new.
+  **Do not mistake the availability fix for an offline fix (verified 2026-07-21).**
+  They are different failure modes and only the first is solved. If helloao is
+  down but the user is ONLINE, the fallback works: the bundle is fetched from our
+  own origin. If the user is genuinely OFFLINE, scripture outside the lazily-cached
+  chapters still fails — the bundle is deliberately excluded from the service-worker
+  precache (`globIgnores` in `vite.config.ts`) and no `runtimeCaching` rule matches
+  it (the only rule is Supabase `NetworkOnly`), so `fetch('/bible/bsb.json.gz')`
+  fails offline just like helloao does. That exclusion is correct — precaching it
+  would push ~1.2 MB onto every first load — so the fix is an explicit, opt-in
+  "download for offline reading" action, not a change to the precache glob. This
+  is exactly what makes this item cheap now: the asset already exists and is
+  already served, so the remaining work is caching one file on purpose plus the
+  UI to trigger and report it.
 
 - **Scripture full-text search (verse-text search).** Search v1 (UX overhaul,
   workstream 6) only *parses* a query into a reference jump ("mat 2:13" →
@@ -106,14 +116,28 @@ prioritized.
   index (the Full-Bible offline prefetch item above) plus a client-side index
   strategy. Deferred deliberately.
 
-- **Multiple study instances over the same verses.** The studies-model milestone
-  settled that notes are verse-anchored and the reading view is cumulative, while
-  a "study" is one effort (a `Passage`). A future step adds a lightweight
-  `study_id` group stamp on notes so a user can deliberately start a *new,
-  distinct* study instance over verses they've already studied (chosen/selected),
-  and so the editor can optionally merge notes from other efforts by anchor
-  overlap. This is the one part of the model that needs a schema touch (a nullable
-  column) — deliberately deferred out of the presentation-only milestone.
+- **Multiple study instances over the same verses — NO schema change needed.**
+  This item previously proposed a nullable `study_id` stamp on notes and was
+  described as "the one part of the model that needs a schema touch." That was
+  wrong, and `docs/proposals/study-id.md` (2026-07-20) proves it by driving the
+  running app rather than reasoning about it:
+  - Starting a **distinct second study** over already-studied verses **already
+    works today**. `StudyMode`'s manual `+ Study` entry does not consult
+    `findOverlappingPassage`, so typing an overlapping reference by hand creates
+    a genuinely separate `Passage` (verified: the Journal went 4 → 5 studies with
+    two independent `John 1:1-5` cards).
+  - **Merging by anchor overlap already works too.** `BookDetailPage`'s
+    `ChapterView` renders notes from every overlapping passage together under
+    their verses via `getNotesByBook` (verified with two overlapping studies).
+  So both halves of what `study_id` was going to buy are already provided by
+  `notes → sessions → passages`. A column would have been redundant, and adding
+  one to live user data would have been a migration for nothing.
+  What actually remains is one small **UI-only** choice, tracked here:
+  `BookDetailPage`'s selection-driven "Start study on {ref}" always *reopens* an
+  overlapping passage, so the "start a fresh study on these verses" path is only
+  reachable by manually retyping the reference in `+ Study`. Optionally surface
+  both (reopen as the default action, "start a new study instead" as a secondary).
+  Small, additive, no schema or `BereanApi` change.
 
 - **Postgres full-text index for note search.** `SupabaseBereanApi.searchNotes`
   is a case-insensitive `ilike '%q%'` scan (v1, acceptable per the plan). For
@@ -177,8 +201,14 @@ prioritized.
   and memoized for the session. It sits outside the cache-forever layer (safe to
   cache since the text is real, but kept out so the cache mirrors helloao only —
   see the code comment). Excluded from the PWA precache via `globIgnores` so users
-  don't download the whole Bible on first load. BSB attribution still owed in the
-  UI — see the note on the prefetch item below.
+  don't download the whole Bible on first load. **BSB attribution shipped
+  2026-07-21** in `public/about.html`'s footer (public-domain, so not legally
+  required, but correct), and `public/privacy.html`'s processor list was corrected
+  in the same change: it described helloao as the sole scripture source, which
+  stopped being true the moment we started serving a fallback copy ourselves. No
+  new third party is involved, so the "no third-party tracking" claims are
+  unaffected — but the standing rule is that any change to what the app fetches
+  gets reflected on that page in the same commit, and this is that.
 
 - **Product usage analytics — read-only SQL views (2026-07-20).**
   `supabase/migrations/0002_analytics_views.sql` adds six views for the app
