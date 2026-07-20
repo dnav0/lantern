@@ -75,7 +75,12 @@ function TestamentSection({
   )
 }
 
-export default function BibleLibrary({ passages, onSelectBook, displayName, onOpenSearch }: BibleLibraryProps): React.ReactElement {
+export default function BibleLibrary({
+  passages,
+  onSelectBook,
+  displayName,
+  onOpenSearch
+}: BibleLibraryProps): React.ReactElement {
   const [playBootFade] = useState(() => !hasBooted)
   useEffect(() => {
     hasBooted = true
@@ -101,16 +106,37 @@ export default function BibleLibrary({ passages, onSelectBook, displayName, onOp
         </p>
         {onOpenSearch && (
           <button type="button" className="library-search-entry" onClick={onOpenSearch}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             Search references or notes…
           </button>
         )}
       </div>
 
-      <TestamentSection label="Old Testament" bibleBooks={OT} countByBook={countByBook} onSelectBook={onSelectBook} />
-      <TestamentSection label="New Testament" bibleBooks={NT} countByBook={countByBook} onSelectBook={onSelectBook} />
+      <TestamentSection
+        label="Old Testament"
+        bibleBooks={OT}
+        countByBook={countByBook}
+        onSelectBook={onSelectBook}
+      />
+      <TestamentSection
+        label="New Testament"
+        bibleBooks={NT}
+        countByBook={countByBook}
+        onSelectBook={onSelectBook}
+      />
     </div>
   )
 }

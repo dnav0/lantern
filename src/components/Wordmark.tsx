@@ -21,7 +21,11 @@ interface WordmarkProps {
  * there is no `opsz` axis to reach for here — the 600 cut plus tight tracking
  * carries it. Outlining this to SVG paths (font-independent) is backlogged.
  */
-export default function Wordmark({ size = 22, className, style }: WordmarkProps): React.JSX.Element {
+export default function Wordmark({
+  size = 22,
+  className,
+  style
+}: WordmarkProps): React.JSX.Element {
   return (
     <span
       className={`wordmark${className ? ` ${className}` : ''}`}

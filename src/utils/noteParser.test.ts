@@ -56,13 +56,19 @@ describe('parseNoteLine — verse anchors', () => {
 describe('parseReferenceLabel', () => {
   it('parses a single verse reference', () => {
     expect(parseReferenceLabel('John 3:16')).toEqual({
-      chapter_start: 3, verse_start: 16, chapter_end: 3, verse_end: 16
+      chapter_start: 3,
+      verse_start: 16,
+      chapter_end: 3,
+      verse_end: 16
     })
   })
 
   it('parses a verse range', () => {
     expect(parseReferenceLabel('Matt 5:1-12')).toEqual({
-      chapter_start: 5, verse_start: 1, chapter_end: 5, verse_end: 12
+      chapter_start: 5,
+      verse_start: 1,
+      chapter_end: 5,
+      verse_end: 12
     })
   })
 

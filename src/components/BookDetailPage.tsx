@@ -109,10 +109,24 @@ function RenderedNoteContent({ content }: { content: string }): React.ReactEleme
     <>
       {segments.map((seg, i) => {
         switch (seg.type) {
-          case 'verse-anchor':  return <span key={i} className="pill-verse">{seg.display}</span>
-          case 'tag':           return null
-          case 'cross-ref':     return <CrossRefPill key={i} reference={seg.data?.reference ?? seg.raw} display={seg.display} />
-          default:              return <span key={i}>{seg.raw}</span>
+          case 'verse-anchor':
+            return (
+              <span key={i} className="pill-verse">
+                {seg.display}
+              </span>
+            )
+          case 'tag':
+            return null
+          case 'cross-ref':
+            return (
+              <CrossRefPill
+                key={i}
+                reference={seg.data?.reference ?? seg.raw}
+                display={seg.display}
+              />
+            )
+          default:
+            return <span key={i}>{seg.raw}</span>
         }
       })}
     </>
@@ -131,7 +145,15 @@ interface ChapterViewProps {
   onNotesChanged: () => void
 }
 
-function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onOpenStudy, onNotesChanged }: ChapterViewProps): React.ReactElement {
+function ChapterView({
+  bookName,
+  chapter,
+  notes,
+  passages,
+  onStudyChapter,
+  onOpenStudy,
+  onNotesChanged
+}: ChapterViewProps): React.ReactElement {
   const api = useApi()
   const [bibleData, setBibleData] = useState<BiblePassage | null>(null)
   const [loading, setLoading] = useState(true)
@@ -163,8 +185,8 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onOpe
   // in the side whitespace (not just over the verse grid) begins a selection.
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const chapterNotes = localNotes.filter(n =>
-    n.chapter_start <= chapter && chapter <= n.chapter_end
+  const chapterNotes = localNotes.filter(
+    n => n.chapter_start <= chapter && chapter <= n.chapter_end
   )
 
   const groups = groupNotes(chapterNotes)
@@ -196,12 +218,17 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onOpe
   useEffect(() => {
     setLoading(true)
     setBibleData(null)
-    api.getBibleVerse(`${bookName} ${chapter}`).then(data => {
-      setBibleData(data)
-    }).finally(() => setLoading(false))
+    api
+      .getBibleVerse(`${bookName} ${chapter}`)
+      .then(data => {
+        setBibleData(data)
+      })
+      .finally(() => setLoading(false))
   }, [bookName, chapter])
 
-  useEffect(() => { setLocalNotes(notes) }, [notes])
+  useEffect(() => {
+    setLocalNotes(notes)
+  }, [notes])
 
   // Note-highlight and range-selection are mutually exclusive dimming systems.
   // Entering either fully clears the other so a verse is never in a stacked,
@@ -252,10 +279,11 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onOpe
     // event mouseup produces re-run tap logic and clobber it.
     if (suppressNextClick()) return
     // Highlight notes anchored to this verse, as before.
-    const anchored = chapterNotes.filter(n =>
-      n.anchor_start_verse !== null &&
-      v >= n.anchor_start_verse &&
-      v <= (n.anchor_end_verse ?? n.anchor_start_verse)
+    const anchored = chapterNotes.filter(
+      n =>
+        n.anchor_start_verse !== null &&
+        v >= n.anchor_start_verse &&
+        v <= (n.anchor_end_verse ?? n.anchor_start_verse)
     )
     if (anchored.length) {
       setHighlightedNoteIds(new Set(anchored.map(n => n.id)))
@@ -426,7 +454,7 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onOpe
       anchor_end_verse: parsed.anchorEnd,
       category: parsed.category
     })
-    setLocalNotes(prev => prev.map(n => n.id === editingNoteId ? { ...n, ...updated } : n))
+    setLocalNotes(prev => prev.map(n => (n.id === editingNoteId ? { ...n, ...updated } : n)))
     markJustSaved(editingNoteId)
     setEditingNoteId(null)
     onNotesChanged()
@@ -454,23 +482,74 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onOpe
     const openPassageId = resolveNotePassageId(note)
     return (
       <div className="se-note-actions">
-        <button className="se-icon-btn" title="Edit" onClick={e => { e.stopPropagation(); handleStartEdit(note) }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        <button
+          className="se-icon-btn"
+          title="Edit"
+          onClick={e => {
+            e.stopPropagation()
+            handleStartEdit(note)
+          }}
+        >
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
           </svg>
         </button>
         {openPassageId && (
-          <button className="se-icon-btn" title="Open study" onClick={e => { e.stopPropagation(); onOpenStudy(openPassageId) }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          <button
+            className="se-icon-btn"
+            title="Open study"
+            onClick={e => {
+              e.stopPropagation()
+              onOpenStudy(openPassageId)
+            }}
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
             </svg>
           </button>
         )}
-        <button className="se-icon-btn se-icon-danger" title="Delete" onClick={e => { e.stopPropagation(); setConfirmDelete(note) }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
+        <button
+          className="se-icon-btn se-icon-danger"
+          title="Delete"
+          onClick={e => {
+            e.stopPropagation()
+            setConfirmDelete(note)
+          }}
+        >
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+            <path d="M10 11v6" />
+            <path d="M14 11v6" />
           </svg>
         </button>
       </div>
@@ -496,7 +575,10 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onOpe
             {opts?.chip && hasAnchor && (
               <button
                 className="note-range-chip"
-                onClick={e => { e.stopPropagation(); scrollToVerse(main.anchor_start_verse!) }}
+                onClick={e => {
+                  e.stopPropagation()
+                  scrollToVerse(main.anchor_start_verse!)
+                }}
                 title={`Go to ${rangeLabel}`}
               >
                 {rangeLabel}
@@ -510,11 +592,26 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onOpe
           </div>
         )}
         {isEditing ? (
-          <QuickEditCard category={main.category} mode="edit" saveDisabled={!editText.trim()} onSave={() => void handleSaveEdit()} onCancel={() => setEditingNoteId(null)}>
-            <RichEditInput className="note-edit-textarea" initialValue={editText} onChange={setEditText} onSave={() => void handleSaveEdit()} onCancel={() => setEditingNoteId(null)} />
+          <QuickEditCard
+            category={main.category}
+            mode="edit"
+            saveDisabled={!editText.trim()}
+            onSave={() => void handleSaveEdit()}
+            onCancel={() => setEditingNoteId(null)}
+          >
+            <RichEditInput
+              className="note-edit-textarea"
+              initialValue={editText}
+              onChange={setEditText}
+              onSave={() => void handleSaveEdit()}
+              onCancel={() => setEditingNoteId(null)}
+            />
           </QuickEditCard>
         ) : isConfirmingDelete ? (
-          <InlineDeleteConfirm onConfirm={() => void handleDeleteNote(main)} onCancel={() => setConfirmDelete(null)} />
+          <InlineDeleteConfirm
+            onConfirm={() => void handleDeleteNote(main)}
+            onCancel={() => setConfirmDelete(null)}
+          />
         ) : (
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
             <div style={{ flex: 1 }} onClick={() => handleNoteClick(main)}>
@@ -530,17 +627,35 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onOpe
               const isSubEditing = editingNoteId === sub.id
               const isSubConfirmingDelete = confirmDelete?.id === sub.id
               return (
-                <div key={sub.id} className={`reading-subnote${highlightedNoteIds.has(sub.id) ? ' highlighted' : ''}${justSavedId === sub.id ? ' just-saved' : ''}`}>
+                <div
+                  key={sub.id}
+                  className={`reading-subnote${highlightedNoteIds.has(sub.id) ? ' highlighted' : ''}${justSavedId === sub.id ? ' just-saved' : ''}`}
+                >
                   <span className="reading-subnote-bullet">◦</span>
                   {isSubEditing ? (
                     <div style={{ flex: 1 }}>
-                      <QuickEditCard category={sub.category} mode="edit" saveDisabled={!editText.trim()} onSave={() => void handleSaveEdit()} onCancel={() => setEditingNoteId(null)}>
-                        <RichEditInput className="note-edit-textarea" initialValue={editText} onChange={setEditText} onSave={() => void handleSaveEdit()} onCancel={() => setEditingNoteId(null)} />
+                      <QuickEditCard
+                        category={sub.category}
+                        mode="edit"
+                        saveDisabled={!editText.trim()}
+                        onSave={() => void handleSaveEdit()}
+                        onCancel={() => setEditingNoteId(null)}
+                      >
+                        <RichEditInput
+                          className="note-edit-textarea"
+                          initialValue={editText}
+                          onChange={setEditText}
+                          onSave={() => void handleSaveEdit()}
+                          onCancel={() => setEditingNoteId(null)}
+                        />
                       </QuickEditCard>
                     </div>
                   ) : isSubConfirmingDelete ? (
                     <div style={{ flex: 1 }}>
-                      <InlineDeleteConfirm onConfirm={() => void handleDeleteNote(sub)} onCancel={() => setConfirmDelete(null)} />
+                      <InlineDeleteConfirm
+                        onConfirm={() => void handleDeleteNote(sub)}
+                        onCancel={() => setConfirmDelete(null)}
+                      />
                     </div>
                   ) : (
                     <>
@@ -630,136 +745,171 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onOpe
         />
       )}
       <div className="book-chapter-content fade-in">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-faint)', letterSpacing: '0.04em' }}>
-          CHAPTER {chapter}
-        </div>
-        <button
-          className="btn-study-chapter"
-          onClick={() => {
-            const lastVerse = verses[verses.length - 1]?.verse ?? 1
-            const existing = findOverlappingPassage(passages, chapter, 1, lastVerse)
-            onStudyChapter(existing?.reference_label ?? `${bookName} ${chapter}`, existing?.id)
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 20
           }}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Study chapter
-        </button>
-      </div>
-
-      {/* Passage-level (anchorless) notes render above the grid, not bracketed. */}
-      {passageGroups.length > 0 && (
-        <div className="rail-passage-notes">
-          <div className="rail-passage-notes-label">Passage notes</div>
-          <div className="reading-notes-group">
-            {passageGroups.map(group => renderNoteGroup(group))}
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: 'var(--text-faint)',
+              letterSpacing: '0.04em'
+            }}
+          >
+            CHAPTER {chapter}
           </div>
+          <button
+            className="btn-study-chapter"
+            onClick={() => {
+              const lastVerse = verses[verses.length - 1]?.verse ?? 1
+              const existing = findOverlappingPassage(passages, chapter, 1, lastVerse)
+              onStudyChapter(existing?.reference_label ?? `${bookName} ${chapter}`, existing?.id)
+            }}
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Study chapter
+          </button>
         </div>
-      )}
 
-      {/* Study-Bible grid: scripture in column 1, rail notes (range notes only) in
+        {/* Passage-level (anchorless) notes render above the grid, not bracketed. */}
+        {passageGroups.length > 0 && (
+          <div className="rail-passage-notes">
+            <div className="rail-passage-notes-label">Passage notes</div>
+            <div className="reading-notes-group">
+              {passageGroups.map(group => renderNoteGroup(group))}
+            </div>
+          </div>
+        )}
+
+        {/* Study-Bible grid: scripture in column 1, rail notes (range notes only) in
           column 2 spanning their anchor range. The rail collapses when there are no
           range/passage notes. Collapses to a single column on mobile (see CSS).
           onPointerDown starts a marquee box selection over the scripture area. */}
-      <div className={`scripture-grid${hasRail ? '' : ' no-rail'}`}>
-        {verses.map((v, i) => {
-          const isSelected = selRange !== null && v.verse >= selRange[0] && v.verse <= selRange[1]
-          const isHighlighted = highlightedVerses.has(v.verse)
-          const isDimmed =
-            (hasHighlightedVerse && !isHighlighted) ||
-            (selRange !== null && !isSelected)
-          const showInline = inlineVerse === v.verse
-          const bracketCat = bracketByVerse.get(v.verse)
+        <div className={`scripture-grid${hasRail ? '' : ' no-rail'}`}>
+          {verses.map((v, i) => {
+            const isSelected = selRange !== null && v.verse >= selRange[0] && v.verse <= selRange[1]
+            const isHighlighted = highlightedVerses.has(v.verse)
+            const isDimmed =
+              (hasHighlightedVerse && !isHighlighted) || (selRange !== null && !isSelected)
+            const showInline = inlineVerse === v.verse
+            const bracketCat = bracketByVerse.get(v.verse)
 
-          const inlineHere = inlineGroupsByVerse.get(v.verse)
-          const mobileRangeHere = mobileRangeByVerse.get(v.verse)
+            const inlineHere = inlineGroupsByVerse.get(v.verse)
+            const mobileRangeHere = mobileRangeByVerse.get(v.verse)
 
-          return (
-            <div
-              key={v.verse}
-              className="reading-verse-block"
-              style={{ gridRow: i + 1, '--stagger-i': i } as React.CSSProperties}
-            >
+            return (
               <div
-                ref={el => { if (el) verseRowRefs.current.set(v.verse, el); else verseRowRefs.current.delete(v.verse) }}
-                className={`reading-verse-row${isHighlighted ? ' highlighted' : ''}${isSelected ? ' selected' : ''}`}
-                onClick={() => handleVerseClick(v.verse)}
-                style={isDimmed ? { opacity: 0.35 } : undefined}
+                key={v.verse}
+                className="reading-verse-block"
+                style={{ gridRow: i + 1, '--stagger-i': i } as React.CSSProperties}
               >
-                {bracketByVerse.has(v.verse) && (
-                  <span
-                    className={`verse-span-bracket cat-${bracketCat || 'none'}`}
-                    title="Note anchored here"
-                    aria-hidden="true"
-                  />
-                )}
-                <span className="verse-number">{v.verse}</span>
-                <span className="verse-text">{v.text}</span>
-              </div>
-
-              {/* Single-verse notes render inline beneath their verse row. */}
-              {inlineHere && inlineHere.length > 0 && (
-                <div className="reading-notes-group inline-verse-notes">
-                  {inlineHere.map(group => renderNoteGroup(group))}
-                </div>
-              )}
-
-              {/* Mobile only: range notes render after their last anchored verse
-                  (desktop uses the rail; this is display:none there). */}
-              {mobileRangeHere && mobileRangeHere.length > 0 && (
-                <div className="reading-notes-group mobile-range-notes">
-                  {mobileRangeHere.map(group => renderNoteGroup(group, { chip: true }))}
-                </div>
-              )}
-
-              {showInline && (
-                <div className="inline-note-row">
-                  <QuickEditCard
-                    mode="create"
-                    saveDisabled={!inlineText.trim() || savingInline}
-                    onSave={() => void handleInlineSave()}
-                    onCancel={() => { setInlineVerse(null); setInlineText('') }}
-                  >
-                    <InlineTagInput
-                      value={inlineText}
-                      onChange={setInlineText}
-                      onEnter={handleInlineSave}
-                      onEscape={() => { setInlineVerse(null); setInlineText('') }}
-                      className="inline-note-input"
-                      placeholder={`v${v.verse} type a note…`}
-                      autoFocus
+                <div
+                  ref={el => {
+                    if (el) verseRowRefs.current.set(v.verse, el)
+                    else verseRowRefs.current.delete(v.verse)
+                  }}
+                  className={`reading-verse-row${isHighlighted ? ' highlighted' : ''}${isSelected ? ' selected' : ''}`}
+                  onClick={() => handleVerseClick(v.verse)}
+                  style={isDimmed ? { opacity: 0.35 } : undefined}
+                >
+                  {bracketByVerse.has(v.verse) && (
+                    <span
+                      className={`verse-span-bracket cat-${bracketCat || 'none'}`}
+                      title="Note anchored here"
+                      aria-hidden="true"
                     />
-                  </QuickEditCard>
+                  )}
+                  <span className="verse-number">{v.verse}</span>
+                  <span className="verse-text">{v.text}</span>
                 </div>
-              )}
-            </div>
-          )
-        })}
 
-        {/* Desktop rail notes — range notes only, each spanning its anchor range
-            via grid-row. Single-verse notes render inline above. */}
-        {rangeGroups.map(group => {
-          const s = group.main.anchor_start_verse!
-          const e = group.main.anchor_end_verse ?? s
-          const isHl = highlightedNoteIds.has(group.main.id)
-          const lane = railLanes.get(group.main.id) ?? 0
-          return (
-            <div
-              key={group.main.id}
-              className={`rail-note${isHl ? ' highlighted' : ''}`}
-              style={{ gridRow: `${clampRow(s)} / ${clampRow(e) + 1}`, marginLeft: lane * LANE_STEP }}
-            >
-              <span className={`rail-bracket cat-${group.main.category || 'none'}`} aria-hidden="true" />
-              <div className="rail-note-body">
-                {renderNoteGroup(group)}
+                {/* Single-verse notes render inline beneath their verse row. */}
+                {inlineHere && inlineHere.length > 0 && (
+                  <div className="reading-notes-group inline-verse-notes">
+                    {inlineHere.map(group => renderNoteGroup(group))}
+                  </div>
+                )}
+
+                {/* Mobile only: range notes render after their last anchored verse
+                  (desktop uses the rail; this is display:none there). */}
+                {mobileRangeHere && mobileRangeHere.length > 0 && (
+                  <div className="reading-notes-group mobile-range-notes">
+                    {mobileRangeHere.map(group => renderNoteGroup(group, { chip: true }))}
+                  </div>
+                )}
+
+                {showInline && (
+                  <div className="inline-note-row">
+                    <QuickEditCard
+                      mode="create"
+                      saveDisabled={!inlineText.trim() || savingInline}
+                      onSave={() => void handleInlineSave()}
+                      onCancel={() => {
+                        setInlineVerse(null)
+                        setInlineText('')
+                      }}
+                    >
+                      <InlineTagInput
+                        value={inlineText}
+                        onChange={setInlineText}
+                        onEnter={handleInlineSave}
+                        onEscape={() => {
+                          setInlineVerse(null)
+                          setInlineText('')
+                        }}
+                        className="inline-note-input"
+                        placeholder={`v${v.verse} type a note…`}
+                        autoFocus
+                      />
+                    </QuickEditCard>
+                  </div>
+                )}
               </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
 
+          {/* Desktop rail notes — range notes only, each spanning its anchor range
+            via grid-row. Single-verse notes render inline above. */}
+          {rangeGroups.map(group => {
+            const s = group.main.anchor_start_verse!
+            const e = group.main.anchor_end_verse ?? s
+            const isHl = highlightedNoteIds.has(group.main.id)
+            const lane = railLanes.get(group.main.id) ?? 0
+            return (
+              <div
+                key={group.main.id}
+                className={`rail-note${isHl ? ' highlighted' : ''}`}
+                style={{
+                  gridRow: `${clampRow(s)} / ${clampRow(e) + 1}`,
+                  marginLeft: lane * LANE_STEP
+                }}
+              >
+                <span
+                  className={`rail-bracket cat-${group.main.category || 'none'}`}
+                  aria-hidden="true"
+                />
+                <div className="rail-note-body">{renderNoteGroup(group)}</div>
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       {selRange !== null && inlineVerse === null && (
@@ -779,8 +929,18 @@ function ChapterView({ bookName, chapter, notes, passages, onStudyChapter, onOpe
             onClick={clearSelection}
             aria-label="Clear selection"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
@@ -838,7 +998,9 @@ export default function BookDetailPage({
   const chaptersWithNotes = new Set(allNotes.map(n => n.chapter_start))
 
   useEffect(() => {
-    const sel = chapterSelectorRef.current?.querySelector('.chapter-pill.active') as HTMLElement | null
+    const sel = chapterSelectorRef.current?.querySelector(
+      '.chapter-pill.active'
+    ) as HTMLElement | null
     sel?.scrollIntoView({ inline: 'nearest', behavior: 'smooth' })
   }, [selectedChapter])
 
@@ -855,8 +1017,17 @@ export default function BookDetailPage({
       <div className="book-detail-header">
         <div className="book-detail-header-inner">
           <button className="book-detail-back" onClick={onBack}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6"/>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6" />
             </svg>
             Library
           </button>
@@ -864,7 +1035,12 @@ export default function BookDetailPage({
             <h1 className="book-detail-title">{bibleBook.name}</h1>
             <div className="book-detail-meta">
               {bibleBook.chapters} chapters
-              {studiedCount > 0 && <> · <span style={{ color: 'var(--accent)' }}>{studiedCount} with notes</span></>}
+              {studiedCount > 0 && (
+                <>
+                  {' '}
+                  · <span style={{ color: 'var(--accent)' }}>{studiedCount} with notes</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -872,8 +1048,23 @@ export default function BookDetailPage({
 
       <div className="chapter-selector-wrap">
         <div className="chapter-selector-wrap-inner">
-          <button className="chapter-nav-btn" onClick={() => scrollChapters(-1)} aria-label="Scroll left">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          <button
+            className="chapter-nav-btn"
+            onClick={() => scrollChapters(-1)}
+            aria-label="Scroll left"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
           </button>
           <div className="chapter-selector" ref={chapterSelectorRef}>
             {Array.from({ length: bibleBook.chapters }, (_, i) => i + 1).map(ch => {
@@ -891,8 +1082,23 @@ export default function BookDetailPage({
               )
             })}
           </div>
-          <button className="chapter-nav-btn" onClick={() => scrollChapters(1)} aria-label="Scroll right">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          <button
+            className="chapter-nav-btn"
+            onClick={() => scrollChapters(1)}
+            aria-label="Scroll right"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
           </button>
         </div>
       </div>

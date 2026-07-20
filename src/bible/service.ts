@@ -69,9 +69,10 @@ export async function getBibleVerse(reference: string): Promise<BiblePassage | n
   const chapterVerses = await provider.getChapter(parsed.bookNumber, parsed.chapterStart)
   if (chapterVerses.length === 0) return null
 
-  const verses = parsed.verseEnd === null
-    ? chapterVerses
-    : chapterVerses.filter(v => v.verse >= parsed.verseStart && v.verse <= parsed.verseEnd!)
+  const verses =
+    parsed.verseEnd === null
+      ? chapterVerses
+      : chapterVerses.filter(v => v.verse >= parsed.verseStart && v.verse <= parsed.verseEnd!)
 
   if (verses.length === 0) return null
 

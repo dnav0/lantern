@@ -13,7 +13,10 @@ function getBookSuggestions(query: string): BibleBook[] {
 
     // Exact alias match
     for (const alias of book.aliases) {
-      if (alias === q) { score = 100; break }
+      if (alias === q) {
+        score = 100
+        break
+      }
     }
 
     if (!score) {
@@ -26,7 +29,10 @@ function getBookSuggestions(query: string): BibleBook[] {
     if (!score) {
       // Alias starts-with / contains
       for (const alias of book.aliases) {
-        if (alias.startsWith(q)) { score = Math.max(score, 50); break }
+        if (alias.startsWith(q)) {
+          score = Math.max(score, 50)
+          break
+        }
         if (alias.includes(q)) score = Math.max(score, 30)
       }
     }
@@ -68,20 +74,23 @@ export default function ReferenceInput({
   const open = suggestions.length > 0
 
   // Commit + decide focus. On parse failure keep focus here and flag the error.
-  const commit = useCallback((val: string): void => {
-    const ok = onSubmit(val)
-    if (ok) {
-      setError(false)
-    } else {
-      setError(true)
-      inputRef.current?.focus()
-    }
-  }, [onSubmit])
+  const commit = useCallback(
+    (val: string): void => {
+      const ok = onSubmit(val)
+      if (ok) {
+        setError(false)
+      } else {
+        setError(true)
+        inputRef.current?.focus()
+      }
+    },
+    [onSubmit]
+  )
 
   // Derive the "book query" portion — only when no chapter:verse present
   function getBookQuery(val: string): string | null {
-    if (/\d+:\d+/.test(val)) return null          // already has ch:v
-    if (/\s+\d/.test(val)) return null             // has "Book 7" — chapter typed
+    if (/\d+:\d+/.test(val)) return null // already has ch:v
+    if (/\s+\d/.test(val)) return null // has "Book 7" — chapter typed
     return val
   }
 
@@ -99,16 +108,22 @@ export default function ReferenceInput({
     }
   }
 
-  const selectBook = useCallback((book: BibleBook): void => {
-    onChange(`${book.name} `)
-    setSuggestions([])
-    setActiveIdx(-1)
-    // Focus & place cursor at end
-    setTimeout(() => {
-      const el = inputRef.current
-      if (el) { el.focus(); el.setSelectionRange(book.name.length + 1, book.name.length + 1) }
-    }, 0)
-  }, [onChange])
+  const selectBook = useCallback(
+    (book: BibleBook): void => {
+      onChange(`${book.name} `)
+      setSuggestions([])
+      setActiveIdx(-1)
+      // Focus & place cursor at end
+      setTimeout(() => {
+        const el = inputRef.current
+        if (el) {
+          el.focus()
+          el.setSelectionRange(book.name.length + 1, book.name.length + 1)
+        }
+      }, 0)
+    },
+    [onChange]
+  )
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (!open) {
@@ -179,7 +194,10 @@ export default function ReferenceInput({
             <div
               key={book.id}
               className={`ref-autocomplete-item${i === activeIdx ? ' active' : ''}`}
-              onMouseDown={e => { e.preventDefault(); selectBook(book) }}
+              onMouseDown={e => {
+                e.preventDefault()
+                selectBook(book)
+              }}
               onMouseEnter={() => setActiveIdx(i)}
             >
               <span className="ref-ac-name">{book.name}</span>

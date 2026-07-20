@@ -26,9 +26,9 @@ interface TagOption {
 
 const TAG_OPTIONS: TagOption[] = [
   { name: 'observation', label: 'observation', colorClass: 'observation' },
-  { name: 'historical',  label: 'historical',  colorClass: 'historical'  },
+  { name: 'historical', label: 'historical', colorClass: 'historical' },
   { name: 'application', label: 'application', colorClass: 'application' },
-  { name: 'personal',    label: 'personal',    colorClass: 'personal'    },
+  { name: 'personal', label: 'personal', colorClass: 'personal' }
 ]
 
 interface TagDropdown {
@@ -40,27 +40,40 @@ interface TagDropdown {
 }
 
 let lineIdCounter = 0
-export function makeLineId(): string { return `ln-${++lineIdCounter}` }
+export function makeLineId(): string {
+  return `ln-${++lineIdCounter}`
+}
 
 // One-time discoverability hint on first note-line focus. localStorage is fine —
 // this is pure web and the flag is non-critical (worst case the hint reappears).
 const HINT_SEEN_KEY = 'berean.noteHintSeen'
 function hintAlreadySeen(): boolean {
-  try { return localStorage.getItem(HINT_SEEN_KEY) === '1' } catch { return true }
+  try {
+    return localStorage.getItem(HINT_SEEN_KEY) === '1'
+  } catch {
+    return true
+  }
 }
 function markHintSeen(): void {
-  try { localStorage.setItem(HINT_SEEN_KEY, '1') } catch { /* ignore */ }
+  try {
+    localStorage.setItem(HINT_SEEN_KEY, '1')
+  } catch {
+    /* ignore */
+  }
 }
 
 // Tap-to-insert chips for the mobile chip row. Same data model as typing the
 // tokens by hand — an input method only, no new schema.
-interface ChipOption { label: string; insert: string }
+interface ChipOption {
+  label: string
+  insert: string
+}
 const CHIP_OPTIONS: ChipOption[] = [
   { label: 'v', insert: 'v' },
   { label: '@observation', insert: '@observation ' },
   { label: '@historical', insert: '@historical ' },
   { label: '@application', insert: '@application ' },
-  { label: '@personal', insert: '@personal ' },
+  { label: '@personal', insert: '@personal ' }
 ]
 
 function filterTags(q: string): TagOption[] {
@@ -122,10 +135,18 @@ function RenderedLine({ text }: { text: string }): React.ReactElement {
     <>
       {segments.map((seg, i) => {
         if (seg.type === 'verse-anchor') {
-          return <span key={i} className="pill-verse">{seg.display}</span>
+          return (
+            <span key={i} className="pill-verse">
+              {seg.display}
+            </span>
+          )
         }
         if (seg.type === 'tag') {
-          return <span key={i} className={`pill-tag-${seg.data?.category ?? 'observation'}`}>{seg.display}</span>
+          return (
+            <span key={i} className={`pill-tag-${seg.data?.category ?? 'observation'}`}>
+              {seg.display}
+            </span>
+          )
         }
         if (seg.type === 'cross-ref') {
           const ref = seg.data?.reference ?? seg.raw
@@ -211,81 +232,100 @@ export default function NoteEditor({
 
   // When an indented line is focused, merge parent's verse range so the passage
   // pane keeps highlighting the root verse context.
-  const getEffectiveParsed = useCallback((lineId: string, text: string): ReturnType<typeof parseNoteLine> => {
-    const parsed = parseNoteLine(text)
-    const lineIdx = lines.findIndex(l => l.id === lineId)
-    if (lineIdx < 0 || lines[lineIdx].indent === 0) return parsed
-    const parent = lines.slice(0, lineIdx).reverse().find(l => l.indent === 0)
-    if (!parent) return parsed
-    const pp = parseNoteLine(parent.text)
-    if (pp.anchorStart === null) return parsed
-    const pStart = pp.anchorStart
-    const pEnd = pp.anchorEnd ?? pStart
-    const cStart = parsed.anchorStart
-    const cEnd = cStart !== null ? (parsed.anchorEnd ?? cStart) : null
-    const mergedStart = cStart !== null ? Math.min(pStart, cStart) : pStart
-    const mergedEnd = cEnd !== null ? Math.max(pEnd, cEnd) : pEnd
-    return { ...parsed, anchorStart: mergedStart, anchorEnd: mergedEnd !== mergedStart ? mergedEnd : null }
-  }, [lines])
+  const getEffectiveParsed = useCallback(
+    (lineId: string, text: string): ReturnType<typeof parseNoteLine> => {
+      const parsed = parseNoteLine(text)
+      const lineIdx = lines.findIndex(l => l.id === lineId)
+      if (lineIdx < 0 || lines[lineIdx].indent === 0) return parsed
+      const parent = lines
+        .slice(0, lineIdx)
+        .reverse()
+        .find(l => l.indent === 0)
+      if (!parent) return parsed
+      const pp = parseNoteLine(parent.text)
+      if (pp.anchorStart === null) return parsed
+      const pStart = pp.anchorStart
+      const pEnd = pp.anchorEnd ?? pStart
+      const cStart = parsed.anchorStart
+      const cEnd = cStart !== null ? (parsed.anchorEnd ?? cStart) : null
+      const mergedStart = cStart !== null ? Math.min(pStart, cStart) : pStart
+      const mergedEnd = cEnd !== null ? Math.max(pEnd, cEnd) : pEnd
+      return {
+        ...parsed,
+        anchorStart: mergedStart,
+        anchorEnd: mergedEnd !== mergedStart ? mergedEnd : null
+      }
+    },
+    [lines]
+  )
 
   // ── tag selection ──────────────────────────────────────────────────────────
-  const selectTag = useCallback((tag: TagOption) => {
-    if (!tagDropdown) return
-    const { lineId, anchorIndex, cursorPos } = tagDropdown
-    const line = lines.find(l => l.id === lineId)
-    if (!line) return
+  const selectTag = useCallback(
+    (tag: TagOption) => {
+      if (!tagDropdown) return
+      const { lineId, anchorIndex, cursorPos } = tagDropdown
+      const line = lines.find(l => l.id === lineId)
+      if (!line) return
 
-    const before = line.text.slice(0, anchorIndex)
-    const insertion = `@${tag.name} `
-    const after = line.text.slice(cursorPos)
-    const newText = before + insertion + after
+      const before = line.text.slice(0, anchorIndex)
+      const insertion = `@${tag.name} `
+      const after = line.text.slice(cursorPos)
+      const newText = before + insertion + after
 
-    onChange(lines.map(l => l.id === lineId ? { ...l, text: newText } : l))
-    setTagDropdown(null)
-    onCursorLine(getEffectiveParsed(lineId, newText))
+      onChange(lines.map(l => (l.id === lineId ? { ...l, text: newText } : l)))
+      setTagDropdown(null)
+      onCursorLine(getEffectiveParsed(lineId, newText))
 
-    setTimeout(() => {
-      const el = elRefs.current.get(lineId)
-      if (el) {
-        renderRich(el, newText)
-        el.focus()
-        setRawCursorPos(el, before.length + insertion.length)
-      }
-    }, 0)
-  }, [tagDropdown, lines, onChange, onCursorLine])
+      setTimeout(() => {
+        const el = elRefs.current.get(lineId)
+        if (el) {
+          renderRich(el, newText)
+          el.focus()
+          setRawCursorPos(el, before.length + insertion.length)
+        }
+      }, 0)
+    },
+    [tagDropdown, lines, onChange, onCursorLine]
+  )
 
   // ── tap-to-insert (mobile chip row) ─────────────────────────────────────────
   // Inserts a token at the caret of the focused line, then restores focus/caret.
   // Same effect as typing the token — the data model is untouched.
-  const insertAtCaret = useCallback((insert: string) => {
-    const lineId = focusedLineId
-    if (!lineId) return
-    const line = lines.find(l => l.id === lineId)
-    if (!line) return
-    const el = elRefs.current.get(lineId)
-    const caret = el ? getRawCursorPos(el) : line.text.length
-    const before = line.text.slice(0, caret)
-    const after = line.text.slice(caret)
-    const newText = before + insert + after
+  const insertAtCaret = useCallback(
+    (insert: string) => {
+      const lineId = focusedLineId
+      if (!lineId) return
+      const line = lines.find(l => l.id === lineId)
+      if (!line) return
+      const el = elRefs.current.get(lineId)
+      const caret = el ? getRawCursorPos(el) : line.text.length
+      const before = line.text.slice(0, caret)
+      const after = line.text.slice(caret)
+      const newText = before + insert + after
 
-    onChange(lines.map(l => l.id === lineId ? { ...l, text: newText } : l))
-    onCursorLine(getEffectiveParsed(lineId, newText))
+      onChange(lines.map(l => (l.id === lineId ? { ...l, text: newText } : l)))
+      onCursorLine(getEffectiveParsed(lineId, newText))
 
-    setTimeout(() => {
-      const target = elRefs.current.get(lineId)
-      if (target) {
-        renderRich(target, newText)
-        target.focus()
-        setRawCursorPos(target, before.length + insert.length)
-      }
-    }, 0)
-  }, [focusedLineId, lines, onChange, onCursorLine, getEffectiveParsed])
+      setTimeout(() => {
+        const target = elRefs.current.get(lineId)
+        if (target) {
+          renderRich(target, newText)
+          target.focus()
+          setRawCursorPos(target, before.length + insert.length)
+        }
+      }, 0)
+    },
+    [focusedLineId, lines, onChange, onCursorLine, getEffectiveParsed]
+  )
 
   // First-use hint on first note-line focus.
-  const handleNoteFocus = useCallback((lineId: string, text: string) => {
-    onCursorLine(getEffectiveParsed(lineId, text))
-    if (!hintAlreadySeen()) setShowHint(true)
-  }, [onCursorLine, getEffectiveParsed])
+  const handleNoteFocus = useCallback(
+    (lineId: string, text: string) => {
+      onCursorLine(getEffectiveParsed(lineId, text))
+      if (!hintAlreadySeen()) setShowHint(true)
+    },
+    [onCursorLine, getEffectiveParsed]
+  )
 
   const dismissHint = useCallback(() => {
     markHintSeen()
@@ -297,113 +337,152 @@ export default function NoteEditor({
   // setRawCursorPos is only called when renderRich actually rewrote the DOM
   // (a token became a pill or a pill was deleted). For plain-text changes the
   // browser already placed the cursor correctly, so we leave it alone.
-  const handleInput = useCallback((e: React.FormEvent<HTMLDivElement>, id: string) => {
-    const el = e.currentTarget
-    const cur = getRawCursorPos(el)
-    const text = getRawText(el)
+  const handleInput = useCallback(
+    (e: React.FormEvent<HTMLDivElement>, id: string) => {
+      const el = e.currentTarget
+      const cur = getRawCursorPos(el)
+      const text = getRawText(el)
 
-    const modified = renderRich(el, text, cur)
-    if (modified) setRawCursorPos(el, cur)
+      const modified = renderRich(el, text, cur)
+      if (modified) setRawCursorPos(el, cur)
 
-    onChange(lines.map(l => l.id === id ? { ...l, text } : l))
-    onCursorLine(getEffectiveParsed(id, text))
+      onChange(lines.map(l => (l.id === id ? { ...l, text } : l)))
+      onCursorLine(getEffectiveParsed(id, text))
 
-    const before = text.slice(0, cur)
-    const m = /@(\w*)$/.exec(before)
-    if (m) {
-      setTagDropdown({ lineId: id, query: m[1], anchorIndex: m.index, cursorPos: cur, activeIdx: 0 })
-    } else {
-      setTagDropdown(null)
-    }
+      const before = text.slice(0, cur)
+      const m = /@(\w*)$/.exec(before)
+      if (m) {
+        setTagDropdown({
+          lineId: id,
+          query: m[1],
+          anchorIndex: m.index,
+          cursorPos: cur,
+          activeIdx: 0
+        })
+      } else {
+        setTagDropdown(null)
+      }
 
-    // As the line wraps or grows while typing, keep the caret above the keyboard.
-    const noteLine = el.closest('.note-line') as HTMLElement | null
-    if (noteLine) scrollLineIntoView(noteLine, true)
-  }, [lines, onChange, onCursorLine])
+      // As the line wraps or grows while typing, keep the caret above the keyboard.
+      const noteLine = el.closest('.note-line') as HTMLElement | null
+      if (noteLine) scrollLineIntoView(noteLine, true)
+    },
+    [lines, onChange, onCursorLine]
+  )
 
   // ── keydown ────────────────────────────────────────────────────────────────
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>, id: string) => {
-    const idx = lines.findIndex(l => l.id === id)
-    const el = e.currentTarget
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>, id: string) => {
+      const idx = lines.findIndex(l => l.id === id)
+      const el = e.currentTarget
 
-    if (hasDropdown) {
-      if (e.key === 'ArrowDown') {
+      if (hasDropdown) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault()
+          setTagDropdown(d =>
+            d ? { ...d, activeIdx: Math.min(d.activeIdx + 1, filteredTags.length - 1) } : d
+          )
+          return
+        }
+        if (e.key === 'ArrowUp') {
+          e.preventDefault()
+          setTagDropdown(d => (d ? { ...d, activeIdx: Math.max(d.activeIdx - 1, 0) } : d))
+          return
+        }
+        if (e.key === 'Enter' || e.key === 'Tab') {
+          e.preventDefault()
+          const tag = filteredTags[tagDropdown!.activeIdx] ?? filteredTags[0]
+          if (tag) selectTag(tag)
+          return
+        }
+        if (e.key === 'Escape') {
+          setTagDropdown(null)
+          return
+        }
+      }
+
+      if (e.key === 'Tab') {
         e.preventDefault()
-        setTagDropdown(d => d ? { ...d, activeIdx: Math.min(d.activeIdx + 1, filteredTags.length - 1) } : d)
+        const line = lines[idx]
+        const newIndent = e.shiftKey ? Math.max(0, line.indent - 1) : Math.min(1, line.indent + 1)
+        if (newIndent !== line.indent) {
+          onChange(lines.map((l, i) => (i === idx ? { ...l, indent: newIndent } : l)))
+        }
         return
       }
-      if (e.key === 'ArrowUp') {
+
+      if (e.key === 'Enter') {
         e.preventDefault()
-        setTagDropdown(d => d ? { ...d, activeIdx: Math.max(d.activeIdx - 1, 0) } : d)
-        return
-      }
-      if (e.key === 'Enter' || e.key === 'Tab') {
-        e.preventDefault()
-        const tag = filteredTags[tagDropdown!.activeIdx] ?? filteredTags[0]
-        if (tag) selectTag(tag)
-        return
-      }
-      if (e.key === 'Escape') {
-        setTagDropdown(null)
-        return
-      }
-    }
-
-    if (e.key === 'Tab') {
-      e.preventDefault()
-      const line = lines[idx]
-      const newIndent = e.shiftKey
-        ? Math.max(0, line.indent - 1)
-        : Math.min(1, line.indent + 1)
-      if (newIndent !== line.indent) {
-        onChange(lines.map((l, i) => i === idx ? { ...l, indent: newIndent } : l))
-      }
-      return
-    }
-
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      const line = lines[idx]
-      const action = decideEnter({
-        text: getRawText(el),
-        indent: line.indent,
-        caret: getRawCursorPos(el),
-        lineCount: lines.length
-      })
-      if (action.type === 'noop') return
-      if (action.type === 'outdent') {
-        // Empty indented bullet: drop one level in place, keep focus/caret.
-        onChange(lines.map((l, i) => i === idx ? { ...l, indent: line.indent - 1 } : l))
-        return
-      }
-      const newId = makeLineId()
-      onChange([...lines.slice(0, idx + 1), { id: newId, text: '', indent: line.indent }, ...lines.slice(idx + 1)])
-      onFocusChange(newId)
-      return
-    }
-
-    if (e.key === 'Backspace' && !e.metaKey && !e.altKey) {
-      // Non-collapsed selection: let the browser delete it; handleInput syncs state.
-      const sel = window.getSelection()
-      if (sel && sel.rangeCount > 0 && !sel.getRangeAt(0).collapsed) return
-
-      const text = getRawText(el)
-      const line = lines[idx]
-
-      // Empty indented bullet at the start → outdent one level in place first,
-      // rather than deleting the line. Only collapses to line-removal at indent 0.
-      if (decideBackspace({ text, indent: line.indent, caret: getRawCursorPos(el), lineCount: lines.length }).type === 'outdent') {
-        e.preventDefault()
-        onChange(lines.map((l, i) => i === idx ? { ...l, indent: line.indent - 1 } : l))
+        const line = lines[idx]
+        const action = decideEnter({
+          text: getRawText(el),
+          indent: line.indent,
+          caret: getRawCursorPos(el),
+          lineCount: lines.length
+        })
+        if (action.type === 'noop') return
+        if (action.type === 'outdent') {
+          // Empty indented bullet: drop one level in place, keep focus/caret.
+          onChange(lines.map((l, i) => (i === idx ? { ...l, indent: line.indent - 1 } : l)))
+          return
+        }
+        const newId = makeLineId()
+        onChange([
+          ...lines.slice(0, idx + 1),
+          { id: newId, text: '', indent: line.indent },
+          ...lines.slice(idx + 1)
+        ])
+        onFocusChange(newId)
         return
       }
 
-      if (text === '' && lines.length > 1) {
-        // Empty line → remove it and move focus
-        e.preventDefault()
-        const prevId = lines[idx - 1]?.id ?? lines[idx + 1]?.id
-        onChange(lines.filter(l => l.id !== id))
-        if (prevId) {
+      if (e.key === 'Backspace' && !e.metaKey && !e.altKey) {
+        // Non-collapsed selection: let the browser delete it; handleInput syncs state.
+        const sel = window.getSelection()
+        if (sel && sel.rangeCount > 0 && !sel.getRangeAt(0).collapsed) return
+
+        const text = getRawText(el)
+        const line = lines[idx]
+
+        // Empty indented bullet at the start → outdent one level in place first,
+        // rather than deleting the line. Only collapses to line-removal at indent 0.
+        if (
+          decideBackspace({
+            text,
+            indent: line.indent,
+            caret: getRawCursorPos(el),
+            lineCount: lines.length
+          }).type === 'outdent'
+        ) {
+          e.preventDefault()
+          onChange(lines.map((l, i) => (i === idx ? { ...l, indent: line.indent - 1 } : l)))
+          return
+        }
+
+        if (text === '' && lines.length > 1) {
+          // Empty line → remove it and move focus
+          e.preventDefault()
+          const prevId = lines[idx - 1]?.id ?? lines[idx + 1]?.id
+          onChange(lines.filter(l => l.id !== id))
+          if (prevId) {
+            onFocusChange(prevId)
+            setTimeout(() => {
+              const prevEl = elRefs.current.get(prevId)
+              if (prevEl) {
+                prevEl.focus()
+                setRawCursorPos(prevEl, getRawText(prevEl).length)
+                const noteLine = prevEl.closest('.note-line') as HTMLElement | null
+                if (noteLine) scrollLineIntoView(noteLine)
+              }
+            }, 0)
+          }
+          return
+        }
+
+        // Cursor at position 0 on a non-empty line → jump to end of previous line
+        if (text !== '' && getRawCursorPos(el) === 0 && idx > 0) {
+          e.preventDefault()
+          const prevId = lines[idx - 1].id
           onFocusChange(prevId)
           setTimeout(() => {
             const prevEl = elRefs.current.get(prevId)
@@ -414,12 +493,13 @@ export default function NoteEditor({
               if (noteLine) scrollLineIntoView(noteLine)
             }
           }, 0)
+          return
         }
-        return
       }
 
-      // Cursor at position 0 on a non-empty line → jump to end of previous line
-      if (text !== '' && getRawCursorPos(el) === 0 && idx > 0) {
+      // Plain ArrowUp/Down navigate between bullet lines.
+      // Shift/Cmd/Alt combos pass through for selection and word jumps.
+      if (e.key === 'ArrowUp' && idx > 0 && !e.shiftKey && !e.metaKey && !e.altKey) {
         e.preventDefault()
         const prevId = lines[idx - 1].id
         onFocusChange(prevId)
@@ -427,45 +507,34 @@ export default function NoteEditor({
           const prevEl = elRefs.current.get(prevId)
           if (prevEl) {
             prevEl.focus()
-            setRawCursorPos(prevEl, getRawText(prevEl).length)
             const noteLine = prevEl.closest('.note-line') as HTMLElement | null
             if (noteLine) scrollLineIntoView(noteLine)
           }
         }, 0)
         return
       }
-    }
-
-    // Plain ArrowUp/Down navigate between bullet lines.
-    // Shift/Cmd/Alt combos pass through for selection and word jumps.
-    if (e.key === 'ArrowUp' && idx > 0 && !e.shiftKey && !e.metaKey && !e.altKey) {
-      e.preventDefault()
-      const prevId = lines[idx - 1].id
-      onFocusChange(prevId)
-      setTimeout(() => {
-        const prevEl = elRefs.current.get(prevId)
-        if (prevEl) {
-          prevEl.focus()
-          const noteLine = prevEl.closest('.note-line') as HTMLElement | null
-          if (noteLine) scrollLineIntoView(noteLine)
-        }
-      }, 0)
-      return
-    }
-    if (e.key === 'ArrowDown' && idx < lines.length - 1 && !e.shiftKey && !e.metaKey && !e.altKey) {
-      e.preventDefault()
-      const nextId = lines[idx + 1].id
-      onFocusChange(nextId)
-      setTimeout(() => {
-        const nextEl = elRefs.current.get(nextId)
-        if (nextEl) {
-          nextEl.focus()
-          const noteLine = nextEl.closest('.note-line') as HTMLElement | null
-          if (noteLine) scrollLineIntoView(noteLine)
-        }
-      }, 0)
-    }
-  }, [lines, hasDropdown, filteredTags, tagDropdown, selectTag, onChange, onFocusChange])
+      if (
+        e.key === 'ArrowDown' &&
+        idx < lines.length - 1 &&
+        !e.shiftKey &&
+        !e.metaKey &&
+        !e.altKey
+      ) {
+        e.preventDefault()
+        const nextId = lines[idx + 1].id
+        onFocusChange(nextId)
+        setTimeout(() => {
+          const nextEl = elRefs.current.get(nextId)
+          if (nextEl) {
+            nextEl.focus()
+            const noteLine = nextEl.closest('.note-line') as HTMLElement | null
+            if (noteLine) scrollLineIntoView(noteLine)
+          }
+        }, 0)
+      }
+    },
+    [lines, hasDropdown, filteredTags, tagDropdown, selectTag, onChange, onFocusChange]
+  )
 
   const handleBlur = useCallback(() => {
     setTimeout(() => {
@@ -476,18 +545,21 @@ export default function NoteEditor({
     }, 80)
   }, [onCursorLine])
 
-  const handlePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>, id: string) => {
-    e.preventDefault()
-    const pasteText = e.clipboardData.getData('text/plain')
-    const el = e.currentTarget
-    const cur = getRawCursorPos(el)
-    const raw = getRawText(el)
-    const newText = raw.slice(0, cur) + pasteText + raw.slice(cur)
-    renderRich(el, newText)
-    setRawCursorPos(el, cur + pasteText.length)
-    onChange(lines.map(l => l.id === id ? { ...l, text: newText } : l))
-    onCursorLine(getEffectiveParsed(id, newText))
-  }, [lines, onChange, onCursorLine])
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent<HTMLDivElement>, id: string) => {
+      e.preventDefault()
+      const pasteText = e.clipboardData.getData('text/plain')
+      const el = e.currentTarget
+      const cur = getRawCursorPos(el)
+      const raw = getRawText(el)
+      const newText = raw.slice(0, cur) + pasteText + raw.slice(cur)
+      renderRich(el, newText)
+      setRawCursorPos(el, cur + pasteText.length)
+      onChange(lines.map(l => (l.id === id ? { ...l, text: newText } : l)))
+      onCursorLine(getEffectiveParsed(id, newText))
+    },
+    [lines, onChange, onCursorLine]
+  )
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -502,110 +574,120 @@ export default function NoteEditor({
 
   return (
     <>
-    <div className="notes-list">
-      {lines.map((line) => {
-        const isFocused = focusedLineId === line.id
-        const showDropdown = hasDropdown && tagDropdown?.lineId === line.id
+      <div className="notes-list">
+        {lines.map(line => {
+          const isFocused = focusedLineId === line.id
+          const showDropdown = hasDropdown && tagDropdown?.lineId === line.id
 
-        return (
-          <div key={line.id} className={`note-line${line.indent > 0 ? ' note-line--indent-1' : ''}`} style={{ position: 'relative' }}>
-            <span className="note-bullet">{line.indent > 0 ? '◦' : '•'}</span>
+          return (
+            <div
+              key={line.id}
+              className={`note-line${line.indent > 0 ? ' note-line--indent-1' : ''}`}
+              style={{ position: 'relative' }}
+            >
+              <span className="note-bullet">{line.indent > 0 ? '◦' : '•'}</span>
 
-            {isFocused ? (
-              <div
-                key="editor"
-                ref={el => {
-                  if (el) {
-                    elRefs.current.set(line.id, el)
-                    if (!el.dataset.init) {
-                      el.dataset.init = '1'
-                      renderRich(el, line.text)
-                      requestAnimationFrame(() => {
-                        if (document.activeElement !== el) {
-                          el.focus()
-                          setRawCursorPos(el, getRawText(el).length)
-                        }
-                        const noteLine = el.closest('.note-line') as HTMLElement | null
-                        if (noteLine) scrollLineIntoView(noteLine)
-                      })
+              {isFocused ? (
+                <div
+                  key="editor"
+                  ref={el => {
+                    if (el) {
+                      elRefs.current.set(line.id, el)
+                      if (!el.dataset.init) {
+                        el.dataset.init = '1'
+                        renderRich(el, line.text)
+                        requestAnimationFrame(() => {
+                          if (document.activeElement !== el) {
+                            el.focus()
+                            setRawCursorPos(el, getRawText(el).length)
+                          }
+                          const noteLine = el.closest('.note-line') as HTMLElement | null
+                          if (noteLine) scrollLineIntoView(noteLine)
+                        })
+                      }
+                    } else {
+                      elRefs.current.delete(line.id)
                     }
-                  } else {
-                    elRefs.current.delete(line.id)
-                  }
-                }}
-                className="note-input note-richtext"
-                contentEditable
-                suppressContentEditableWarning
-                onInput={e => handleInput(e, line.id)}
-                onKeyDown={e => handleKeyDown(e, line.id)}
-                onFocus={() => handleNoteFocus(line.id, line.text)}
-                onBlur={handleBlur}
-                onPaste={e => handlePaste(e, line.id)}
-                data-placeholder="Type your note — @ for a category, v4 to tag verse 4"
-              />
-            ) : (
-              <div
-                key="rendered"
-                className="note-rendered"
-                onClick={() => onFocusChange(line.id)}
-              >
-                <RenderedLine text={line.text} />
-              </div>
-            )}
-
-            {(() => {
-              const src = line.noteId ? existingNotes?.get(line.noteId) : undefined
-              // Only show "saved X ago" when the line still matches what was
-              // actually persisted — a stamp on since-edited content would
-              // read as "this is safely saved" when it isn't. Its absence is
-              // itself the signal for "new or changed this session,"
-              // distinguishing that from lines untouched since load.
-              if (!src || src.content !== line.text || (src.indent_level ?? 0) !== line.indent) {
-                return null
-              }
-              const stamp = src.updated_at || src.created_at
-              return (
-                <time className="note-line-timestamp" dateTime={stamp}>
-                  {formatRelativeTime(stamp)}
-                </time>
-              )
-            })()}
-
-            {showDropdown && (
-              <div className="tag-dropdown">
-                {filteredTags.map((tag, i) => (
-                  <div
-                    key={tag.name}
-                    className={`tag-dropdown-item${i === tagDropdown!.activeIdx ? ' active' : ''}`}
-                    onMouseDown={e => { e.preventDefault(); selectTag(tag) }}
-                    onMouseEnter={() => setTagDropdown(d => d ? { ...d, activeIdx: i } : d)}
-                  >
-                    <span className={`tag-dropdown-swatch swatch-${tag.colorClass}`} />
-                    <span className="tag-dropdown-label">@{tag.label}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {isFocused && showHint && (
-              <div className="note-hint-popover" role="note">
-                <span className="note-hint-text">
-                  Tip: type <strong>@</strong> to tag a category, or <strong>v4</strong> to
-                  anchor a note to verse 4. A reference like <strong>Matt 5:9</strong> becomes a link.
-                </span>
-                <button
-                  type="button"
-                  className="note-hint-dismiss"
-                  onMouseDown={e => { e.preventDefault(); dismissHint() }}
+                  }}
+                  className="note-input note-richtext"
+                  contentEditable
+                  suppressContentEditableWarning
+                  onInput={e => handleInput(e, line.id)}
+                  onKeyDown={e => handleKeyDown(e, line.id)}
+                  onFocus={() => handleNoteFocus(line.id, line.text)}
+                  onBlur={handleBlur}
+                  onPaste={e => handlePaste(e, line.id)}
+                  data-placeholder="Type your note — @ for a category, v4 to tag verse 4"
+                />
+              ) : (
+                <div
+                  key="rendered"
+                  className="note-rendered"
+                  onClick={() => onFocusChange(line.id)}
                 >
-                  Got it
-                </button>
-              </div>
-            )}
-          </div>
-        )
-      })}
-    </div>
+                  <RenderedLine text={line.text} />
+                </div>
+              )}
+
+              {(() => {
+                const src = line.noteId ? existingNotes?.get(line.noteId) : undefined
+                // Only show "saved X ago" when the line still matches what was
+                // actually persisted — a stamp on since-edited content would
+                // read as "this is safely saved" when it isn't. Its absence is
+                // itself the signal for "new or changed this session,"
+                // distinguishing that from lines untouched since load.
+                if (!src || src.content !== line.text || (src.indent_level ?? 0) !== line.indent) {
+                  return null
+                }
+                const stamp = src.updated_at || src.created_at
+                return (
+                  <time className="note-line-timestamp" dateTime={stamp}>
+                    {formatRelativeTime(stamp)}
+                  </time>
+                )
+              })()}
+
+              {showDropdown && (
+                <div className="tag-dropdown">
+                  {filteredTags.map((tag, i) => (
+                    <div
+                      key={tag.name}
+                      className={`tag-dropdown-item${i === tagDropdown!.activeIdx ? ' active' : ''}`}
+                      onMouseDown={e => {
+                        e.preventDefault()
+                        selectTag(tag)
+                      }}
+                      onMouseEnter={() => setTagDropdown(d => (d ? { ...d, activeIdx: i } : d))}
+                    >
+                      <span className={`tag-dropdown-swatch swatch-${tag.colorClass}`} />
+                      <span className="tag-dropdown-label">@{tag.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFocused && showHint && (
+                <div className="note-hint-popover" role="note">
+                  <span className="note-hint-text">
+                    Tip: type <strong>@</strong> to tag a category, or <strong>v4</strong> to anchor
+                    a note to verse 4. A reference like <strong>Matt 5:9</strong> becomes a link.
+                  </span>
+                  <button
+                    type="button"
+                    className="note-hint-dismiss"
+                    onMouseDown={e => {
+                      e.preventDefault()
+                      dismissHint()
+                    }}
+                  >
+                    Got it
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
       {/* A sibling of .notes-list, not its last child: it used to be inside
           the scrollable list, position:sticky to its bottom — sticky only
           holds an element at an edge once you'd otherwise scroll it past that
@@ -623,7 +705,10 @@ export default function NoteEditor({
               type="button"
               className="note-chip"
               // preventDefault keeps focus/caret in the editor while inserting.
-              onMouseDown={e => { e.preventDefault(); insertAtCaret(chip.insert) }}
+              onMouseDown={e => {
+                e.preventDefault()
+                insertAtCaret(chip.insert)
+              }}
             >
               {chip.label}
             </button>

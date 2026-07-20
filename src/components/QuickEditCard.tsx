@@ -40,8 +40,18 @@ export default function QuickEditCard({
         </span>
         <div className="quick-edit-actions">
           <button type="button" className="quick-edit-btn quick-edit-btn-cancel" onClick={onCancel}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
             Cancel
           </button>
@@ -51,7 +61,16 @@ export default function QuickEditCard({
             onClick={onSave}
             disabled={saveDisabled}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <polyline points="20 6 9 17 4 12" />
             </svg>
             {mode === 'create' ? 'Save note' : 'Save changes'}

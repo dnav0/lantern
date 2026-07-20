@@ -66,7 +66,9 @@ export default function GlobalSearch({
   // times, and its resting coordinates are measured from its own (always
   // in-flow) parent, `.topnav-search`. This gives CSS a single continuous
   // transform/position transition instead of a jump.
-  const [restRect, setRestRect] = useState<{ top: number; left: number; width: number } | null>(null)
+  const [restRect, setRestRect] = useState<{ top: number; left: number; width: number } | null>(
+    null
+  )
   // Keyboard nav through the combined result list (scripture results first,
   // then notes — same order as rendered). -1 = nothing highlighted yet, so a
   // bare Enter with no arrow-key use doesn't fire a surprise action.
@@ -178,7 +180,8 @@ export default function GlobalSearch({
 
   const hasQuery = query.trim().length > 0
   const showResults = hasQuery
-  const nothing = hasQuery && scriptureResults.length === 0 && !notesLoading && noteResults.length === 0
+  const nothing =
+    hasQuery && scriptureResults.length === 0 && !notesLoading && noteResults.length === 0
 
   // Flat, render-order list of every selectable row (scripture first, then
   // notes) so arrow keys/Enter can walk it without caring which section a
@@ -187,7 +190,8 @@ export default function GlobalSearch({
   const flatResults = useMemo(
     () => [
       ...scriptureResults.map(scripture => ({
-        onSelect: () => choose(() => onJumpToChapter(scripture.bookName, scripture.chapter, scripture.verse))
+        onSelect: () =>
+          choose(() => onJumpToChapter(scripture.bookName, scripture.chapter, scripture.verse))
       })),
       ...noteResults.map(r => ({
         onSelect: () => choose(() => onOpenStudy(r.passage_id))
@@ -234,7 +238,9 @@ export default function GlobalSearch({
                 aria-selected={i === activeIndex}
                 onMouseEnter={() => setActiveIndex(i)}
                 onClick={() =>
-                  choose(() => onJumpToChapter(scripture.bookName, scripture.chapter, scripture.verse))
+                  choose(() =>
+                    onJumpToChapter(scripture.bookName, scripture.chapter, scripture.verse)
+                  )
                 }
               >
                 <span className="search-result-ref">{ref}</span>
@@ -280,7 +286,9 @@ export default function GlobalSearch({
         </div>
       )}
 
-      {nothing && <div className="search-empty">No scripture reference or notes match “{query.trim()}”.</div>}
+      {nothing && (
+        <div className="search-empty">No scripture reference or notes match “{query.trim()}”.</div>
+      )}
     </div>
   )
 
@@ -291,7 +299,11 @@ export default function GlobalSearch({
           needed to drive it. Only the 'bar' variant expands like this; the
           mobile 'surface' variant is already its own full-screen page. */}
       {variant === 'bar' && (
-        <div className="search-backdrop" aria-hidden="true" onMouseDown={() => inputRef.current?.blur()} />
+        <div
+          className="search-backdrop"
+          aria-hidden="true"
+          onMouseDown={() => inputRef.current?.blur()}
+        />
       )}
       <div className="search-input-wrap" ref={wrapRef} style={restStyle}>
         <svg
@@ -349,7 +361,11 @@ export default function GlobalSearch({
         {/* Signals the "/" shortcut is available, the way Notion/Linear/GitHub
             do — visible only at rest so it doesn't crowd the query while
             typing. Purely a hint; the input itself works with or without it. */}
-        {variant === 'bar' && !query && <kbd className="search-input-kbd" aria-hidden="true">/</kbd>}
+        {variant === 'bar' && !query && (
+          <kbd className="search-input-kbd" aria-hidden="true">
+            /
+          </kbd>
+        )}
       </div>
       {showResults && results}
     </div>

@@ -42,12 +42,10 @@ function guessNextReference(label: string): string {
   return `${bookPart} ${ch}:${ve + 1}-${ve + 1 + len}`
 }
 
-const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode({
-  initialReference = '',
-  initialPassageId = null,
-  onSaveRead,
-  onSaveNext
-}, ref) {
+const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode(
+  { initialReference = '', initialPassageId = null, onSaveRead, onSaveNext },
+  ref
+) {
   const api = useApi()
   const [reference, setReference] = useState(initialReference)
   const [passage, setPassage] = useState<BiblePassage | null>(null)
@@ -138,26 +136,28 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
       // oldest session, matching the append behaviour elsewhere.
       const writeSession = sessionList[sessionList.length - 1]
       setEditSessionId(writeSession.id)
-      const noteLists = await Promise.all(
-        sessionList.map(s => api.getNotesBySession(s.id))
-      )
+      const noteLists = await Promise.all(sessionList.map(s => api.getNotesBySession(s.id)))
       if (cancelled) return
       const allNotes = noteLists
         .flat()
         .sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id))
       if (allNotes.length > 0) {
         setExistingNotes(new Map(allNotes.map(n => [n.id, n])))
-        setLines(allNotes.map(n => ({
-          id: makeLineId(),
-          text: n.content,
-          indent: n.indent_level ?? 0,
-          noteId: n.id
-        })))
+        setLines(
+          allNotes.map(n => ({
+            id: makeLineId(),
+            text: n.content,
+            indent: n.indent_level ?? 0,
+            noteId: n.id
+          }))
+        )
         setFocusedLineId(null)
       }
     }
     void loadExisting()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [initialPassageId])
 
   async function loadPassageByReference(ref: string): Promise<void> {
@@ -177,39 +177,45 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
   // *synchronously*, move focus to the first note line immediately, and kick the
   // verse fetch off in the background. Returns false on parse failure so the
   // ReferenceInput keeps focus and shows its error — focus never moves on async.
-  const commitReference = useCallback((ref: string): boolean => {
-    const trimmed = ref.trim()
-    if (!trimmed || !parseReferenceLabel(trimmed)) return false
-    setFocusedLineId(lines[0].id)
-    setNoteFocusNonce(n => n + 1)
-    void loadPassageByReference(trimmed)
-    return true
-  }, [lines])
+  const commitReference = useCallback(
+    (ref: string): boolean => {
+      const trimmed = ref.trim()
+      if (!trimmed || !parseReferenceLabel(trimmed)) return false
+      setFocusedLineId(lines[0].id)
+      setNoteFocusNonce(n => n + 1)
+      void loadPassageByReference(trimmed)
+      return true
+    },
+    [lines]
+  )
 
-  const handleCursorLine = useCallback((parsed: ReturnType<typeof parseNoteLine> | null) => {
-    if (!parsed || !passage) {
-      setHighlightedVerses(new Set())
-      setHasHighlight(false)
-      return
-    }
-    if (parsed.anchorStart !== null) {
-      const start = parsed.anchorStart
-      const end = parsed.anchorEnd ?? start
-      const vSet = new Set<number>()
-      for (let v = start; v <= end; v++) vSet.add(v)
-      setHighlightedVerses(vSet)
-      setHasHighlight(true)
-      // Bring the tagged verse into view if it's scrolled out of the (often
-      // bounded/collapsed-on-mobile) scripture panel — scrollIntoView on the
-      // nearest scrollable ancestor only (block:'nearest'), so it's a no-op
-      // when the verse is already visible and never scrolls the whole page.
-      const row = scriptureBodyRef.current?.querySelector(`[data-verse="${start}"]`)
-      row?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-    } else {
-      setHighlightedVerses(new Set())
-      setHasHighlight(false)
-    }
-  }, [passage])
+  const handleCursorLine = useCallback(
+    (parsed: ReturnType<typeof parseNoteLine> | null) => {
+      if (!parsed || !passage) {
+        setHighlightedVerses(new Set())
+        setHasHighlight(false)
+        return
+      }
+      if (parsed.anchorStart !== null) {
+        const start = parsed.anchorStart
+        const end = parsed.anchorEnd ?? start
+        const vSet = new Set<number>()
+        for (let v = start; v <= end; v++) vSet.add(v)
+        setHighlightedVerses(vSet)
+        setHasHighlight(true)
+        // Bring the tagged verse into view if it's scrolled out of the (often
+        // bounded/collapsed-on-mobile) scripture panel — scrollIntoView on the
+        // nearest scrollable ancestor only (block:'nearest'), so it's a no-op
+        // when the verse is already visible and never scrolls the whole page.
+        const row = scriptureBodyRef.current?.querySelector(`[data-verse="${start}"]`)
+        row?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      } else {
+        setHighlightedVerses(new Set())
+        setHasHighlight(false)
+      }
+    },
+    [passage]
+  )
 
   // Reconciling save: diff the editor lines against the notes this study opened
   // with (existingNotes) rather than deleting-all-then-recreating. Lines that
@@ -295,32 +301,36 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
     return { passageId: newPassage.id, sessionId: session.id }
   }
 
-  useImperativeHandle(ref, () => ({
-    isDirty: () => {
-      // A hydrated study is dirty when any line diverges from its source note,
-      // or a note was removed; a blank study is dirty once any text is entered.
-      if (existingNotes.size > 0) {
-        const kept = new Set<string>()
-        for (const l of lines) {
-          if (l.noteId && existingNotes.has(l.noteId)) {
-            kept.add(l.noteId)
-            const src = existingNotes.get(l.noteId)!
-            if (src.content !== l.text || (src.indent_level ?? 0) !== l.indent) return true
-          } else if (l.text.trim() !== '') {
-            return true
+  useImperativeHandle(
+    ref,
+    () => ({
+      isDirty: () => {
+        // A hydrated study is dirty when any line diverges from its source note,
+        // or a note was removed; a blank study is dirty once any text is entered.
+        if (existingNotes.size > 0) {
+          const kept = new Set<string>()
+          for (const l of lines) {
+            if (l.noteId && existingNotes.has(l.noteId)) {
+              kept.add(l.noteId)
+              const src = existingNotes.get(l.noteId)!
+              if (src.content !== l.text || (src.indent_level ?? 0) !== l.indent) return true
+            } else if (l.text.trim() !== '') {
+              return true
+            }
           }
+          return kept.size !== existingNotes.size
         }
-        return kept.size !== existingNotes.size
+        return lines.some(l => l.text.trim() !== '')
+      },
+      save: async () => {
+        const ids = await ensureIds()
+        if (!ids) return null
+        await reconcileNotes(ids.sessionId)
+        return ids.passageId
       }
-      return lines.some(l => l.text.trim() !== '')
-    },
-    save: async () => {
-      const ids = await ensureIds()
-      if (!ids) return null
-      await reconcileNotes(ids.sessionId)
-      return ids.passageId
-    }
-  }), [lines, reference, existingNotes, editSessionId])
+    }),
+    [lines, reference, existingNotes, editSessionId]
+  )
 
   const handleSaveRead = async (): Promise<void> => {
     if (saving) return
@@ -390,8 +400,19 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
               'Saving…'
             ) : (
               <>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ flexShrink: 0 }}
+                >
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                 </svg>
                 Save & Read
               </>
@@ -404,8 +425,19 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
             title={blankAndEmpty ? 'Type at least one note before saving' : undefined}
           >
             Save & Next
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ flexShrink: 0 }}
+            >
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
             </svg>
           </button>
         </div>
@@ -442,8 +474,14 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
           </span>
           <svg
             className={`study-scripture-chevron${scriptureExpanded ? ' expanded' : ''}`}
-            width="14" height="14" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
             <polyline points="6 9 12 15 18 9" />
           </svg>

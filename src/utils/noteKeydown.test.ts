@@ -19,7 +19,9 @@ describe('decideEnter', () => {
   })
 
   it('inserts a new line when the bullet has content (indent 0)', () => {
-    expect(decideEnter(state({ text: 'grace abounds', indent: 0 }))).toEqual({ type: 'insert-line' })
+    expect(decideEnter(state({ text: 'grace abounds', indent: 0 }))).toEqual({
+      type: 'insert-line'
+    })
   })
 
   it('inserts a new line when an indented bullet has content', () => {

@@ -7,13 +7,16 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react'
 import { getRawText, getRawCursorPos, setRawCursorPos, renderRich } from '../utils/richText'
 
-interface TagOption { name: string; colorClass: string }
+interface TagOption {
+  name: string
+  colorClass: string
+}
 
 const TAG_OPTIONS: TagOption[] = [
   { name: 'observation', colorClass: 'observation' },
-  { name: 'historical',  colorClass: 'historical'  },
+  { name: 'historical', colorClass: 'historical' },
   { name: 'application', colorClass: 'application' },
-  { name: 'personal',    colorClass: 'personal'    },
+  { name: 'personal', colorClass: 'personal' }
 ]
 
 interface DropdownState {
@@ -31,7 +34,13 @@ interface RichEditInputProps {
   className?: string
 }
 
-export default function RichEditInput({ initialValue, onChange, onSave, onCancel, className }: RichEditInputProps): React.ReactElement {
+export default function RichEditInput({
+  initialValue,
+  onChange,
+  onSave,
+  onCancel,
+  className
+}: RichEditInputProps): React.ReactElement {
   const elRef = useRef<HTMLDivElement>(null)
   const [dropdown, setDropdown] = useState<DropdownState | null>(null)
 
@@ -49,20 +58,23 @@ export default function RichEditInput({ initialValue, onChange, onSave, onCancel
     setRawCursorPos(el, initialValue.length)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selectTag = useCallback((tag: TagOption): void => {
-    const el = elRef.current
-    if (!el || !dropdown) return
-    const text = getRawText(el)
-    const before = text.slice(0, dropdown.anchorIndex)
-    const after = text.slice(dropdown.cursorPos)
-    const insertion = `@${tag.name} `
-    const newText = before + insertion + after
-    onChange(newText)
-    renderRich(el, newText)
-    setRawCursorPos(el, before.length + insertion.length)
-    setDropdown(null)
-    el.focus()
-  }, [dropdown, onChange])
+  const selectTag = useCallback(
+    (tag: TagOption): void => {
+      const el = elRef.current
+      if (!el || !dropdown) return
+      const text = getRawText(el)
+      const before = text.slice(0, dropdown.anchorIndex)
+      const after = text.slice(dropdown.cursorPos)
+      const insertion = `@${tag.name} `
+      const newText = before + insertion + after
+      onChange(newText)
+      renderRich(el, newText)
+      setRawCursorPos(el, before.length + insertion.length)
+      setDropdown(null)
+      el.focus()
+    },
+    [dropdown, onChange]
+  )
 
   const handleInput = (): void => {
     const el = elRef.current
@@ -86,12 +98,14 @@ export default function RichEditInput({ initialValue, onChange, onSave, onCancel
     if (isOpen && dropdown) {
       if (e.key === 'ArrowDown') {
         e.preventDefault()
-        setDropdown(d => d ? { ...d, activeIdx: Math.min(d.activeIdx + 1, filteredTags.length - 1) } : d)
+        setDropdown(d =>
+          d ? { ...d, activeIdx: Math.min(d.activeIdx + 1, filteredTags.length - 1) } : d
+        )
         return
       }
       if (e.key === 'ArrowUp') {
         e.preventDefault()
-        setDropdown(d => d ? { ...d, activeIdx: Math.max(d.activeIdx - 1, 0) } : d)
+        setDropdown(d => (d ? { ...d, activeIdx: Math.max(d.activeIdx - 1, 0) } : d))
         return
       }
       if (e.key === 'Enter' || e.key === 'Tab') {
@@ -107,8 +121,15 @@ export default function RichEditInput({ initialValue, onChange, onSave, onCancel
       }
     }
 
-    if (e.key === 'Enter') { e.preventDefault(); onSave() }
-    if (e.key === 'Escape') { e.preventDefault(); setDropdown(null); onCancel() }
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      onSave()
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      setDropdown(null)
+      onCancel()
+    }
   }
 
   // Close dropdown on outside click
@@ -129,7 +150,13 @@ export default function RichEditInput({ initialValue, onChange, onSave, onCancel
         className={className}
         onInput={handleInput}
         onKeyDown={handleKeyDown}
-        style={{ outline: 'none', minHeight: '1.6em', whiteSpace: 'pre-wrap', wordBreak: 'break-word', cursor: 'text' }}
+        style={{
+          outline: 'none',
+          minHeight: '1.6em',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+          cursor: 'text'
+        }}
       />
       {isOpen && (
         <div className="tag-dropdown" style={{ left: 0 }}>
@@ -137,8 +164,11 @@ export default function RichEditInput({ initialValue, onChange, onSave, onCancel
             <div
               key={tag.name}
               className={`tag-dropdown-item${i === dropdown?.activeIdx ? ' active' : ''}`}
-              onMouseDown={e => { e.preventDefault(); selectTag(tag) }}
-              onMouseEnter={() => setDropdown(d => d ? { ...d, activeIdx: i } : d)}
+              onMouseDown={e => {
+                e.preventDefault()
+                selectTag(tag)
+              }}
+              onMouseEnter={() => setDropdown(d => (d ? { ...d, activeIdx: i } : d))}
             >
               <span className={`tag-dropdown-swatch swatch-${tag.colorClass}`} />
               <span className="tag-dropdown-label">@{tag.name}</span>

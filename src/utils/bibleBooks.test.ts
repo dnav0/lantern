@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { BIBLE_BOOKS, bookByNumber, findBookByAlias, buildCrossRefRegex, normalizeReference } from './bibleBooks'
+import {
+  BIBLE_BOOKS,
+  bookByNumber,
+  findBookByAlias,
+  buildCrossRefRegex,
+  normalizeReference
+} from './bibleBooks'
 
 describe('BIBLE_BOOKS', () => {
   it('has exactly 66 entries', () => {

@@ -104,13 +104,21 @@ body.dark .verse-span-bracket {
   background: #3a3654;
 }
 body.dark .rail-bracket.cat-observation,
-body.dark .verse-span-bracket.cat-observation { background: var(--accent-hover); }
+body.dark .verse-span-bracket.cat-observation {
+  background: var(--accent-hover);
+}
 body.dark .rail-bracket.cat-historical,
-body.dark .verse-span-bracket.cat-historical { background: var(--cat-historical); }
+body.dark .verse-span-bracket.cat-historical {
+  background: var(--cat-historical);
+}
 body.dark .rail-bracket.cat-application,
-body.dark .verse-span-bracket.cat-application { background: var(--cat-application); }
+body.dark .verse-span-bracket.cat-application {
+  background: var(--cat-application);
+}
 body.dark .rail-bracket.cat-personal,
-body.dark .verse-span-bracket.cat-personal { background: var(--cat-personal); }
+body.dark .verse-span-bracket.cat-personal {
+  background: var(--cat-personal);
+}
 body.dark .scripture-grid .rail-note-body .reading-note-card:hover,
 body.dark .scripture-grid .rail-note-body .reading-note-card.highlighted {
   background: var(--accent-weak);

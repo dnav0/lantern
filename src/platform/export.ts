@@ -32,7 +32,11 @@ export function safeFilename(s: string): string {
 //   (trailing blank line)
 // Notes are ordered by anchor_start_verse ascending (nulls last), then by
 // created_at, matching the legacy SQL `ORDER BY anchor_start_verse NULLS LAST, created_at`.
-export function serializePassageMarkdown(passage: Passage, bookName: string, notes: Note[]): string {
+export function serializePassageMarkdown(
+  passage: Passage,
+  bookName: string,
+  notes: Note[]
+): string {
   const ordered = [...notes].sort((a, b) => {
     const av = a.anchor_start_verse
     const bv = b.anchor_start_verse

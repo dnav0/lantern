@@ -111,7 +111,12 @@ export function useVerseMarquee(
   // viewport-space rects (getBoundingClientRect) so it survives scroll/zoom with
   // no measurement bookkeeping.
   const hitTest = useCallback(
-    (leftClientX: number, rightClientX: number, topClientY: number, bottomClientY: number): void => {
+    (
+      leftClientX: number,
+      rightClientX: number,
+      topClientY: number,
+      bottomClientY: number
+    ): void => {
       let min: number | null = null
       let max: number | null = null
       for (const [verse, el] of verseRowRefs.current) {

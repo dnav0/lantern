@@ -45,7 +45,9 @@ function passageInfo(p: Passage): Omit<NoteWithPassageInfo, keyof Note> {
 export function createMemoryApi(): BereanApi {
   return {
     async getPassages() {
-      return [...passages.values()].sort((a, b) => a.reference_label.localeCompare(b.reference_label))
+      return [...passages.values()].sort((a, b) =>
+        a.reference_label.localeCompare(b.reference_label)
+      )
     },
 
     async getPassagesByBook(bookNumber) {

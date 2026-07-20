@@ -76,7 +76,11 @@ export default function NavBar({
   // becomes active (staying parked at wherever it last was) and fades back
   // in at the right spot when the user returns to Bible or Journal.
   const topnavTabsRef = useRef<HTMLElement>(null)
-  const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number; visible: boolean }>({
+  const [indicatorStyle, setIndicatorStyle] = useState<{
+    left: number
+    width: number
+    visible: boolean
+  }>({
     left: 0,
     width: 0,
     visible: false
@@ -121,7 +125,11 @@ export default function NavBar({
       if (!tab) return
       const containerRect = container.getBoundingClientRect()
       const tabRect = tab.getBoundingClientRect()
-      setIndicatorStyle({ left: tabRect.left - containerRect.left, width: tabRect.width, visible: true })
+      setIndicatorStyle({
+        left: tabRect.left - containerRect.left,
+        width: tabRect.width,
+        visible: true
+      })
     }
     measure()
     window.addEventListener('resize', measure)
@@ -272,7 +280,11 @@ export default function NavBar({
           </div>
         </div>
 
-        <nav className="topnav-tabs" aria-label="Primary" ref={topnavTabsRef as React.RefObject<HTMLElement>}>
+        <nav
+          className="topnav-tabs"
+          aria-label="Primary"
+          ref={topnavTabsRef as React.RefObject<HTMLElement>}
+        >
           <span
             className="topnav-tab-indicator"
             aria-hidden="true"
@@ -369,7 +381,11 @@ export default function NavBar({
       <nav
         className="bottomnav"
         aria-label="Primary"
-        style={{ '--bottomnav-active-index': BOTTOMNAV_ORDER.indexOf(destination) } as React.CSSProperties}
+        style={
+          {
+            '--bottomnav-active-index': BOTTOMNAV_ORDER.indexOf(destination)
+          } as React.CSSProperties
+        }
       >
         <span className="bottomnav-indicator" aria-hidden="true" />
         {navTab('bible', 'Bible', bibleIcon)}

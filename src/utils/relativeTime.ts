@@ -7,7 +7,10 @@ const MINUTE = 60 * 1000
 const HOUR = 60 * MINUTE
 const DAY = 24 * HOUR
 
-export function formatRelativeTime(iso: string | null | undefined, now: number = Date.now()): string {
+export function formatRelativeTime(
+  iso: string | null | undefined,
+  now: number = Date.now()
+): string {
   if (!iso) return ''
   const then = Date.parse(iso)
   if (Number.isNaN(then)) return ''
@@ -22,7 +25,10 @@ export function formatRelativeTime(iso: string | null | undefined, now: number =
   // Older than a week: a compact date. Same year drops the year for brevity.
   const d = new Date(then)
   const sameYear = new Date(now).getFullYear() === d.getFullYear()
-  return d.toLocaleDateString(undefined, sameYear
-    ? { month: 'short', day: 'numeric' }
-    : { month: 'short', day: 'numeric', year: 'numeric' })
+  return d.toLocaleDateString(
+    undefined,
+    sameYear
+      ? { month: 'short', day: 'numeric' }
+      : { month: 'short', day: 'numeric', year: 'numeric' }
+  )
 }

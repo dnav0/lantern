@@ -11,11 +11,21 @@ interface ScriptureSkeletonProps {
 // number" nub) rather than a bare "Loading…" string, so populating scripture
 // reads as "already arriving" instead of a stalled blank page. Widths are
 // fixed (not randomized) so the skeleton doesn't jitter across re-renders.
-export default function ScriptureSkeleton({ lines = 9, narrow }: ScriptureSkeletonProps): React.ReactElement {
+export default function ScriptureSkeleton({
+  lines = 9,
+  narrow
+}: ScriptureSkeletonProps): React.ReactElement {
   return (
-    <div className={`scripture-skeleton${narrow ? ' scripture-skeleton--narrow' : ''}`} aria-hidden="true">
+    <div
+      className={`scripture-skeleton${narrow ? ' scripture-skeleton--narrow' : ''}`}
+      aria-hidden="true"
+    >
       {Array.from({ length: lines }).map((_, i) => (
-        <div className="skeleton-verse-row" key={i} style={{ '--stagger-i': i } as React.CSSProperties}>
+        <div
+          className="skeleton-verse-row"
+          key={i}
+          style={{ '--stagger-i': i } as React.CSSProperties}
+        >
           <span className="skeleton-line skeleton-line--num" />
           <span className="skeleton-line skeleton-line--text" />
         </div>

@@ -5,7 +5,7 @@ import ScriptureSkeleton from './ScriptureSkeleton'
 interface PassagePaneProps {
   passage: BiblePassage | null
   loading: boolean
-  highlightedVerses: Set<number>  // verse numbers to highlight
+  highlightedVerses: Set<number> // verse numbers to highlight
   hasAnyHighlight: boolean
 }
 
@@ -29,7 +29,11 @@ export default function PassagePane({
         {/* Was "...reference above" — wrong on desktop (the reference field is
             beside this pane, not above it) and actively backwards on mobile,
             where the scripture panel is pinned ABOVE the reference field. */}
-        <div>Type a reference<br />and press Enter to load verse text.</div>
+        <div>
+          Type a reference
+          <br />
+          and press Enter to load verse text.
+        </div>
       </div>
     )
   }

@@ -3,7 +3,14 @@
  * Drop-in replacement for <input> in inline note contexts.
  * Pass multiline={true} for a textarea that auto-resizes and saves on Cmd/Ctrl+Enter.
  */
-import React, { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  forwardRef,
+  useImperativeHandle
+} from 'react'
 
 interface TagOption {
   name: string
@@ -11,10 +18,10 @@ interface TagOption {
 }
 
 const TAG_OPTIONS: TagOption[] = [
-  { name: 'observation',  colorClass: 'observation' },
-  { name: 'historical',   colorClass: 'historical'  },
-  { name: 'application',  colorClass: 'application' },
-  { name: 'personal',     colorClass: 'personal'    },
+  { name: 'observation', colorClass: 'observation' },
+  { name: 'historical', colorClass: 'historical' },
+  { name: 'application', colorClass: 'application' },
+  { name: 'personal', colorClass: 'personal' }
 ]
 
 function filterTags(q: string): TagOption[] {
@@ -37,7 +44,10 @@ interface InlineTagInputProps {
 }
 
 const InlineTagInput = forwardRef<InlineTagInputHandle, InlineTagInputProps>(
-  function InlineTagInput({ value, onChange, onEnter, onEscape, className, placeholder, autoFocus, multiline }, ref) {
+  function InlineTagInput(
+    { value, onChange, onEnter, onEscape, className, placeholder, autoFocus, multiline },
+    ref
+  ) {
     const inputRef = useRef<HTMLInputElement>(null)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const [dropdown, setDropdown] = useState<{
@@ -51,7 +61,7 @@ const InlineTagInput = forwardRef<InlineTagInputHandle, InlineTagInputProps>(
     const isOpen = filteredTags.length > 0
 
     useImperativeHandle(ref, () => ({
-      focus: () => multiline ? textareaRef.current?.focus() : inputRef.current?.focus()
+      focus: () => (multiline ? textareaRef.current?.focus() : inputRef.current?.focus())
     }))
 
     // Auto-resize textarea when value changes
@@ -69,22 +79,25 @@ const InlineTagInput = forwardRef<InlineTagInputHandle, InlineTagInputProps>(
       [multiline]
     )
 
-    const selectTag = useCallback((tag: TagOption): void => {
-      if (!dropdown) return
-      const before = value.slice(0, dropdown.anchorIndex)
-      const after = value.slice(dropdown.cursorPos)
-      const insertion = `@${tag.name} `
-      onChange(before + insertion + after)
-      setDropdown(null)
-      setTimeout(() => {
-        const el = getActiveEl()
-        if (el) {
-          const pos = before.length + insertion.length
-          el.focus()
-          el.setSelectionRange(pos, pos)
-        }
-      }, 0)
-    }, [dropdown, value, onChange, getActiveEl])
+    const selectTag = useCallback(
+      (tag: TagOption): void => {
+        if (!dropdown) return
+        const before = value.slice(0, dropdown.anchorIndex)
+        const after = value.slice(dropdown.cursorPos)
+        const insertion = `@${tag.name} `
+        onChange(before + insertion + after)
+        setDropdown(null)
+        setTimeout(() => {
+          const el = getActiveEl()
+          if (el) {
+            const pos = before.length + insertion.length
+            el.focus()
+            el.setSelectionRange(pos, pos)
+          }
+        }, 0)
+      },
+      [dropdown, value, onChange, getActiveEl]
+    )
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
       const text = e.target.value
@@ -99,16 +112,20 @@ const InlineTagInput = forwardRef<InlineTagInputHandle, InlineTagInputProps>(
       }
     }
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
+    const handleKeyDown = (
+      e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>
+    ): void => {
       if (isOpen && dropdown) {
         if (e.key === 'ArrowDown') {
           e.preventDefault()
-          setDropdown(d => d ? { ...d, activeIdx: Math.min(d.activeIdx + 1, filteredTags.length - 1) } : d)
+          setDropdown(d =>
+            d ? { ...d, activeIdx: Math.min(d.activeIdx + 1, filteredTags.length - 1) } : d
+          )
           return
         }
         if (e.key === 'ArrowUp') {
           e.preventDefault()
-          setDropdown(d => d ? { ...d, activeIdx: Math.max(d.activeIdx - 1, 0) } : d)
+          setDropdown(d => (d ? { ...d, activeIdx: Math.max(d.activeIdx - 1, 0) } : d))
           return
         }
         if (e.key === 'Enter' || e.key === 'Tab') {
@@ -125,11 +142,25 @@ const InlineTagInput = forwardRef<InlineTagInputHandle, InlineTagInputProps>(
       }
 
       if (multiline) {
-        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); onEnter?.() }
-        if (e.key === 'Escape') { e.preventDefault(); setDropdown(null); onEscape?.() }
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+          e.preventDefault()
+          onEnter?.()
+        }
+        if (e.key === 'Escape') {
+          e.preventDefault()
+          setDropdown(null)
+          onEscape?.()
+        }
       } else {
-        if (e.key === 'Enter') { e.preventDefault(); onEnter?.() }
-        if (e.key === 'Escape') { e.preventDefault(); setDropdown(null); onEscape?.() }
+        if (e.key === 'Enter') {
+          e.preventDefault()
+          onEnter?.()
+        }
+        if (e.key === 'Escape') {
+          e.preventDefault()
+          setDropdown(null)
+          onEscape?.()
+        }
       }
     }
 
@@ -148,8 +179,11 @@ const InlineTagInput = forwardRef<InlineTagInputHandle, InlineTagInputProps>(
           <div
             key={tag.name}
             className={`tag-dropdown-item${i === dropdown?.activeIdx ? ' active' : ''}`}
-            onMouseDown={e => { e.preventDefault(); selectTag(tag) }}
-            onMouseEnter={() => setDropdown(d => d ? { ...d, activeIdx: i } : d)}
+            onMouseDown={e => {
+              e.preventDefault()
+              selectTag(tag)
+            }}
+            onMouseEnter={() => setDropdown(d => (d ? { ...d, activeIdx: i } : d))}
           >
             <span className={`tag-dropdown-swatch swatch-${tag.colorClass}`} />
             <span className="tag-dropdown-label">@{tag.name}</span>

@@ -51,17 +51,33 @@
 .skeleton-line--text {
   flex: 1;
 }
-.skeleton-verse-row:nth-child(6n+1) .skeleton-line--text { max-width: 94%; }
-.skeleton-verse-row:nth-child(6n+2) .skeleton-line--text { max-width: 72%; }
-.skeleton-verse-row:nth-child(6n+3) .skeleton-line--text { max-width: 88%; }
-.skeleton-verse-row:nth-child(6n+4) .skeleton-line--text { max-width: 60%; }
-.skeleton-verse-row:nth-child(6n+5) .skeleton-line--text { max-width: 82%; }
-.skeleton-verse-row:nth-child(6n+6) .skeleton-line--text { max-width: 96%; }
+.skeleton-verse-row:nth-child(6n + 1) .skeleton-line--text {
+  max-width: 94%;
+}
+.skeleton-verse-row:nth-child(6n + 2) .skeleton-line--text {
+  max-width: 72%;
+}
+.skeleton-verse-row:nth-child(6n + 3) .skeleton-line--text {
+  max-width: 88%;
+}
+.skeleton-verse-row:nth-child(6n + 4) .skeleton-line--text {
+  max-width: 60%;
+}
+.skeleton-verse-row:nth-child(6n + 5) .skeleton-line--text {
+  max-width: 82%;
+}
+.skeleton-verse-row:nth-child(6n + 6) .skeleton-line--text {
+  max-width: 96%;
+}
 
 @media (prefers-reduced-motion: no-preference) {
   @keyframes skeletonShimmer {
-    0% { background-position: -240px 0; }
-    100% { background-position: 240px 0; }
+    0% {
+      background-position: -240px 0;
+    }
+    100% {
+      background-position: 240px 0;
+    }
   }
   .skeleton-line {
     background-image: linear-gradient(
@@ -81,12 +97,24 @@
 
 @media (prefers-reduced-motion: no-preference) {
   @keyframes fadeRise {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   @keyframes springIn {
-    from { opacity: 0; transform: translateY(6px) scale(0.94); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.94);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 
   /* ── Entrance: rail/margin notes fade-rise on first mount only (the note's
@@ -114,7 +142,9 @@
     animation: springIn var(--dur-3) var(--ease-spring) both;
   }
   .library-search-entry {
-    transition: transform var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out);
+    transition:
+      transform var(--dur-1) var(--ease-out),
+      box-shadow var(--dur-1) var(--ease-out);
   }
   .library-search-entry:active {
     transform: scale(0.98);
@@ -133,8 +163,12 @@
      the resulting rendered note instead. `.just-saved` is toggled by a
      short-lived timeout in BookDetailPage/ReadingMode. */
   @keyframes notedSavedPulse {
-    0% { background: var(--accent-weak); }
-    100% { background: transparent; }
+    0% {
+      background: var(--accent-weak);
+    }
+    100% {
+      background: transparent;
+    }
   }
   .reading-note-card.just-saved,
   .reading-subnote.just-saved {
@@ -204,24 +238,36 @@
       color var(--dur-1) var(--ease-out),
       transform var(--dur-1) var(--ease-out);
   }
-  .bible-book-row:hover { transform: translateY(-1px); }
-  .bible-book-row:active { transform: translateY(0) scale(0.99); }
+  .bible-book-row:hover {
+    transform: translateY(-1px);
+  }
+  .bible-book-row:active {
+    transform: translateY(0) scale(0.99);
+  }
 
   .search-result {
     transition:
       background var(--dur-1) var(--ease-out),
       transform var(--dur-1) var(--ease-out);
   }
-  .search-result:hover { transform: translateX(2px); }
-  .search-result:active { transform: scale(0.98); }
+  .search-result:hover {
+    transform: translateX(2px);
+  }
+  .search-result:active {
+    transform: scale(0.98);
+  }
 
   .verse-action-btn {
     transition:
       background var(--dur-1) var(--ease-out),
       transform var(--dur-1) var(--ease-out);
   }
-  .verse-action-btn:hover { transform: translateY(-1px); }
-  .verse-action-btn:active { transform: translateY(0) scale(0.96); }
+  .verse-action-btn:hover {
+    transform: translateY(-1px);
+  }
+  .verse-action-btn:active {
+    transform: translateY(0) scale(0.96);
+  }
 
   .topnav-tabs .nav-tab {
     transition:
@@ -229,15 +275,21 @@
       color var(--dur-1) var(--ease-out),
       transform var(--dur-1) var(--ease-out);
   }
-  .topnav-tabs .nav-tab:active { transform: scale(0.96); }
+  .topnav-tabs .nav-tab:active {
+    transform: scale(0.96);
+  }
 
   .avatar-btn {
     transition:
       opacity var(--dur-1) var(--ease-out),
       transform var(--dur-1) var(--ease-out);
   }
-  .avatar-btn:hover { transform: scale(1.05); }
-  .avatar-btn:active { transform: scale(0.92); }
+  .avatar-btn:hover {
+    transform: scale(1.05);
+  }
+  .avatar-btn:active {
+    transform: scale(0.92);
+  }
 
   .text-size-option,
   .theme-swatch {
@@ -252,7 +304,9 @@
   }
 
   .study-resize-grip {
-    transition: background var(--dur-1) var(--ease-out), width var(--dur-1) var(--ease-out);
+    transition:
+      background var(--dur-1) var(--ease-out),
+      width var(--dur-1) var(--ease-out);
   }
   .study-resize-handle:hover .study-resize-grip,
   .study-resize-handle:active .study-resize-grip {
@@ -265,8 +319,12 @@
       background var(--dur-1) var(--ease-out),
       transform var(--dur-1) var(--ease-out);
   }
-  .reading-note-card:hover { transform: translateX(2px); }
-  .reading-note-card:active { transform: scale(0.99); }
+  .reading-note-card:hover {
+    transform: translateX(2px);
+  }
+  .reading-note-card:active {
+    transform: scale(0.99);
+  }
 
   .dialog-btn,
   .smodal-btn-save {
@@ -313,8 +371,12 @@
      plain CSS animation on them only ever plays once, exactly at true app
      start, with no mount-tracking state needed. */
   @keyframes navFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
   /* .topnav is deliberately fade-ONLY, no transform: GlobalSearch's box
      (`.search-input-wrap`, `position: fixed`) lives inside it, and giving an
@@ -329,8 +391,14 @@
     animation: navFadeIn var(--dur-5) var(--ease-calm) both;
   }
   @keyframes navSettleUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   .bottomnav {
     animation: navSettleUp var(--dur-5) var(--ease-calm) both;

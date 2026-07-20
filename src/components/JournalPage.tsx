@@ -134,7 +134,10 @@ export default function JournalPage({ onOpenStudy }: JournalPageProps): React.Re
                     <span className="skeleton-line" style={{ width: '38%', height: 14 }} />
                     <span className="skeleton-line" style={{ width: 56, height: 10 }} />
                   </div>
-                  <span className="skeleton-line" style={{ width: '70%', height: 10, marginTop: 8 }} />
+                  <span
+                    className="skeleton-line"
+                    style={{ width: '70%', height: 10, marginTop: 8 }}
+                  />
                 </div>
               ))}
             </div>
@@ -150,8 +153,8 @@ export default function JournalPage({ onOpenStudy }: JournalPageProps): React.Re
         <div className="journal-page-empty">
           <div className="journal-page-title">Journal</div>
           <p className="journal-page-hint">
-            No studies yet. Start one from the Bible view or the + Study tab — it will show up
-            here, grouped by book.
+            No studies yet. Start one from the Bible view or the + Study tab — it will show up here,
+            grouped by book.
           </p>
         </div>
       </div>
@@ -179,10 +182,7 @@ export default function JournalPage({ onOpenStudy }: JournalPageProps): React.Re
                 const preview = entry.preview ? previewText(entry.preview) : ''
                 return (
                   <div key={entry.passage.id} className="journal-entry-row">
-                    <button
-                      className="journal-entry"
-                      onClick={() => onOpenStudy(entry.passage.id)}
-                    >
+                    <button className="journal-entry" onClick={() => onOpenStudy(entry.passage.id)}>
                       <div className="journal-entry-top">
                         <span className="journal-entry-ref">{entry.passage.reference_label}</span>
                         <span className="journal-entry-date">{formatDate(date)}</span>
@@ -200,8 +200,20 @@ export default function JournalPage({ onOpenStudy }: JournalPageProps): React.Re
                       aria-label={`Delete study ${entry.passage.reference_label}`}
                       onClick={() => setConfirmDelete(entry)}
                     >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6" /><path d="M14 11v6" />
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                        <path d="M10 11v6" />
+                        <path d="M14 11v6" />
                       </svg>
                     </button>
                   </div>
@@ -219,18 +231,24 @@ export default function JournalPage({ onOpenStudy }: JournalPageProps): React.Re
             ? `“${confirmDelete.passage.reference_label}” and its ${confirmDelete.note_count} note${confirmDelete.note_count === 1 ? '' : 's'} will be permanently deleted. This can't be undone.`
             : undefined
         }
-        onClose={() => { if (!deleting) setConfirmDelete(null) }}
+        onClose={() => {
+          if (!deleting) setConfirmDelete(null)
+        }}
         actions={[
           {
             label: 'Cancel',
             variant: 'ghost',
             autoFocus: true,
-            onClick: () => { if (!deleting) setConfirmDelete(null) }
+            onClick: () => {
+              if (!deleting) setConfirmDelete(null)
+            }
           },
           {
             label: deleting ? 'Deleting…' : 'Delete',
             variant: 'danger',
-            onClick: () => { if (confirmDelete && !deleting) void handleDelete(confirmDelete) }
+            onClick: () => {
+              if (confirmDelete && !deleting) void handleDelete(confirmDelete)
+            }
           }
         ]}
       />

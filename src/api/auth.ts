@@ -105,7 +105,10 @@ export async function updateDisplayName(displayName: string): Promise<void> {
   const { data: userData } = await client().auth.getUser()
   const id = userData.user?.id
   if (!id) throw new Error('Not signed in')
-  const { error } = await client().from('profiles').update({ display_name: displayName }).eq('id', id)
+  const { error } = await client()
+    .from('profiles')
+    .update({ display_name: displayName })
+    .eq('id', id)
   if (error) throw error
 }
 

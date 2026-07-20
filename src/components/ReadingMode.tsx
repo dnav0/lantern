@@ -95,11 +95,21 @@ function RenderedNoteContent({ content }: { content: string }): React.ReactEleme
       {segments.map((seg, i) => {
         switch (seg.type) {
           case 'verse-anchor':
-            return <span key={i} className="pill-verse">{seg.display}</span>
+            return (
+              <span key={i} className="pill-verse">
+                {seg.display}
+              </span>
+            )
           case 'tag':
             return null
           case 'cross-ref':
-            return <CrossRefPill key={i} reference={seg.data?.reference ?? seg.raw} display={seg.display} />
+            return (
+              <CrossRefPill
+                key={i}
+                reference={seg.data?.reference ?? seg.raw}
+                display={seg.display}
+              />
+            )
           default:
             return <span key={i}>{seg.raw}</span>
         }
@@ -108,7 +118,13 @@ function RenderedNoteContent({ content }: { content: string }): React.ReactEleme
   )
 }
 
-export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, onPassageDeleted }: ReadingModeProps): React.ReactElement {
+export default function ReadingMode({
+  passage,
+  onStudy,
+  onRefresh,
+  onOpenStudy,
+  onPassageDeleted
+}: ReadingModeProps): React.ReactElement {
   const api = useApi()
   const [biblePassage, setBiblePassage] = useState<BiblePassage | null>(null)
   const [notes, setNotes] = useState<Note[]>([])
@@ -146,13 +162,12 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
     setHighlightedVerses(new Set())
     setEditingNoteId(null)
 
-    Promise.all([
-      api.getBibleVerse(passage.reference_label),
-      api.getNotesByPassage(passage.id)
-    ]).then(([bp, ns]) => {
-      if (bp) setBiblePassage(bp)
-      setNotes(ns)
-    }).finally(() => setLoading(false))
+    Promise.all([api.getBibleVerse(passage.reference_label), api.getNotesByPassage(passage.id)])
+      .then(([bp, ns]) => {
+        if (bp) setBiblePassage(bp)
+        setNotes(ns)
+      })
+      .finally(() => setLoading(false))
   }, [passage.id])
 
   // Escape clears every highlight/selection everywhere.
@@ -208,10 +223,11 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
     // event mouseup produces re-run tap logic and clobber it.
     if (suppressNextClick()) return
     if (editingNoteId !== null) return
-    const anchored = notes.filter(n =>
-      n.anchor_start_verse !== null &&
-      verseNum >= n.anchor_start_verse &&
-      verseNum <= (n.anchor_end_verse ?? n.anchor_start_verse)
+    const anchored = notes.filter(
+      n =>
+        n.anchor_start_verse !== null &&
+        verseNum >= n.anchor_start_verse &&
+        verseNum <= (n.anchor_end_verse ?? n.anchor_start_verse)
     )
     if (anchored.length > 0) {
       setHighlightedNoteIds(new Set(anchored.map(n => n.id)))
@@ -267,7 +283,8 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
       ? null
       : [Math.min(selAnchor, selFocus), Math.max(selAnchor, selFocus)]
 
-  const bookAndChapter = `${bookByNumber(passage.book_number)?.name ?? ''} ${passage.chapter_start}`.trim()
+  const bookAndChapter =
+    `${bookByNumber(passage.book_number)?.name ?? ''} ${passage.chapter_start}`.trim()
   const selReference = selRange
     ? selRange[0] === selRange[1]
       ? `${bookAndChapter}:${selRange[0]}`
@@ -347,7 +364,7 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
       anchor_end_verse: parsed.anchorEnd,
       category: parsed.category
     })
-    setNotes(prev => prev.map(n => n.id === editingNoteId ? updated : n))
+    setNotes(prev => prev.map(n => (n.id === editingNoteId ? updated : n)))
     markJustSaved(editingNoteId)
     setEditingNoteId(null)
     onRefresh?.()
@@ -437,21 +454,72 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
 
   const renderNoteActions = (note: Note): React.ReactElement => (
     <div className="se-note-actions">
-      <button className="se-icon-btn se-icon-primary" title="Edit note" onClick={e => { e.stopPropagation(); handleStartEdit(note) }}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+      <button
+        className="se-icon-btn se-icon-primary"
+        title="Edit note"
+        onClick={e => {
+          e.stopPropagation()
+          handleStartEdit(note)
+        }}
+      >
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
         </svg>
       </button>
-      <button className="se-icon-btn" title="Open study" onClick={e => { e.stopPropagation(); onOpenStudy() }}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+      <button
+        className="se-icon-btn"
+        title="Open study"
+        onClick={e => {
+          e.stopPropagation()
+          onOpenStudy()
+        }}
+      >
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
         </svg>
       </button>
-      <button className="se-icon-btn se-icon-danger" title="Delete" onClick={e => { e.stopPropagation(); setConfirmDelete(note) }}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
+      <button
+        className="se-icon-btn se-icon-danger"
+        title="Delete"
+        onClick={e => {
+          e.stopPropagation()
+          setConfirmDelete(note)
+        }}
+      >
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+          <path d="M10 11v6" />
+          <path d="M14 11v6" />
         </svg>
       </button>
     </div>
@@ -475,7 +543,10 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
           {opts?.chip && hasAnchor && (
             <button
               className="note-range-chip"
-              onClick={e => { e.stopPropagation(); scrollToVerse(main.anchor_start_verse!) }}
+              onClick={e => {
+                e.stopPropagation()
+                scrollToVerse(main.anchor_start_verse!)
+              }}
               title={`Go to ${rangeLabel}`}
             >
               {rangeLabel}
@@ -491,11 +562,26 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
           </time>
         </div>
         {isEditing ? (
-          <QuickEditCard category={main.category} mode="edit" saveDisabled={!editText.trim()} onSave={() => void handleSaveEdit()} onCancel={() => setEditingNoteId(null)}>
-            <RichEditInput className="note-edit-textarea" initialValue={editText} onChange={setEditText} onSave={() => void handleSaveEdit()} onCancel={() => setEditingNoteId(null)} />
+          <QuickEditCard
+            category={main.category}
+            mode="edit"
+            saveDisabled={!editText.trim()}
+            onSave={() => void handleSaveEdit()}
+            onCancel={() => setEditingNoteId(null)}
+          >
+            <RichEditInput
+              className="note-edit-textarea"
+              initialValue={editText}
+              onChange={setEditText}
+              onSave={() => void handleSaveEdit()}
+              onCancel={() => setEditingNoteId(null)}
+            />
           </QuickEditCard>
         ) : isConfirmingDelete ? (
-          <InlineDeleteConfirm onConfirm={() => void handleDeleteNote(main)} onCancel={() => setConfirmDelete(null)} />
+          <InlineDeleteConfirm
+            onConfirm={() => void handleDeleteNote(main)}
+            onCancel={() => setConfirmDelete(null)}
+          />
         ) : (
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
             <div style={{ flex: 1 }} onClick={() => handleNoteClick(main)}>
@@ -511,17 +597,35 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
               const isSubEditing = editingNoteId === sub.id
               const isSubConfirmingDelete = confirmDelete?.id === sub.id
               return (
-                <div key={sub.id} className={`reading-subnote${highlightedNoteIds.has(sub.id) ? ' highlighted' : ''}${justSavedId === sub.id ? ' just-saved' : ''}`}>
+                <div
+                  key={sub.id}
+                  className={`reading-subnote${highlightedNoteIds.has(sub.id) ? ' highlighted' : ''}${justSavedId === sub.id ? ' just-saved' : ''}`}
+                >
                   <span className="reading-subnote-bullet">◦</span>
                   {isSubEditing ? (
                     <div style={{ flex: 1 }}>
-                      <QuickEditCard category={sub.category} mode="edit" saveDisabled={!editText.trim()} onSave={() => void handleSaveEdit()} onCancel={() => setEditingNoteId(null)}>
-                        <RichEditInput className="note-edit-textarea" initialValue={editText} onChange={setEditText} onSave={() => void handleSaveEdit()} onCancel={() => setEditingNoteId(null)} />
+                      <QuickEditCard
+                        category={sub.category}
+                        mode="edit"
+                        saveDisabled={!editText.trim()}
+                        onSave={() => void handleSaveEdit()}
+                        onCancel={() => setEditingNoteId(null)}
+                      >
+                        <RichEditInput
+                          className="note-edit-textarea"
+                          initialValue={editText}
+                          onChange={setEditText}
+                          onSave={() => void handleSaveEdit()}
+                          onCancel={() => setEditingNoteId(null)}
+                        />
                       </QuickEditCard>
                     </div>
                   ) : isSubConfirmingDelete ? (
                     <div style={{ flex: 1 }}>
-                      <InlineDeleteConfirm onConfirm={() => void handleDeleteNote(sub)} onCancel={() => setConfirmDelete(null)} />
+                      <InlineDeleteConfirm
+                        onConfirm={() => void handleDeleteNote(sub)}
+                        onCancel={() => setConfirmDelete(null)}
+                      />
                     </div>
                   ) : (
                     <>
@@ -569,7 +673,9 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
         <div className="reading-heading">
           <h1>{passage.reference_label}</h1>
           <div className="reading-meta">
-            <span>{passage.session_count ?? 0} session{passage.session_count !== 1 ? 's' : ''}</span>
+            <span>
+              {passage.session_count ?? 0} session{passage.session_count !== 1 ? 's' : ''}
+            </span>
             {passage.last_studied && (
               <span>Last studied {new Date(passage.last_studied).toLocaleDateString()}</span>
             )}
@@ -602,11 +708,11 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
                 box selection over the scripture area. */}
             <div className={`scripture-grid${hasRail ? '' : ' no-rail'}`}>
               {verses.map((v, i) => {
-                const isSelected = selRange !== null && v.verse >= selRange[0] && v.verse <= selRange[1]
+                const isSelected =
+                  selRange !== null && v.verse >= selRange[0] && v.verse <= selRange[1]
                 const isHighlighted = highlightedVerses.has(v.verse)
                 const isDimmed =
-                  (hasAnyHighlightedVerse && !isHighlighted) ||
-                  (selRange !== null && !isSelected)
+                  (hasAnyHighlightedVerse && !isHighlighted) || (selRange !== null && !isSelected)
                 const showInline = inlineVerse === v.verse
                 const bracketCat = bracketByVerse.get(v.verse)
 
@@ -620,7 +726,10 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
                     style={{ gridRow: i + 1, '--stagger-i': i } as React.CSSProperties}
                   >
                     <div
-                      ref={el => { if (el) verseRowRefs.current.set(v.verse, el); else verseRowRefs.current.delete(v.verse) }}
+                      ref={el => {
+                        if (el) verseRowRefs.current.set(v.verse, el)
+                        else verseRowRefs.current.delete(v.verse)
+                      }}
                       className={`reading-verse-row${isHighlighted ? ' highlighted' : ''}${isSelected ? ' selected' : ''}`}
                       onClick={() => handleVerseClick(v.verse)}
                       style={isDimmed ? { opacity: 0.35 } : undefined}
@@ -637,7 +746,10 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
                       <span
                         className="verse-add-btn"
                         data-no-drag
-                        onClick={e => { e.stopPropagation(); handleAddInline(v.verse) }}
+                        onClick={e => {
+                          e.stopPropagation()
+                          handleAddInline(v.verse)
+                        }}
                         title="Add note"
                       >
                         +
@@ -665,13 +777,19 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
                           mode="create"
                           saveDisabled={!inlineText.trim() || savingInline}
                           onSave={() => void handleInlineSave()}
-                          onCancel={() => { setInlineVerse(null); setInlineText('') }}
+                          onCancel={() => {
+                            setInlineVerse(null)
+                            setInlineText('')
+                          }}
                         >
                           <InlineTagInput
                             value={inlineText}
                             onChange={setInlineText}
                             onEnter={handleInlineSave}
-                            onEscape={() => { setInlineVerse(null); setInlineText('') }}
+                            onEscape={() => {
+                              setInlineVerse(null)
+                              setInlineText('')
+                            }}
                             className="inline-note-input"
                             placeholder={`v${v.verse} type a note…`}
                             autoFocus
@@ -694,12 +812,16 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
                   <div
                     key={group.main.id}
                     className={`rail-note${isHl ? ' highlighted' : ''}`}
-                    style={{ gridRow: `${clampRow(s)} / ${clampRow(e) + 1}`, marginLeft: lane * LANE_STEP }}
+                    style={{
+                      gridRow: `${clampRow(s)} / ${clampRow(e) + 1}`,
+                      marginLeft: lane * LANE_STEP
+                    }}
                   >
-                    <span className={`rail-bracket cat-${group.main.category || 'none'}`} aria-hidden="true" />
-                    <div className="rail-note-body">
-                      {renderNoteGroup(group)}
-                    </div>
+                    <span
+                      className={`rail-bracket cat-${group.main.category || 'none'}`}
+                      aria-hidden="true"
+                    />
+                    <div className="rail-note-body">{renderNoteGroup(group)}</div>
                   </div>
                 )
               })}
@@ -727,8 +849,18 @@ export default function ReadingMode({ passage, onStudy, onRefresh, onOpenStudy, 
             onClick={clearSelection}
             aria-label="Clear selection"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>

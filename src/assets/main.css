@@ -1859,10 +1859,18 @@ body.dark .search-backdrop {
   transition: background 0.12s;
   align-self: stretch;
 }
-.rail-bracket.cat-observation { background: var(--accent); }
-.rail-bracket.cat-historical { background: var(--cat-historical); }
-.rail-bracket.cat-application { background: var(--cat-application); }
-.rail-bracket.cat-personal { background: var(--cat-personal); }
+.rail-bracket.cat-observation {
+  background: var(--accent);
+}
+.rail-bracket.cat-historical {
+  background: var(--cat-historical);
+}
+.rail-bracket.cat-application {
+  background: var(--cat-application);
+}
+.rail-bracket.cat-personal {
+  background: var(--cat-personal);
+}
 
 .rail-note.highlighted .rail-bracket,
 .rail-note:hover .rail-bracket {
@@ -1912,10 +1920,18 @@ body.dark .search-backdrop {
   background: #d8d5f2;
   cursor: pointer;
 }
-.verse-span-bracket.cat-observation { background: var(--accent); }
-.verse-span-bracket.cat-historical { background: var(--cat-historical); }
-.verse-span-bracket.cat-application { background: var(--cat-application); }
-.verse-span-bracket.cat-personal { background: var(--cat-personal); }
+.verse-span-bracket.cat-observation {
+  background: var(--accent);
+}
+.verse-span-bracket.cat-historical {
+  background: var(--cat-historical);
+}
+.verse-span-bracket.cat-application {
+  background: var(--cat-application);
+}
+.verse-span-bracket.cat-personal {
+  background: var(--cat-personal);
+}
 
 .note-range-chip {
   display: inline-flex;
@@ -1976,10 +1992,18 @@ body.dark .search-backdrop {
   border-left: 3px solid var(--accent);
   box-shadow: var(--elev-2);
 }
-.quick-edit-card.cat-observation { border-left-color: var(--cat-observation); }
-.quick-edit-card.cat-historical  { border-left-color: var(--cat-historical); }
-.quick-edit-card.cat-application{ border-left-color: var(--cat-application); }
-.quick-edit-card.cat-personal   { border-left-color: var(--cat-personal); }
+.quick-edit-card.cat-observation {
+  border-left-color: var(--cat-observation);
+}
+.quick-edit-card.cat-historical {
+  border-left-color: var(--cat-historical);
+}
+.quick-edit-card.cat-application {
+  border-left-color: var(--cat-application);
+}
+.quick-edit-card.cat-personal {
+  border-left-color: var(--cat-personal);
+}
 .quick-edit-card--danger {
   border-left-color: #e83d3d;
 }
@@ -3233,14 +3257,30 @@ body.dark .search-backdrop {
 
 /* Each swatch renders a static preview of its OWN theme's palette, not the
    currently-active one — so all four are comparable at a glance. */
-.theme-preview-berean { background: #f4f0e8; }
-.theme-preview-berean .theme-preview-accent { background: #6b62d6; }
-.theme-preview-scholarly { background: #fbfaf8; }
-.theme-preview-scholarly .theme-preview-accent { background: #6b62d6; }
-.theme-preview-paper { background: #f3efe7; }
-.theme-preview-paper .theme-preview-accent { background: #b5732a; }
-.theme-preview-modern { background: #f7f8fa; }
-.theme-preview-modern .theme-preview-accent { background: #5b57e0; }
+.theme-preview-berean {
+  background: #f4f0e8;
+}
+.theme-preview-berean .theme-preview-accent {
+  background: #6b62d6;
+}
+.theme-preview-scholarly {
+  background: #fbfaf8;
+}
+.theme-preview-scholarly .theme-preview-accent {
+  background: #6b62d6;
+}
+.theme-preview-paper {
+  background: #f3efe7;
+}
+.theme-preview-paper .theme-preview-accent {
+  background: #b5732a;
+}
+.theme-preview-modern {
+  background: #f7f8fa;
+}
+.theme-preview-modern .theme-preview-accent {
+  background: #5b57e0;
+}
 
 .theme-swatch-text {
   display: flex;
@@ -3937,7 +3977,9 @@ body.dark .upd-popover-btn-ghost:hover {
     color: var(--text-muted);
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
-    transition: background 0.12s, color 0.12s;
+    transition:
+      background 0.12s,
+      color 0.12s;
   }
   .topnav-search-btn:active {
     background: var(--surface-2);

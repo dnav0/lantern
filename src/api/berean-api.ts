@@ -15,7 +15,13 @@ import type {
 } from '../types'
 import { getBibleVerse } from '../bible/service'
 import { mirrorKey, readMirror, writeMirror } from '../offline/mirror'
-import { OfflineError, isNetworkError, markOffline, markOnline, emitOfflineToast } from '../offline/status'
+import {
+  OfflineError,
+  isNetworkError,
+  markOffline,
+  markOnline,
+  emitOfflineToast
+} from '../offline/status'
 
 // SupabaseBereanApi: the single mutation choke point against Postgres. Every id
 // is client-generated (crypto.randomUUID) and every timestamp is client-set — the
@@ -136,7 +142,11 @@ export class SupabaseBereanApi implements BereanApi {
 
   async getPassageById(id: string): Promise<Passage | null> {
     return this.read('getPassageById', id, async () => {
-      const { data, error } = await this.db.from('passages').select(PASSAGE_COLS).eq('id', id).maybeSingle()
+      const { data, error } = await this.db
+        .from('passages')
+        .select(PASSAGE_COLS)
+        .eq('id', id)
+        .maybeSingle()
       if (error) throw new Error(error.message)
       return (data as Passage) ?? null
     })
@@ -150,7 +160,11 @@ export class SupabaseBereanApi implements BereanApi {
         created_at: now(),
         ...input
       }
-      const { data, error } = await this.db.from('passages').insert(row).select(PASSAGE_COLS).single()
+      const { data, error } = await this.db
+        .from('passages')
+        .insert(row)
+        .select(PASSAGE_COLS)
+        .single()
       return this.assert(data, error) as Passage
     })
   }
@@ -176,7 +190,7 @@ export class SupabaseBereanApi implements BereanApi {
         )
         .eq('sessions.passages.workspace_id', this.workspaceId)
         .order('created_at', { ascending: true })
-      const first = <T,>(v: T | T[]): T => (Array.isArray(v) ? v[0] : v)
+      const first = <T>(v: T | T[]): T => (Array.isArray(v) ? v[0] : v)
       const rows = this.assert(data, error) as unknown as Array<{
         content: string
         created_at: string
@@ -261,7 +275,7 @@ export class SupabaseBereanApi implements BereanApi {
         .order('created_at', { ascending: true })
       // Nested relations come back as objects (or arrays under some driver
       // versions); normalise defensively.
-      const first = <T,>(v: T | T[]): T => (Array.isArray(v) ? v[0] : v)
+      const first = <T>(v: T | T[]): T => (Array.isArray(v) ? v[0] : v)
       const rows = this.assert(data, error) as unknown as Array<
         Record<string, unknown> & {
           sessions: { passages: Record<string, unknown> } | { passages: Record<string, unknown> }[]
@@ -380,7 +394,7 @@ export class SupabaseBereanApi implements BereanApi {
         .ilike('content', `%${escaped}%`)
         .order('updated_at', { ascending: false })
         .limit(50)
-      const first = <T,>(v: T | T[]): T => (Array.isArray(v) ? v[0] : v)
+      const first = <T>(v: T | T[]): T => (Array.isArray(v) ? v[0] : v)
       const rows = this.assert(data, error) as unknown as Array<
         Record<string, unknown> & {
           sessions:

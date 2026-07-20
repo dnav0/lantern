@@ -211,7 +211,9 @@ export default function App({ displayName, onSignOut }: AppProps): React.ReactEl
           key={`${selectedBibleBook.id}-${selectedChapter ?? 1}`}
           bibleBook={selectedBibleBook}
           initialChapter={selectedChapter ?? 1}
-          onBack={() => setState(prev => ({ ...prev, selectedBookName: null, selectedChapter: null }))}
+          onBack={() =>
+            setState(prev => ({ ...prev, selectedBookName: null, selectedChapter: null }))
+          }
           onStudy={(ref, passageId) => {
             handleStudyFromReading(ref, passageId)
             refresh()

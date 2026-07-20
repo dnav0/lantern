@@ -101,7 +101,11 @@ describe('formatRelativeTime — compact date (>= 7 days)', () => {
     const now = Date.parse('2024-01-03T12:00:00.000Z')
     const then = new Date(now - 10 * DAY)
     expect(then.getFullYear()).not.toBe(new Date(now).getFullYear())
-    const expected = then.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+    const expected = then.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    })
     expect(formatRelativeTime(then.toISOString(), now)).toBe(expected)
   })
 })

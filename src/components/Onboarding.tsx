@@ -71,9 +71,8 @@ export default function Onboarding({ onDone }: OnboardingProps): React.ReactElem
           <>
             <h1 className="welcome-title">Study mode</h1>
             <p className="welcome-body">
-              Type a reference, read the passage, and write what you see —
-              observations, historical context, application, personal reflection.
-              Notes anchor to the verses they belong to.
+              Type a reference, read the passage, and write what you see — observations, historical
+              context, application, personal reflection. Notes anchor to the verses they belong to.
             </p>
             <div className="welcome-actions">
               <button className="welcome-btn-primary" onClick={next}>
@@ -87,8 +86,8 @@ export default function Onboarding({ onDone }: OnboardingProps): React.ReactElem
           <>
             <h1 className="welcome-title">Reading mode</h1>
             <p className="welcome-body">
-              Come back to any passage to read your notes against the text,
-              browse the whole Bible by book, and pick up where you left off.
+              Come back to any passage to read your notes against the text, browse the whole Bible
+              by book, and pick up where you left off.
             </p>
             <div className="welcome-actions">
               <button className="welcome-btn-primary" onClick={finish} disabled={saving}>

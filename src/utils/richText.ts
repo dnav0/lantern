@@ -60,9 +60,10 @@ export function setRawCursorPos(el: HTMLElement, target: number): void {
 
   for (const child of Array.from(el.childNodes)) {
     if ((child as HTMLElement).tagName === 'BR') continue
-    const len = child.nodeType === Node.TEXT_NODE
-      ? (child.textContent?.length ?? 0)
-      : ((child as HTMLElement).dataset.raw?.length ?? child.textContent?.length ?? 0)
+    const len =
+      child.nodeType === Node.TEXT_NODE
+        ? (child.textContent?.length ?? 0)
+        : ((child as HTMLElement).dataset.raw?.length ?? child.textContent?.length ?? 0)
 
     if (rem <= len) {
       if (child.nodeType === Node.TEXT_NODE) {
@@ -107,7 +108,8 @@ export function renderRich(el: HTMLElement, text: string, cursorPos?: number): b
         span.contentEditable = 'false'
         span.dataset.raw = seg.raw
         if (seg.type === 'verse-anchor') span.className = 'pill-verse'
-        else if (seg.type === 'tag') span.className = `pill-tag-${seg.data?.category ?? 'observation'}`
+        else if (seg.type === 'tag')
+          span.className = `pill-tag-${seg.data?.category ?? 'observation'}`
         else if (seg.type === 'cross-ref') span.className = 'pill-crossref'
         span.textContent = seg.display
         frag.appendChild(span)
@@ -118,7 +120,7 @@ export function renderRich(el: HTMLElement, text: string, cursorPos?: number): b
 
   const serialise = (node: HTMLElement | DocumentFragment): string =>
     Array.from(node.childNodes)
-      .map(n => n.nodeType === Node.TEXT_NODE ? n.textContent : (n as HTMLElement).outerHTML)
+      .map(n => (n.nodeType === Node.TEXT_NODE ? n.textContent : (n as HTMLElement).outerHTML))
       .join('')
 
   if (serialise(el) === serialise(frag as unknown as HTMLElement)) return false

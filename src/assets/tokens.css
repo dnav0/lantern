@@ -17,9 +17,17 @@
 
 :root {
   /* ── Geometry ── */
-  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
-  --space-5: 24px; --space-6: 32px; --space-7: 48px;
-  --radius-sm: 7px; --radius-md: 12px; --radius-lg: 18px; --radius-xl: 26px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --radius-sm: 7px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 26px;
   --measure: 66ch;
   /* Page-shell width: one consistent, fairly snug column shared by a page's
      header, chapter-pill nav, and library grid — centered via margin:auto at
@@ -47,45 +55,45 @@
   --text-scale: 1;
 
   /* ── Surfaces & ink (Berean light) ── */
-  --bg:         #f4f0e8;  /* app canvas — warm cream */
-  --surface:    #fbf9f4;  /* raised cards / panels */
-  --surface-2:  #ece6da;  /* subtle fills, hover rows, insets */
-  --border:     #e2dccf;  /* hairline dividers & outlines */
+  --bg: #f4f0e8; /* app canvas — warm cream */
+  --surface: #fbf9f4; /* raised cards / panels */
+  --surface-2: #ece6da; /* subtle fills, hover rows, insets */
+  --border: #e2dccf; /* hairline dividers & outlines */
   --border-strong: #d8d0c0;
-  --text:       #201e1a;  /* primary ink */
-  --text-muted: #6a6353;  /* secondary text, metadata — AA (~4.8:1) on cream */
-  --text-faint: #938a77;  /* de-emphasised labels, placeholders */
+  --text: #201e1a; /* primary ink */
+  --text-muted: #6a6353; /* secondary text, metadata — AA (~4.8:1) on cream */
+  --text-faint: #938a77; /* de-emphasised labels, placeholders */
 
   /* ── UI type scale (systematic hierarchy) ── */
-  --text-xs:   11px;  /* eyebrow labels, chips, timestamps */
-  --text-sm:   13px;  /* secondary / metadata */
-  --text-base: 14px;  /* UI body */
-  --text-lg:   16px;  /* emphasis */
-  --text-xl:   20px;  /* section titles */
-  --text-2xl:  26px;  /* page headings */
+  --text-xs: 11px; /* eyebrow labels, chips, timestamps */
+  --text-sm: 13px; /* secondary / metadata */
+  --text-base: 14px; /* UI body */
+  --text-lg: 16px; /* emphasis */
+  --text-xl: 20px; /* section titles */
+  --text-2xl: 26px; /* page headings */
   --tracking-eyebrow: 0.08em;
 
   /* ── Accent (indigo — trust/calm, decoupled from the warm canvas) ── */
-  --accent:        #6b62d6;
-  --accent-hover:  #5b52c8;
-  --accent-weak:   rgba(107, 98, 214, 0.11); /* tinted fills, selection wash */
+  --accent: #6b62d6;
+  --accent-hover: #5b52c8;
+  --accent-weak: rgba(107, 98, 214, 0.11); /* tinted fills, selection wash */
   --accent-weaker: rgba(107, 98, 214, 0.07);
-  --accent-soft:   rgba(107, 98, 214, 0.18); /* borders on tinted chips */
-  --on-accent:     #ffffff;                  /* text/icons on an accent fill */
+  --accent-soft: rgba(107, 98, 214, 0.18); /* borders on tinted chips */
+  --on-accent: #ffffff; /* text/icons on an accent fill */
 
   /* ── Note categories ── */
   --cat-observation: #6b62d6;
-  --cat-historical:  #3f8f5b;
+  --cat-historical: #3f8f5b;
   --cat-application: #b5732a;
-  --cat-personal:    #c05070;
+  --cat-personal: #c05070;
   --cat-observation-weak: rgba(107, 98, 214, 0.12);
-  --cat-historical-weak:  rgba(63, 143, 91, 0.12);
+  --cat-historical-weak: rgba(63, 143, 91, 0.12);
   --cat-application-weak: rgba(181, 115, 42, 0.12);
-  --cat-personal-weak:    rgba(192, 80, 112, 0.12);
+  --cat-personal-weak: rgba(192, 80, 112, 0.12);
 
   /* ── Elevation (soft, layered — freshness lives in the chrome) ── */
   --elev-1: 0 1px 2px rgba(20, 16, 8, 0.05), 0 1px 1px rgba(20, 16, 8, 0.04);
-  --elev-2: 0 2px 6px rgba(20, 16, 8, 0.06), 0 8px 20px -6px rgba(20, 16, 8, 0.10);
+  --elev-2: 0 2px 6px rgba(20, 16, 8, 0.06), 0 8px 20px -6px rgba(20, 16, 8, 0.1);
   --elev-3: 0 6px 16px -4px rgba(20, 16, 8, 0.12), 0 20px 40px -12px rgba(20, 16, 8, 0.18);
   --elev-hairline: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 
@@ -104,11 +112,14 @@
      read as sudden/mechanical at these longer durations; easing the START
      too is what makes a slower duration actually feel composed rather than
      just "the same snap, held longer." */
-  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-calm:   cubic-bezier(0.45, 0, 0.15, 1);
-  --dur-1: 150ms; --dur-2: 200ms; --dur-3: 260ms;
-  --dur-4: 600ms; --dur-5: 950ms;
+  --ease-calm: cubic-bezier(0.45, 0, 0.15, 1);
+  --dur-1: 150ms;
+  --dur-2: 200ms;
+  --dur-3: 260ms;
+  --dur-4: 600ms;
+  --dur-5: 950ms;
 }
 
 /* ── Dark: matches the app's existing cool dark palette for F1 ──
@@ -118,32 +129,32 @@
    (and the dark.css → token collapse that lets it fully drive dark mode) is the
    deliberate next step — see BACKLOG "F1b: warm dark + dark.css collapse". */
 body.dark {
-  --bg:         #17140f;
-  --surface:    #211d17;
-  --surface-2:  #2b2620;
-  --border:     #38322a;
+  --bg: #17140f;
+  --surface: #211d17;
+  --surface-2: #2b2620;
+  --border: #38322a;
   --border-strong: #473f34;
-  --text:       #ece4d6;
+  --text: #ece4d6;
   --text-muted: #a99f8e;
   --text-faint: #7a7264;
 
-  --accent:        #a49cf0;
-  --accent-hover:  #b6aff5;
-  --accent-weak:   rgba(164, 156, 240, 0.15);
+  --accent: #a49cf0;
+  --accent-hover: #b6aff5;
+  --accent-weak: rgba(164, 156, 240, 0.15);
   --accent-weaker: rgba(164, 156, 240, 0.08);
-  --accent-soft:   rgba(164, 156, 240, 0.22);
-  --on-accent:     #17140f;
+  --accent-soft: rgba(164, 156, 240, 0.22);
+  --on-accent: #17140f;
 
   --cat-observation: #a49cf0;
-  --cat-historical:  #5fbf92;
+  --cat-historical: #5fbf92;
   --cat-application: #d79a55;
-  --cat-personal:    #e58aab;
+  --cat-personal: #e58aab;
   --cat-observation-weak: rgba(164, 156, 240, 0.18);
-  --cat-historical-weak:  rgba(95, 191, 146, 0.16);
+  --cat-historical-weak: rgba(95, 191, 146, 0.16);
   --cat-application-weak: rgba(215, 154, 85, 0.16);
-  --cat-personal-weak:    rgba(229, 138, 171, 0.16);
+  --cat-personal-weak: rgba(229, 138, 171, 0.16);
 
-  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.3);
   --elev-2: 0 2px 6px rgba(0, 0, 0, 0.32), 0 10px 22px -8px rgba(0, 0, 0, 0.42);
   --elev-3: 0 8px 20px -6px rgba(0, 0, 0, 0.45), 0 24px 48px -16px rgba(0, 0, 0, 0.55);
   --elev-hairline: inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -158,139 +169,179 @@ body.dark {
    Only color + reading type differ per theme; elevation/motion/spacing are
    shared. Palettes originate from design/mockup.html's compare artifact. */
 
-[data-theme="scholarly"] {
-  --bg:        #fbfaf8;
-  --surface:   #ffffff;
+[data-theme='scholarly'] {
+  --bg: #fbfaf8;
+  --surface: #ffffff;
   --surface-2: #f4f2ee;
-  --border:    #e7e3dc;
+  --border: #e7e3dc;
   --border-strong: #d7d2c8;
-  --text:      #21201d;
-  --text-muted:#6e6960;
-  --text-faint:#9a9488;
-  --accent:        #6b62d6;
-  --accent-hover:  #5b52c8;
-  --accent-weak:   rgba(107, 98, 214, 0.10);
+  --text: #21201d;
+  --text-muted: #6e6960;
+  --text-faint: #9a9488;
+  --accent: #6b62d6;
+  --accent-hover: #5b52c8;
+  --accent-weak: rgba(107, 98, 214, 0.1);
   --accent-weaker: rgba(107, 98, 214, 0.06);
-  --accent-soft:   rgba(107, 98, 214, 0.18);
-  --on-accent:     #ffffff;
+  --accent-soft: rgba(107, 98, 214, 0.18);
+  --on-accent: #ffffff;
   --scripture-font: 'Source Serif 4', Georgia, 'Times New Roman', serif;
   --scripture-size: 19px;
   --scripture-lh: 1.72;
-  --cat-observation: #6b62d6; --cat-historical: #1d9e75;
-  --cat-application: #ba7517; --cat-personal: #d4537e;
+  --cat-observation: #6b62d6;
+  --cat-historical: #1d9e75;
+  --cat-application: #ba7517;
+  --cat-personal: #d4537e;
   --cat-observation-weak: rgba(107, 98, 214, 0.12);
-  --cat-historical-weak:  rgba(29, 158, 117, 0.12);
+  --cat-historical-weak: rgba(29, 158, 117, 0.12);
   --cat-application-weak: rgba(186, 117, 23, 0.12);
-  --cat-personal-weak:    rgba(212, 83, 126, 0.12);
+  --cat-personal-weak: rgba(212, 83, 126, 0.12);
 }
-html[data-theme="scholarly"] body.dark {
-  --bg:#17161a; --surface:#201f24; --surface-2:#1b1a1f;
-  --border:#302e36; --border-strong:#3d3b44;
-  --text:#e9e7e2; --text-muted:#a5a1ab; --text-faint:#726f79;
-  --accent:#9a91f0; --accent-hover:#aca4f5;
-  --accent-weak:rgba(154,145,240,0.14); --accent-weaker:rgba(154,145,240,0.08);
-  --accent-soft:rgba(154,145,240,0.22); --on-accent:#17140f;
-  --cat-observation:#9a91f0; --cat-historical:#4fb98c;
-  --cat-application:#d08a3a; --cat-personal:#e06a94;
-  --cat-observation-weak: rgba(154,145,240,0.16);
-  --cat-historical-weak:  rgba(79,185,140,0.16);
-  --cat-application-weak: rgba(208,138,58,0.16);
-  --cat-personal-weak:    rgba(224,106,148,0.16);
-  --elev-1: 0 1px 2px rgba(0,0,0,.30);
-  --elev-2: 0 2px 6px rgba(0,0,0,.32), 0 10px 22px -8px rgba(0,0,0,.42);
-  --elev-3: 0 8px 20px -6px rgba(0,0,0,.45), 0 24px 48px -16px rgba(0,0,0,.55);
+html[data-theme='scholarly'] body.dark {
+  --bg: #17161a;
+  --surface: #201f24;
+  --surface-2: #1b1a1f;
+  --border: #302e36;
+  --border-strong: #3d3b44;
+  --text: #e9e7e2;
+  --text-muted: #a5a1ab;
+  --text-faint: #726f79;
+  --accent: #9a91f0;
+  --accent-hover: #aca4f5;
+  --accent-weak: rgba(154, 145, 240, 0.14);
+  --accent-weaker: rgba(154, 145, 240, 0.08);
+  --accent-soft: rgba(154, 145, 240, 0.22);
+  --on-accent: #17140f;
+  --cat-observation: #9a91f0;
+  --cat-historical: #4fb98c;
+  --cat-application: #d08a3a;
+  --cat-personal: #e06a94;
+  --cat-observation-weak: rgba(154, 145, 240, 0.16);
+  --cat-historical-weak: rgba(79, 185, 140, 0.16);
+  --cat-application-weak: rgba(208, 138, 58, 0.16);
+  --cat-personal-weak: rgba(224, 106, 148, 0.16);
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --elev-2: 0 2px 6px rgba(0, 0, 0, 0.32), 0 10px 22px -8px rgba(0, 0, 0, 0.42);
+  --elev-3: 0 8px 20px -6px rgba(0, 0, 0, 0.45), 0 24px 48px -16px rgba(0, 0, 0, 0.55);
 }
 
-[data-theme="paper"] {
-  --bg:        #f3efe7;
-  --surface:   #fbf8f2;
+[data-theme='paper'] {
+  --bg: #f3efe7;
+  --surface: #fbf8f2;
   --surface-2: #ece7dc;
-  --border:    #ddd6c8;
+  --border: #ddd6c8;
   --border-strong: #cfc6b3;
-  --text:      #2b2620;
-  --text-muted:#736b5a;
-  --text-faint:#a89f8d;
-  --accent:        #b5732a;
-  --accent-hover:  #9d6224;
-  --accent-weak:   rgba(181, 115, 42, 0.13);
+  --text: #2b2620;
+  --text-muted: #736b5a;
+  --text-faint: #a89f8d;
+  --accent: #b5732a;
+  --accent-hover: #9d6224;
+  --accent-weak: rgba(181, 115, 42, 0.13);
   --accent-weaker: rgba(181, 115, 42, 0.07);
-  --accent-soft:   rgba(181, 115, 42, 0.20);
-  --on-accent:     #ffffff;
+  --accent-soft: rgba(181, 115, 42, 0.2);
+  --on-accent: #ffffff;
   --scripture-font: 'Newsreader', Georgia, serif;
   --scripture-size: 20px;
   --scripture-lh: 1.7;
-  --cat-observation: #6b62d6; --cat-historical: #3f8f5b;
-  --cat-application: #b5732a; --cat-personal: #c05070;
+  --cat-observation: #6b62d6;
+  --cat-historical: #3f8f5b;
+  --cat-application: #b5732a;
+  --cat-personal: #c05070;
   --cat-observation-weak: rgba(107, 98, 214, 0.12);
-  --cat-historical-weak:  rgba(63, 143, 91, 0.12);
+  --cat-historical-weak: rgba(63, 143, 91, 0.12);
   --cat-application-weak: rgba(181, 115, 42, 0.13);
-  --cat-personal-weak:    rgba(192, 80, 112, 0.12);
+  --cat-personal-weak: rgba(192, 80, 112, 0.12);
 }
-html[data-theme="paper"] body.dark {
-  --bg:#1c1915; --surface:#25211b; --surface-2:#201c16;
-  --border:#39332a; --border-strong:#493f31;
-  --text:#ece5d8; --text-muted:#ad9f8a; --text-faint:#7a7160;
-  --accent:#e0a15e; --accent-hover:#e8b276;
-  --accent-weak:rgba(224,161,94,0.15); --accent-weaker:rgba(224,161,94,0.08);
-  --accent-soft:rgba(224,161,94,0.24); --on-accent:#1c1611;
-  --cat-observation:#a79fee; --cat-historical:#6bbf8c;
-  --cat-application:#e0a15e; --cat-personal:#e08aa6;
-  --cat-observation-weak: rgba(167,159,238,0.16);
-  --cat-historical-weak:  rgba(107,191,140,0.16);
-  --cat-application-weak: rgba(224,161,94,0.16);
-  --cat-personal-weak:    rgba(224,138,166,0.16);
-  --elev-1: 0 1px 2px rgba(0,0,0,.30);
-  --elev-2: 0 2px 6px rgba(0,0,0,.32), 0 10px 22px -8px rgba(0,0,0,.42);
-  --elev-3: 0 8px 20px -6px rgba(0,0,0,.45), 0 24px 48px -16px rgba(0,0,0,.55);
+html[data-theme='paper'] body.dark {
+  --bg: #1c1915;
+  --surface: #25211b;
+  --surface-2: #201c16;
+  --border: #39332a;
+  --border-strong: #493f31;
+  --text: #ece5d8;
+  --text-muted: #ad9f8a;
+  --text-faint: #7a7160;
+  --accent: #e0a15e;
+  --accent-hover: #e8b276;
+  --accent-weak: rgba(224, 161, 94, 0.15);
+  --accent-weaker: rgba(224, 161, 94, 0.08);
+  --accent-soft: rgba(224, 161, 94, 0.24);
+  --on-accent: #1c1611;
+  --cat-observation: #a79fee;
+  --cat-historical: #6bbf8c;
+  --cat-application: #e0a15e;
+  --cat-personal: #e08aa6;
+  --cat-observation-weak: rgba(167, 159, 238, 0.16);
+  --cat-historical-weak: rgba(107, 191, 140, 0.16);
+  --cat-application-weak: rgba(224, 161, 94, 0.16);
+  --cat-personal-weak: rgba(224, 138, 166, 0.16);
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --elev-2: 0 2px 6px rgba(0, 0, 0, 0.32), 0 10px 22px -8px rgba(0, 0, 0, 0.42);
+  --elev-3: 0 8px 20px -6px rgba(0, 0, 0, 0.45), 0 24px 48px -16px rgba(0, 0, 0, 0.55);
 }
 
-[data-theme="modern"] {
-  --bg:        #f7f8fa;
-  --surface:   #ffffff;
+[data-theme='modern'] {
+  --bg: #f7f8fa;
+  --surface: #ffffff;
   --surface-2: #eef0f4;
-  --border:    #e2e5ea;
+  --border: #e2e5ea;
   --border-strong: #ccd1d9;
-  --text:      #14161a;
-  --text-muted:#565d68;
-  --text-faint:#8b929e;
-  --accent:        #5b57e0;
-  --accent-hover:  #4a46cf;
-  --accent-weak:   rgba(91, 87, 224, 0.10);
+  --text: #14161a;
+  --text-muted: #565d68;
+  --text-faint: #8b929e;
+  --accent: #5b57e0;
+  --accent-hover: #4a46cf;
+  --accent-weak: rgba(91, 87, 224, 0.1);
   --accent-weaker: rgba(91, 87, 224, 0.06);
-  --accent-soft:   rgba(91, 87, 224, 0.18);
-  --on-accent:     #ffffff;
+  --accent-soft: rgba(91, 87, 224, 0.18);
+  --on-accent: #ffffff;
   /* Quiet Modern is the one direction that reads scripture in the UI sans,
      not a serif — a deliberate contrast to the other three. */
   --scripture-font: var(--ui-font);
   --scripture-size: 18px;
   --scripture-lh: 1.75;
-  --cat-observation: #5b57e0; --cat-historical: #0f9d73;
-  --cat-application: #c07b12; --cat-personal: #d63f76;
+  --cat-observation: #5b57e0;
+  --cat-historical: #0f9d73;
+  --cat-application: #c07b12;
+  --cat-personal: #d63f76;
   --cat-observation-weak: rgba(91, 87, 224, 0.11);
-  --cat-historical-weak:  rgba(15, 157, 115, 0.12);
+  --cat-historical-weak: rgba(15, 157, 115, 0.12);
   --cat-application-weak: rgba(192, 123, 18, 0.12);
-  --cat-personal-weak:    rgba(214, 63, 118, 0.12);
+  --cat-personal-weak: rgba(214, 63, 118, 0.12);
 }
-html[data-theme="modern"] body.dark {
-  --bg:#0f1115; --surface:#181b21; --surface-2:#12151a;
-  --border:#282d36; --border-strong:#373e4a;
-  --text:#eceef2; --text-muted:#a2a9b5; --text-faint:#6a7280;
-  --accent:#8b88f5; --accent-hover:#9d9af7;
-  --accent-weak:rgba(139,136,245,0.16); --accent-weaker:rgba(139,136,245,0.09);
-  --accent-soft:rgba(139,136,245,0.26); --on-accent:#0d0e11;
-  --cat-observation:#8b88f5; --cat-historical:#3fc796;
-  --cat-application:#e0a03f; --cat-personal:#ea6797;
-  --cat-observation-weak: rgba(139,136,245,0.18);
-  --cat-historical-weak:  rgba(63,199,150,0.16);
-  --cat-application-weak: rgba(224,160,63,0.16);
-  --cat-personal-weak:    rgba(234,103,151,0.16);
-  --elev-1: 0 1px 2px rgba(0,0,0,.35);
-  --elev-2: 0 2px 6px rgba(0,0,0,.36), 0 10px 22px -8px rgba(0,0,0,.48);
-  --elev-3: 0 8px 20px -6px rgba(0,0,0,.5), 0 24px 48px -16px rgba(0,0,0,.6);
+html[data-theme='modern'] body.dark {
+  --bg: #0f1115;
+  --surface: #181b21;
+  --surface-2: #12151a;
+  --border: #282d36;
+  --border-strong: #373e4a;
+  --text: #eceef2;
+  --text-muted: #a2a9b5;
+  --text-faint: #6a7280;
+  --accent: #8b88f5;
+  --accent-hover: #9d9af7;
+  --accent-weak: rgba(139, 136, 245, 0.16);
+  --accent-weaker: rgba(139, 136, 245, 0.09);
+  --accent-soft: rgba(139, 136, 245, 0.26);
+  --on-accent: #0d0e11;
+  --cat-observation: #8b88f5;
+  --cat-historical: #3fc796;
+  --cat-application: #e0a03f;
+  --cat-personal: #ea6797;
+  --cat-observation-weak: rgba(139, 136, 245, 0.18);
+  --cat-historical-weak: rgba(63, 199, 150, 0.16);
+  --cat-application-weak: rgba(224, 160, 63, 0.16);
+  --cat-personal-weak: rgba(234, 103, 151, 0.16);
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --elev-2: 0 2px 6px rgba(0, 0, 0, 0.36), 0 10px 22px -8px rgba(0, 0, 0, 0.48);
+  --elev-3: 0 8px 20px -6px rgba(0, 0, 0, 0.5), 0 24px 48px -16px rgba(0, 0, 0, 0.6);
 }
 
 /* ─── Text size preference (Settings, useTextSize.ts) ───────────────────────
    Independent of theme/dark mode — `data-text-size` on <html>, "medium"
    (the default) is unmarked, same convention as [data-theme]. */
-[data-text-size="small"]  { --text-scale: 0.88; }
-[data-text-size="large"]  { --text-scale: 1.16; }
+[data-text-size='small'] {
+  --text-scale: 0.88;
+}
+[data-text-size='large'] {
+  --text-scale: 1.16;
+}
