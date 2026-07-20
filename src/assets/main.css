@@ -2987,6 +2987,64 @@ body.dark .search-backdrop {
   }
 }
 
+/* ─── Error boundaries ───────────────────────────────────────────────────────── */
+.error-boundary-app {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: var(--space-5);
+}
+
+.error-boundary-app-card {
+  max-width: 380px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elev-2);
+  padding: var(--space-6) var(--space-5);
+}
+
+.error-boundary-app-title {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: var(--space-2);
+}
+
+.error-boundary-app-body {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: var(--space-5);
+}
+
+.error-boundary-pane {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: var(--space-5);
+  gap: var(--space-2);
+}
+
+.error-boundary-pane-title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.error-boundary-pane-body {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: var(--space-2);
+}
+
 /* Note action icons (shared by reading/book views) */
 .se-note-actions {
   display: flex;

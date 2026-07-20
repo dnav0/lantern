@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from 'react'
 import NoteEditor, { makeLineId } from './NoteEditor'
+import ErrorBoundary from './ErrorBoundary'
 import PassagePane from './PassagePane'
 import ReferenceInput from './ReferenceInput'
 import { BiblePassage, Note } from '../types'
@@ -487,12 +488,14 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
           </svg>
         </button>
         <div className="study-scripture-body" ref={scriptureBodyRef}>
-          <PassagePane
-            passage={passage}
-            loading={loadingPassage}
-            highlightedVerses={highlightedVerses}
-            hasAnyHighlight={hasHighlight}
-          />
+          <ErrorBoundary variant="pane" key={passage?.reference ?? 'empty'}>
+            <PassagePane
+              passage={passage}
+              loading={loadingPassage}
+              highlightedVerses={highlightedVerses}
+              hasAnyHighlight={hasHighlight}
+            />
+          </ErrorBoundary>
         </div>
         {/* Mobile-only manual resize handle — overlaid on the bottom edge
             (position:absolute in CSS) rather than taking its own flex row,

@@ -80,7 +80,7 @@ prioritized.
   up front, rather than lazily per chapter, for guaranteed offline reading.
   Still the real answer for offline readers and for `bible.helloao.org` being
   down (see the availability risk below): the cache is lazy, so today a user only
-  holds chapters they have already opened, and `HelloaoBibleProvider` *throws* on
+  holds chapters they have already opened, and `HelloaoBibleProvider` _throws_ on
   a failed fetch rather than degrading.
   **Partially mitigated in dev only** (2026-07-15): `FixtureBibleProvider`
   (`src/bible/fixture.ts`) bundles the four chapters `seedMemoryApi` seeds, and
@@ -91,7 +91,7 @@ prioritized.
   fixture, not a Bible; this item stands.
 
 - **Scripture full-text search (verse-text search).** Search v1 (UX overhaul,
-  workstream 6) only *parses* a query into a reference jump ("mat 2:13" →
+  workstream 6) only _parses_ a query into a reference jump ("mat 2:13" →
   Matthew 2) via `parseScriptureQuery`; it does NOT search the words of
   scripture. Searching verse text depends on having the full BSB available to
   index (the Full-Bible offline prefetch item above) plus a client-side index
@@ -100,8 +100,8 @@ prioritized.
 - **Multiple study instances over the same verses.** The studies-model milestone
   settled that notes are verse-anchored and the reading view is cumulative, while
   a "study" is one effort (a `Passage`). A future step adds a lightweight
-  `study_id` group stamp on notes so a user can deliberately start a *new,
-  distinct* study instance over verses they've already studied (chosen/selected),
+  `study_id` group stamp on notes so a user can deliberately start a _new,
+  distinct_ study instance over verses they've already studied (chosen/selected),
   and so the editor can optionally merge notes from other efforts by anchor
   overlap. This is the one part of the model that needs a schema touch (a nullable
   column) — deliberately deferred out of the presentation-only milestone.
@@ -129,6 +129,25 @@ prioritized.
   experience so it never feels crippled.
 
 ## Done
+
+- **React error boundaries + recoverable failure UI (2026-07-20).** Found during
+  backlog triage on 2026-07-20: a render-time throw anywhere in the tree blanked
+  the whole app with no recovery. `src/components/ErrorBoundary.tsx` is a small
+  class component (the one place React still requires a class) with two
+  fallback variants, both built from existing design tokens only (no new color
+  literals): `variant="app"` is a full-screen calm recovery card wired around
+  both `Root.tsx` render paths (Supabase and memory-stub), with a "Reload"
+  button; `variant="pane"` is a smaller in-place fallback wrapping the two
+  scripture-rendering surfaces — `PassagePane` in `StudyMode` and `ChapterView`
+  in `BookDetailPage` — with a "Try again" retry, so a chapter-load render
+  failure degrades only that pane. Both boundaries are keyed on the data that
+  produced the render (passage reference / book+chapter) so navigating to a
+  different passage or chapter remounts a fresh boundary instead of getting
+  stuck showing a stale fallback. No telemetry or error-reporting SDK added —
+  out of scope by design, so `public/privacy.html`'s "no third-party tracking"
+  claim needed no change. Verified with a deliberately thrown test error,
+  screenshotted in light/dark at desktop/mobile widths, then reverted; `tsc
+--noEmit` clean, tests pass.
 
 - **Repo normalized with Prettier (2026-07-20).** Done as its own commit, alone,
   exactly as this item required: `npm run format` rewrote **39 files
@@ -168,7 +187,7 @@ prioritized.
   - **`hello@lanternword.com` routes.** Cloudflare Email Routing is configured as
     a catch-all forwarding all `@lanternword.com` mail to the owner, so the
     contact address published on the live `/privacy`, `/terms` and `/about` pages
-    is real. (Receive-only: replying *as* `hello@` would need Gmail "Send mail as"
+    is real. (Receive-only: replying _as_ `hello@` would need Gmail "Send mail as"
     over the existing Brevo SMTP credentials.)
   - **Legal pages reviewed and finalised.** Contact address resolved as above.
     Governing law deliberately stays NEUTRAL ("the laws applicable at the
@@ -187,7 +206,7 @@ prioritized.
   - **`prefers-reduced-motion` VERIFIED** (previously "never verified live").
     Audited rather than assumed: **32 of 32** `animation`/`transition`
     declarations in `motion.css` sit inside a `prefers-reduced-motion:
-    no-preference` guard (zero outside), backed by a global
+no-preference` guard (zero outside), backed by a global
     `*:not(.upd-spinner)` kill-switch using `!important` near-zero durations; and
     the JS side is covered too — `usePrefersReducedMotion()` reads the flag at
     mount and `useClipLoop` skips the script entirely. The resting states were
@@ -223,15 +242,15 @@ prioritized.
     same file that was uploaded (`icon-512.png`), rendered on the page next to the
     exact app name.
   - **Full app verification is NOT required** for non-sensitive scopes
-    (email/profile/openid) — only the lightweight *brand* verification. Ignore the
+    (email/profile/openid) — only the lightweight _brand_ verification. Ignore the
     Audience page's generic "submit your app for review" banner; that is the heavy
     sensitive-scope path.
   - Also fixed along the way: `/robots.txt` was being served as the app's HTML by
     the SPA catch-all (`public/robots.txt` + `public/sitemap.xml` now exist).
-  Incidental: Cloudflare **Email Obfuscation** rewrites `mailto:` links on the
-  static pages into `/cdn-cgi/l/email-protection` plus a decoder script — harmless,
-  but proof Cloudflare mutates served HTML; check Rocket Loader is off if crawler
-  rendering ever looks wrong. Full blow-by-blow is in git history.
+    Incidental: Cloudflare **Email Obfuscation** rewrites `mailto:` links on the
+    static pages into `/cdn-cgi/l/email-protection` plus a decoder script — harmless,
+    but proof Cloudflare mutates served HTML; check Rocket Loader is off if crawler
+    rendering ever looks wrong. Full blow-by-blow is in git history.
 
   **Standing decision — keep BOTH Google and email, not Google-only.** Google is
   the prominent one-click default; email OTP stays as the fallback ("or continue
@@ -240,12 +259,12 @@ prioritized.
   own data; (2) a real minority of users specifically avoid Google-linked sign-in
   for a personal spiritual-journal app; and (3) Apple's App Store guidelines
   require offering Sign in with Apple as a parallel option if Google sign-in is
-  offered, so a Google-only app would be forced to add a *third* auth method just
+  offered, so a Google-only app would be forced to add a _third_ auth method just
   to ship on iOS (see the Capacitor mobile wrap item), whereas keeping email as the
   neutral fallback never trips that rule.
 
 - **Custom SMTP auth email templates (2026-07-19).** `supabase/templates/
-  magic-link.html` (the one that matters — `signInWithOtp` with
+magic-link.html` (the one that matters — `signInWithOtp` with
   `enable_confirmations = false` routes through the "Magic Link" template for both
   new and returning users) and `confirm-signup.html` (defensive duplicate). Both
   lead with the 6-digit `{{ .Token }}` and offer `{{ .ConfirmationURL }}` as the
@@ -258,7 +277,7 @@ prioritized.
   real user could only type 6 of 8 and sign-in would fail. Fixed at the source
   (owner set the hosted Email OTP length to 6 — `config.toml` drives only the local
   CLI) and re-verified with no bypass. Brevo remains the send pipe; note Brevo SMTP
-  keys die after 90 days of *zero* sending, so if auth email ever stops silently,
+  keys die after 90 days of _zero_ sending, so if auth email ever stops silently,
   regenerate the key first.
 
 - **Cloudflare Pages deploy — live (2026-07-19).** `lanternword.com` is registered
@@ -297,13 +316,13 @@ prioritized.
   reassignment already produces via an always-applied `main.css` base rule of the
   identical `selector { property: var(--token) }`. NOT a blanket sweep — most
   `body.dark` rules survived because they do real work, and three traps were
-  caught: (1) **real overrides** where dark uses a *different* token than the base
+  caught: (1) **real overrides** where dark uses a _different_ token than the base
   (`.verse-text` light `--text` → dark `--text-muted`; every `::-webkit-scrollbar-thumb`
   light `--border` → dark `--surface-2`; `.reading-meta`/`.se-icon-btn`/`.bible-book-name`
   muted→faint; `.reading-note-card.highlighted` weak→weaker; etc.) or a raw
   dark-only value (`.note-timestamp #c4c1ba`, all the `rgba(255,255,255,…)` hairlines,
   the `#3a3654` bracket default); (2) **specificity traps** where deleting a matched
-  rule would let a *kept* higher-specificity `body.dark` rule take over — the
+  rule would let a _kept_ higher-specificity `body.dark` rule take over — the
   `.rail-bracket.cat-{historical,application,personal}` rules must out-specify the
   kept `body.dark .rail-bracket {background:#3a3654}` default, and
   `.verse-action-btn.primary(:hover)` must out-specify the kept generic
@@ -352,8 +371,8 @@ prioritized.
     `https://lanternword.com` + `https://lantern-5jf.pages.dev` + localhost. The
     hosted-dashboard allowlist confirmation remains an owner step (see the
     Cloudflare Pages item under Deferred).
-  Build (`tsc --noEmit` + vite) clean; `dist` emits both html pages + the updated
-  `_redirects`.
+    Build (`tsc --noEmit` + vite) clean; `dist` emits both html pages + the updated
+    `_redirects`.
 
 - **PWA PNG icons regenerated from the new mark, plus a browser favicon.** The
   three manifest icons (`public/icon-192.png`, `icon-512.png`,
@@ -372,18 +391,18 @@ prioritized.
   review of pass 1: slightly cramped (especially on wide displays), the buttons
   were confusing, and "Get started free" implied a SaaS pricing model.
   - **The buttons were one action wearing two labels.** "Get started" and "Sign
-    in" both opened the same dialog, because first sign-in *is* sign-up
+    in" both opened the same dialog, because first sign-in _is_ sign-up
     (`shouldCreateUser: true`) — there is no separate signup path to send anyone
     down. That pair is a SaaS funnel convention (free tier vs returning
     customer) borrowed into a product with no funnel. **Decided: the only real
-    choice is *how* to sign in, so that is the only one offered.** Nav is a
+    choice is _how_ to sign in, so that is the only one offered.** Nav is a
     single "Sign in"; the hero is "Continue with Google" + "Continue with email"
     (which is what the approved mockup always specced); the CTA is one button.
     `SignIn` takes `emailFirst` so the hero's email choice isn't re-asked inside
     the dialog.
   - **Anti-SaaS.** "Get started free" → "Start your first study", CTA heading →
     "Ready when you are.", and the hero's "Free to use" → "Nothing to buy" (the
-    word *free* only needs saying where a paid tier is implied). Added a **"The
+    word _free_ only needs saying where a paid tier is implied). Added a **"The
     name" section**: Psalm 119:105, why a lantern (carried, lights one step), and
     a short first-person note on why the tool exists. This also restores the
     mockup's "The name" nav link, which pass 1 dropped as a dead link.
@@ -413,7 +432,7 @@ prioritized.
     `<Wordmark />`), and its hero is a **static card superseded by**
     `lantern-hero.html`'s flythrough. Its static "Four lenses" and "Read. Note.
     Return." sections were replaced by the three clips (owner's call — one of the
-    clips *is* Four lenses, so keeping both duplicated a section). The hero clip's
+    clips _is_ Four lenses, so keeping both duplicated a section). The hero clip's
     topbar lamp icon (same retired mark) became the wordmark, matching the real
     app's top bar. The login card dropped its separate mark: with a wordmark it
     would render "Lantern" twice, stacked, above "Welcome to Lantern".
@@ -481,9 +500,9 @@ prioritized.
     object** is too complex to reduce (stripped down it reads as a bag/bell/jar);
     an **open book** is depth-ambiguous at mark size (four renderings — outlined,
     solid, edge-on, page-stack — all failed; you can't tell a closed back cover
-    from an open book); a **lamp** contradicts the name (a lantern is *carried*,
-    a pendant is *fixed*); and a **flame on a book** risks reading as a *burning
-    Bible*, which is disqualifying for this product. A wordmark is unambiguous,
+    from an open book); a **lamp** contradicts the name (a lantern is _carried_,
+    a pendant is _fixed_); and a **flame on a book** risks reading as a _burning
+    Bible_, which is disqualifying for this product. A wordmark is unambiguous,
     timeless, and makes the mark and the name one thing by definition.
   - **Changed:** `Wordmark` replaces the retired `AppLogo` (book+beacon, deleted)
     in `NavBar`, `SignIn`, `Onboarding`; `index.html` title; PWA manifest
@@ -500,7 +519,7 @@ prioritized.
   added one per row without threading through `App.tsx` (the page already holds
   `useApi()` + its own entries state). Each entry is now wrapped in a
   `.journal-entry-row` so a `.se-icon-btn.se-icon-danger` delete button sits as
-  a *sibling* of the row `<button>` (never nested — invalid HTML), overlaid at
+  a _sibling_ of the row `<button>` (never nested — invalid HTML), overlaid at
   the right edge, hover/focus-revealed (`opacity 0→1`) on pointer devices and
   always visible under `@media (hover: none)` for touch; the card reserves
   `padding-right: 40px` so neither the date nor the preview runs under the icon.
@@ -621,10 +640,10 @@ prioritized.
       playing. `.topnav` learned this the hard way: its boot-fade trapped
       the search backdrop/popover and the profile/workspace dropdown menus
       (all `position: fixed`/`absolute` descendants nested inside it) into
-      an undefined stacking position, silently painting them *below*
+      an undefined stacking position, silently painting them _below_
       `.main-area`'s later content regardless of their own `z-index`.
       Fixed by giving `.topnav` an explicit `position: relative; z-index:
-      140`. If you add an animation to a new ancestor element, check what's
+140`. If you add an animation to a new ancestor element, check what's
       nested inside it.
     - Giving an ancestor of a `position: fixed` element ANY `transform`
       value — even a no-op `translateY(0)`, even only for an animation's
@@ -635,7 +654,7 @@ prioritized.
     - A CSS animation's keyframe `transform` (e.g. `springIn`'s
       translateY/scale) permanently overrides any separately-cascaded static
       `transform` on the same property — so `left: 50%; transform:
-      translateX(-50%)` centering tricks silently break on any element that
+translateX(-50%)` centering tricks silently break on any element that
       also has an entrance animation touching `transform`. Center via
       `left: calc(50vw - half-width)` instead when both are needed.
     - Measuring an element's position/size for later use (`GlobalSearch`'s
@@ -659,10 +678,10 @@ prioritized.
     (`useTextSize.ts`, mirroring `useTheme.ts`'s pattern) plus a ~10% mobile
     size reduction, since the desktop "hero" scripture size ate most of a
     375px line width.
-  Verified live throughout (puppeteer-driven pointer sequences and
-  computed-style/CSSOM inspection) at desktop and mobile widths, light +
-  dark, across all 4 visual themes where relevant. Build
-  (`tsc --noEmit` + vite) clean.
+    Verified live throughout (puppeteer-driven pointer sequences and
+    computed-style/CSSOM inspection) at desktop and mobile widths, light +
+    dark, across all 4 visual themes where relevant. Build
+    (`tsc --noEmit` + vite) clean.
 
 - **Library spacing correction, mobile nav priority reverted, mobile study
   empty-state.**
@@ -690,10 +709,10 @@ prioritized.
     makes sense with a physical keyboard. Split via `.hint-text-desktop`/
     `.hint-text-mobile` at the existing mobile breakpoint, mirroring how the
     rest of the app splits responsive copy (no UA sniffing).
-  Verified live at 2000px and 390px: library spacing looks open rather than
-  cramped, mobile nav is back to uniform weight across all four tabs, the
-  empty scripture panel collapses correctly and expands the moment a valid
-  reference loads. Build clean.
+    Verified live at 2000px and 390px: library spacing looks open rather than
+    cramped, mobile nav is back to uniform weight across all four tabs, the
+    empty scripture panel collapses correctly and expands the moment a valid
+    reference loads. Build clean.
 
 - **Mobile study editor, blank-save guard, existing-note timestamps, mobile
   nav priority.**
@@ -710,7 +729,7 @@ prioritized.
     but zero real note lines silently created an empty `Passage`+`Session` — a
     dead Journal entry with nothing in it. Both Save buttons are now disabled
     (with an explanatory `title`) when there's no note content AND no
-    `initialPassageId` — editing an *existing* study down to zero notes is left
+    `initialPassageId` — editing an _existing_ study down to zero notes is left
     alone, since that's a legitimate delete-the-study action that should
     correctly cascade-delete the now-empty session/passage.
   - **Existing-note timestamps in the editor.** At scale, it's easy to lose
@@ -719,7 +738,7 @@ prioritized.
     `formatRelativeTime`/`.note-timestamp` pattern from `ReadingMode`'s note
     cards) — but ONLY while its content still exactly matches what's actually
     persisted; the moment you edit it, the stamp disappears, since showing
-    "saved" on since-changed content would be misleading. Its *absence* is
+    "saved" on since-changed content would be misleading. Its _absence_ is
     itself the "new or changed this session" signal. `NoteEditor` gained an
     `existingNotes` prop (the same `Map<string, Note>` `StudyMode` already
     hydrates from).
@@ -735,9 +754,9 @@ prioritized.
     joins Profile at `opacity: 0.72` at rest (both visited rarely, per
     discussion), returning to full weight when actually active — same
     established mechanism, no new visual language.
-  Build (`tsc --noEmit` + vite) clean throughout; verified live at 2000px and
-  390px, light + dark — including the overlap-matched existing-note timestamp
-  showing correctly and disappearing on edit, and the disabled Save state.
+    Build (`tsc --noEmit` + vite) clean throughout; verified live at 2000px and
+    390px, light + dark — including the overlap-matched existing-note timestamp
+    showing correctly and disappearing on edit, and the disabled Save state.
 
 - **Start-study overlap matching + a round of mobile/library follow-up fixes.**
   - **"Start study on {ref}" / "Study chapter" now reopen an existing passage**
@@ -800,17 +819,17 @@ prioritized.
     `PassagePane`'s rows, `scrollIntoView({block:'nearest'})` scoped to the
     panel's own scroll container (never scrolls the whole page), triggered from
     `StudyMode`'s existing `handleCursorLine`.
-  Build (`tsc --noEmit` + vite) clean throughout; verified live at 2000px and
-  390px, light + dark.
+    Build (`tsc --noEmit` + vite) clean throughout; verified live at 2000px and
+    390px, light + dark.
 
 - **Top-bar true centering + search/mobile-nav polish.** Fixed a real
   centering bug: `.topnav-tabs` used `flex:1; justify-content:center`, which
-  centers tabs in the *leftover space* between the logo (left) and
+  centers tabs in the _leftover space_ between the logo (left) and
   search-box+avatar (right) — correct only if both sides are equal width.
   They weren't (search box + avatar > logo), so the tabs sat visibly left of
   the true viewport center, exactly as flagged from a live screenshot. Fixed
   by switching `.topnav` to `display:grid; grid-template-columns: 1fr auto
-  1fr` and grouping the search box/button + avatar into one `.topnav-right`
+1fr` and grouping the search box/button + avatar into one `.topnav-right`
   wrapper (new, in `NavBar.tsx`) so the two outer columns are forced equal —
   tabs now land within 0.01px of true center (verified via
   `getBoundingClientRect`), independent of the two sides' own content width.
@@ -833,15 +852,15 @@ prioritized.
   - **Mobile "+ Study" tab.** The `nav-tab-action` class was already applied
     (shared `navTab()` helper) but had no bottom-nav-scoped styling. Added a
     light-touch treatment — permanently accent-tinted icon/label + slightly
-    bolder label — at the *same* size/shape/position as the other three tabs
+    bolder label — at the _same_ size/shape/position as the other three tabs
     (still one of four equal `flex:1` columns, no pill or badge), so it
     signals "this one's an action" without breaking the bottom bar's visual
     rhythm the way the desktop pill treatment would have.
   - **Font-size bump.** Top-bar nav tabs 13→14px, library/book-detail page
     titles 22→24px, library book names 14→15px, per a legibility pass against
     a real desktop screenshot.
-  Verified live at 2000px and 390px, light + dark. Build clean. No
-  schema/`BereanApi` change.
+    Verified live at 2000px and 390px, light + dark. Build clean. No
+    schema/`BereanApi` change.
 
 - **Page-shell centering on wide viewports (two passes).** The Bible Library and
   the book/chapter view (`BookDetailPage`) had no max-width, so on wide monitors
@@ -853,7 +872,7 @@ prioritized.
   stay full-bleed while their content centers) — initially at 1180px, on the
   theory of a wide "masthead" over a narrower reading column. **Live feedback
   correction:** that still looked off — a left-aligned block (page title, a
-  pill row, a grid) inside an *overly wide* centered box still reads as
+  pill row, a grid) inside an _overly wide_ centered box still reads as
   left-anchored, because the eye tracks the ragged content edge, not the
   invisible box; centering the container without the content filling it just
   relocates the dead space rather than removing the asymmetry. Fixed by
@@ -903,7 +922,7 @@ prioritized.
   variants scoped as `html[data-theme="x"] body.dark` — a descendant selector that
   out-specifies the generic Berean-dark `body.dark` block with no `!important`, so
   light/dark and theme compose correctly in all 8 combinations. `SettingsModal`
-  renders a 4-row swatch picker (each row previews its *own* theme's canvas/accent
+  renders a 4-row swatch picker (each row previews its _own_ theme's canvas/accent
   colors so all four are comparable regardless of which is active), threaded through
   `App.tsx` alongside the existing dark-mode toggle. Newsreader font added to
   `index.html` alongside Source Serif 4 (Warm Paper needs it). Verified live:
@@ -976,13 +995,13 @@ prioritized.
      the remaining legacy cool dark literals in `main.css` `body.dark` chrome blocks
      (nav menu, settings modal, toasts) tokenized so dark mode is cohesively warm with
      no cool/warm clash. `dark.css` was already fully token-driven.
-  Frozen `.welcome-*` navy and the danger/amber-alert schemes left as literals
-  (no semantic token yet). Build (`tsc --noEmit` + vite) clean throughout; verified
-  live at 1280px on reader/library/study/settings, **light + dark**. CSS/token +
-  one NavBar class + `index.html` font link; no schema/`BereanApi`/data change.
-  Direction from `design/mockup.html` (throwaway compare-artifact) + reading-UX/
-  color research. Remaining design work (F4 motion, font self-host, theme picker)
-  is in Deferred.
+     Frozen `.welcome-*` navy and the danger/amber-alert schemes left as literals
+     (no semantic token yet). Build (`tsc --noEmit` + vite) clean throughout; verified
+     live at 1280px on reader/library/study/settings, **light + dark**. CSS/token +
+     one NavBar class + `index.html` font link; no schema/`BereanApi`/data change.
+     Direction from `design/mockup.html` (throwaway compare-artifact) + reading-UX/
+     color research. Remaining design work (F4 motion, font self-host, theme picker)
+     is in Deferred.
 
 - **Reading-view interaction hardening.** Five fixes to the study-Bible reading
   layout (`BookDetailPage` ChapterView + `ReadingMode`), from live testing across
@@ -1008,22 +1027,22 @@ prioritized.
      never crossing their text, still selected them, because verses were
      effectively treated as spanning the full width. `hitTest` now also checks
      horizontal overlap and clears the selection when the box hits no rows.
-  Also (`de054fd`): mobile range notes (no rail there) now render inline right
-  after their LAST anchored verse instead of stacking at the bottom of the whole
-  chapter — `.mobile-range-notes` replaces the old bottom `.mobile-note-stack`,
-  keyed per-verse via `mobileRangeByVerse`, styled light + dark. Build/test/lint
-  clean; verified live in a real browser (puppeteer-driven pointer sequences,
-  not synthetic `dispatchEvent` alone) at both desktop and 390px, light + dark,
-  on both surfaces.
+     Also (`de054fd`): mobile range notes (no rail there) now render inline right
+     after their LAST anchored verse instead of stacking at the bottom of the whole
+     chapter — `.mobile-range-notes` replaces the old bottom `.mobile-note-stack`,
+     keyed per-verse via `mobileRangeByVerse`, styled light + dark. Build/test/lint
+     clean; verified live in a real browser (puppeteer-driven pointer sequences,
+     not synthetic `dispatchEvent` alone) at both desktop and 390px, light + dark,
+     on both surfaces.
 
 - **Marquee (box) verse selection (desktop).** Replaces the earlier
   gutter-only click-drag (retired `useVerseDragSelect`) with a Windows-style
   marquee: `useVerseMarquee` (`src/utils/useVerseMarquee.ts`), used by both
   `ReadingMode` and `BookDetailPage`'s ChapterView, without touching
   `selAnchor`/`selFocus` ownership (the hook only calls back into it).
-  `onPointerDown` on the `.scripture-grid` container begins a drag *unless* it
+  `onPointerDown` on the `.scripture-grid` container begins a drag _unless_ it
   lands on an interactive child (`button, a, input, textarea, [contenteditable],
-  [data-no-drag]`); it tracks a rectangle from the start point to the current
+[data-no-drag]`); it tracks a rectangle from the start point to the current
   pointer, renders a subtle accent-tinted overlay (`.verse-marquee`, dark-mode
   variant in `dark.css`), and hit-tests every registered verse row via
   `verseRowRefs` — any row whose `getBoundingClientRect` overlaps the box
@@ -1058,11 +1077,11 @@ prioritized.
 - **Note placement by anchor width (inline vs rail).** Refinement of the margin/
   span-notes layout below, from live user testing: verse-anchored notes are now
   split by how many verses they span. **Single-verse notes** (`anchor_start_verse
-  === anchor_end_verse`, or `anchor_end_verse` null) render **inline beneath their
+=== anchor_end_verse`, or `anchor_end_verse` null) render **inline beneath their
   verse row** (an `.inline-verse-notes` group in the scripture column), with their
   indented sub-notes inline too — the way inline notes read before the
   margin-rail change. **Multi-verse range notes** (`anchor_end_verse >
-  anchor_start_verse`) keep the right-hand rail with the category bracket spanning
+anchor_start_verse`) keep the right-hand rail with the category bracket spanning
   the anchored rows (the grid-row mechanism below). **Anchorless notes** stay
   passage-level (top block, never bracketed). The **rail only appears when there
   is at least one range or passage-level note** (`hasRail`); if every note is
@@ -1094,12 +1113,12 @@ prioritized.
   indicator, and anchored notes render in a stacked list (`.mobile-note-stack`,
   desktop-hidden) each with a `.note-range-chip` ("v4" / "vv.4-15") that scrolls to
   the anchored verse row (ref-map linkage). **Anchorless notes** (`anchor_start_verse
-  === null`) are handled as passage-level notes: rendered in a `.rail-passage-notes`
+=== null`) are handled as passage-level notes: rendered in a `.rail-passage-notes`
   block above the grid (a "Passage notes" label), never bracketed. Highlight linkage
   is preserved and bidirectional: hovering/clicking a rail note highlights its verses
   (`onMouseEnter`/`handleNoteClick` → `highlightVersesForNote`) and clicking a verse
   highlights its notes. **Centered passage column:** the scripture column is centered
-  as a block with a comfortable reading measure while verse *text* stays left-aligned
+  as a block with a comfortable reading measure while verse _text_ stays left-aligned
   — `.reading-content`/`.book-chapter-content` get `margin: 0 auto` (widened via
   `:has(.scripture-grid)` when a rail is present), and `PassagePane` gained a
   `.passage-pane-col` centered wrapper for the StudyMode passage pane; mobile stays
@@ -1215,7 +1234,7 @@ prioritized.
   carry no persisted timestamp) — only on rendered/persisted note cards.
 
 - **Editor behaviors (UX overhaul, workstream 4).** Reference field commits on
-  Enter/Tab and moves focus to the first note line *immediately* (synchronous —
+  Enter/Tab and moves focus to the first note line _immediately_ (synchronous —
   never on the async verse fetch); parse failure keeps focus in the field and
   shows an inline error; `enterKeyHint="go"` for mobile. `ReferenceInput.onSubmit`
   now returns a boolean so the field can decide focus-vs-error, and `StudyMode`
@@ -1223,7 +1242,7 @@ prioritized.
   target line. Outdent rules in `NoteEditor` keydown: Enter on an empty bullet at
   indent > 0 outdents in place (keeps the bullet, no new line); Enter on an empty
   level-0 bullet is a no-op; Backspace at the start of an empty indented bullet
-  also outdents; Shift+Tab unchanged. The keydown *decisions* were extracted to a
+  also outdents; Shift+Tab unchanged. The keydown _decisions_ were extracted to a
   pure module (`src/utils/noteKeydown.ts`) so they're unit-testable without a
   contenteditable — tag parsing stayed in `noteParser.ts`, layers kept separate.
   Tag discoverability (all passive): every empty note line shows the placeholder

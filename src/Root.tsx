@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react'
 import App from './App'
+import ErrorBoundary from './components/ErrorBoundary'
 import Onboarding from './components/Onboarding'
 import { ApiProvider } from './api/context'
 import { createMemoryApi, seedMemoryApi } from './api/memory'
@@ -111,10 +112,20 @@ function SupabaseRoot(): React.ReactElement {
 }
 
 export default function Root(): React.ReactElement {
-  if (isSupabaseConfigured) return <SupabaseRoot />
+  if (isSupabaseConfigured) {
+    return (
+      <ErrorBoundary variant="app">
+        <SupabaseRoot />
+      </ErrorBoundary>
+    )
+  }
   console.warn(
     '[berean] Supabase env vars absent — running on the in-memory stub. ' +
       'Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to use the real backend.'
   )
-  return <MemoryRoot />
+  return (
+    <ErrorBoundary variant="app">
+      <MemoryRoot />
+    </ErrorBoundary>
+  )
 }
