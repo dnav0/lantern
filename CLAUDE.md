@@ -116,6 +116,14 @@ defused, and the rule going forward is simple:
   "src/**/*.{ts,tsx,css}"` should report **0 files** on `main` — if it ever
   reports more than the files you are working on, someone committed unformatted
   code and it is worth fixing separately.
+- **Line endings: `.prettierrc.json` sets `"endOfLine": "auto"` on purpose.**
+  Git here runs with `core.autocrlf=true`, so the working tree is CRLF while the
+  committed blobs are LF (`git diff` is clean because git normalizes on compare).
+  With Prettier's default `endOfLine: "lf"` that mismatch made
+  `--list-different` report **every** file as unformatted on Windows, which
+  invites a pointless CRLF/LF rewrite war between contributors. `"auto"` makes
+  Prettier respect whatever the file already uses. Don't "fix" this by rewriting
+  line endings or adding a `.gitattributes` eol rule without a reason.
 - **Never mix a reformat with a feature change.** If a formatting sweep is ever
   needed again, it goes in its own commit with no other edits, so a real diff is
   never buried in reflow.
