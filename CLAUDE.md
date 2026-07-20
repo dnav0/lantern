@@ -101,6 +101,34 @@ network egress still see real verses (it tree-shakes out of production).
 - `npm run dev` — Vite dev server
 - `npm run build` — `tsc --noEmit` then production build
 - `npm run lint` / `npm run format`
+- `npm test` — Vitest (unit tests for the pure `src/utils/` logic)
+
+## Repo hygiene
+
+**`src/` is Prettier-normalized as of 2026-07-20.** The whole tree was formatted
+once, alone, in its own commit. Before that it had never been run through the
+current `.prettierrc.json`, so `npm run format` rewrote ~40 otherwise-untouched
+files — which is exactly why it had to be its own commit. That landmine is now
+defused, and the rule going forward is simple:
+
+- **Run `npm run format` freely.** On a clean tree it is a no-op; on your own
+  changes it only touches what you edited. `npx prettier --list-different
+  "src/**/*.{ts,tsx,css}"` should report **0 files** on `main` — if it ever
+  reports more than the files you are working on, someone committed unformatted
+  code and it is worth fixing separately.
+- **Never mix a reformat with a feature change.** If a formatting sweep is ever
+  needed again, it goes in its own commit with no other edits, so a real diff is
+  never buried in reflow.
+- **The formatter is deliberately scoped** to `src/**/*.{ts,tsx,css}`. It does NOT
+  touch `index.html`, `public/*.html` (the live landing fallback and legal pages),
+  `supabase/templates/*.html` (the auth emails, which are hand-tuned for email
+  clients), or `design/`. Don't widen that glob casually — those files have
+  whitespace/structure constraints the formatter doesn't know about.
+- **This repo has more than one writer.** Other chats and HQ cloud workers push to
+  `main`. Always `git fetch` before assuming you are in sync, **stage only the
+  files you changed** (never `git add -A`), and expect to rebase. If a rebase
+  conflicts in `docs/BACKLOG.md`, resolve by keeping BOTH sides — two agents
+  closing different items is the normal case, not a mistake.
 
 ## Layout
 

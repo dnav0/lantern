@@ -49,15 +49,6 @@ prioritized.
   replaces. Needs conflict handling and last-write-wins (or better) reconciliation
   given client-set timestamps.
 
-- **Normalize the repo with Prettier, in its own commit (low priority).** The repo
-  was never formatted with the current Prettier config, so `npm run format`
-  reformats ~40 otherwise-untouched files (~2700 lines). That's a landmine: run it
-  as part of a feature change and the real diff drowns in reflow. Fix once, alone,
-  when no other chat is mid-change in the repo — a single `npm run format` +
-  `tsc --noEmit` + one commit. Until then, every contributor (human or agent) must
-  avoid running the formatter as a side effect. Deliberately deferred, not
-  forgotten.
-
 - **Landing page — leftovers from the build.** The page itself is done (see
   Done). Still open:
   - **Delete the design/ specs.** `design/README.md` says the three committed
@@ -138,6 +129,33 @@ prioritized.
   experience so it never feels crippled.
 
 ## Done
+
+- **Repo normalized with Prettier (2026-07-20).** Done as its own commit, alone,
+  exactly as this item required: `npm run format` rewrote **39 files
+  (+2919/-1171)** in `src/`. The line growth is mostly compact multi-declaration
+  CSS in `tokens.css` splitting one-per-line, not new code. Purely mechanical —
+  verified `tsc --noEmit` + vite build clean, **87/87 tests pass**,
+  `prettier --list-different` now reports 0 files, and both theme cascades still
+  resolve correctly in the running app (dark `#a49cf0`/`#ece4d6`/`#211d17`, light
+  `#6b62d6`/`#201e1a`/`#fbf9f4`). ESLint reports the same 3 errors as before the
+  sweep, so none were introduced; two of them are `node:crypto`/`node:process` in
+  `scripts/migrate-sqlite.ts`, which is a legitimate Node script **outside**
+  `src/` — the `no-restricted-imports` rule is just scoped repo-wide rather than
+  to `src/`, worth tightening if it ever gets noisy.
+
+  **The sweep also surfaced a real bug**: `src/assets/dark.css` had been
+  syntactically invalid since the dark.css prune (59f6e3e), which deleted the
+  comment, selector and declaration of `body.dark .wn-version-chip` but left its
+  closing brace (87 open / 86 close). Browsers discard a stray top-level `}` via
+  error recovery so there was no visual regression, but Prettier refused to parse
+  the file, which is how it came to light. Fixed in its own commit first. Lesson
+  worth keeping: a formatter doubles as a syntax checker for CSS, which nothing
+  else in this toolchain was doing — `tsc` and vite both built happily around it.
+
+  Policy going forward is documented in CLAUDE.md under **Repo hygiene**: run the
+  formatter freely, never mix a reformat with a feature change, and don't widen
+  the `src/**/*.{ts,tsx,css}` glob (the HTML under `public/`, `supabase/templates/`
+  and `index.html` has constraints the formatter doesn't know about).
 
 - **Launch-readiness closeout (2026-07-20).** The last four open items from the
   deploy/auth milestone, all now resolved:
