@@ -38,10 +38,6 @@ prioritized.
   priority is closed as a deliberate decision (see Done). What's left is
   optional polish only:
 
-  - **dark.css redundancy prune (cosmetic).** `dark.css` is now fully token-driven
-    and consistent, but many of its `body.dark …` rules only restate a value the
-    `tokens.css` `body.dark` reassignment already produces. They're harmless but
-    could be deleted to shrink the file. Low priority, skip for the deploy pass.
   - **Elevation-over-borders + cross-surface max-width polish.** Optional refinement:
     apply the `--elev-*` scale to reader/journal/study cards (currently border-led)
     and reconcile the library vs. journal vs. book-detail max-widths for a fully
@@ -399,6 +395,29 @@ prioritized.
   persistent banner — and is hidden on the touch layout where Alt/marquee don't
   apply. Replaces the two deferred "modifier-to-copy" entries.
 
+- **dark.css redundancy prune (2026-07-19).** Removed 40 `body.dark …` rules
+  (122 lines, 472 → 350) that only restated a value the `tokens.css` `body.dark`
+  reassignment already produces via an always-applied `main.css` base rule of the
+  identical `selector { property: var(--token) }`. NOT a blanket sweep — most
+  `body.dark` rules survived because they do real work, and three traps were
+  caught: (1) **real overrides** where dark uses a *different* token than the base
+  (`.verse-text` light `--text` → dark `--text-muted`; every `::-webkit-scrollbar-thumb`
+  light `--border` → dark `--surface-2`; `.reading-meta`/`.se-icon-btn`/`.bible-book-name`
+  muted→faint; `.reading-note-card.highlighted` weak→weaker; etc.) or a raw
+  dark-only value (`.note-timestamp #c4c1ba`, all the `rgba(255,255,255,…)` hairlines,
+  the `#3a3654` bracket default); (2) **specificity traps** where deleting a matched
+  rule would let a *kept* higher-specificity `body.dark` rule take over — the
+  `.rail-bracket.cat-{historical,application,personal}` rules must out-specify the
+  kept `body.dark .rail-bracket {background:#3a3654}` default, and
+  `.verse-action-btn.primary(:hover)` must out-specify the kept generic
+  `body.dark .verse-action-btn`, and `.reading-verse-row.highlighted` must win over
+  the kept `body.dark .reading-verse-row:hover` in the combined state — all kept;
+  (3) **competing override** — `body.dark .welcome-title` also exists in `main.css`
+  (`#f0ede8`), so the dark.css copy is load-order-load-bearing, kept. Two
+  `body.dark` rules whose only base declaration lives inside a `max-width:768px`
+  block (`.study-scripture-toggle-hint`/`-chevron`) were kept conservatively. No
+  change to `tokens.css`; deletion-only diff. Screenshot-verified the dark reader
+  view is visually unchanged.
 - **Terms + Privacy pages, login-card fine print, and prod deploy wiring
   (2026-07-19).** Three things that were gated on "the pages don't exist yet":
   - **Standalone legal pages.** `public/terms.html` and `public/privacy.html` —
