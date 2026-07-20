@@ -49,8 +49,9 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
         <div className="error-boundary-app-card">
           <div className="error-boundary-app-title">Something didn't load right.</div>
           <div className="error-boundary-app-body">
-            Lantern ran into a problem it couldn't recover from on its own. Your notes are saved —
-            reloading should bring things back.
+            Lantern ran into a problem it couldn't recover from on its own. Notes you've already
+            saved are safe. If you were partway through writing one, copy the text somewhere before
+            you reload.
           </div>
           <button
             type="button"
