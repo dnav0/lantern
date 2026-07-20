@@ -12,6 +12,14 @@ export default defineConfig({
       // service worker's runtime cache.
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        // Keep the self-hosted BSB fallback bundle (~1.2 MB gzip) OUT of the
+        // service-worker precache. The glob above is extension-scoped and
+        // already wouldn't match a `.gz`, but this is explicit belt-and-braces:
+        // if that bundle ever landed in the precache manifest, every user would
+        // download the entire Bible on first load, which defeats the whole point
+        // of fetching it lazily (only when helloao is down). See
+        // src/bible/self-hosted.ts.
+        globIgnores: ['**/bible/bsb.json.gz'],
         navigateFallback: '/index.html',
         runtimeCaching: [
           {

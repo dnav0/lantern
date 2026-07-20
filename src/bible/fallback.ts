@@ -20,9 +20,12 @@ export class FallbackBibleProvider implements BibleProvider {
     } catch (primaryError) {
       try {
         const verses = await this.fallback.getChapter(bookNumber, chapter)
+        // Generic wording: the same class now backs two different fallbacks —
+        // the dev-only fixture (four seeded chapters) and the self-hosted
+        // complete-BSB bundle — so the message can't claim to be either one.
         console.warn(
-          `[lantern] scripture fetch failed for ${bookNumber}/${chapter} — serving the ` +
-            'offline dev fixture. Verse text is real BSB but only seeded chapters exist.',
+          `[lantern] scripture fetch failed for ${bookNumber}/${chapter} — serving ` +
+            'offline fallback text (real BSB).',
           primaryError
         )
         return verses

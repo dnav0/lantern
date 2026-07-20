@@ -89,6 +89,16 @@ prioritized.
   nothing for real users — it exists so contributors and agents in sandboxes
   without egress see real verses instead of a thrown fetch. Four chapters is a
   fixture, not a Bible; this item stands.
+  **Availability half now solved (2026-07-20):** the complete BSB is bundled and
+  shipped as `public/bible/bsb.json.gz` (see "Self-hosted BSB fallback" under
+  Done), so a helloao outage no longer throws — `SelfHostedBibleProvider` serves
+  the missing chapter. What remains of *this* item is the **prefetch** proper:
+  the bundle already exists, so guaranteed up-front offline reading is now reduced
+  to hydrating the IndexedDB cache from that bundle (decompress once, populate
+  `berean-bible-cache`) instead of downloading anything new. Also still owed: the
+  BSB attribution line in the UI (public-domain, so not legally required, but
+  correct) — deferred here because every UI surface was out of scope for the
+  fallback task.
 
 - **Scripture full-text search (verse-text search).** Search v1 (UX overhaul,
   workstream 6) only *parses* a query into a reference jump ("mat 2:13" →
@@ -120,15 +130,24 @@ prioritized.
 - **Tauri desktop wrap.** Same idea for desktop, replacing the frozen Electron
   app. The web code is the source of truth.
 
-- **Self-hosted BSB fallback.** Host the BSB dump ourselves so reads don't depend
-  on `bible.helloao.org` availability. Cache-forever already blunts this risk;
-  this removes it.
-
 - **Paid tier considerations.** If/when hosting or AI costs warrant it: what's
   free vs paid, billing, quota enforcement. Design the free single-user
   experience so it never feels crippled.
 
 ## Done
+
+- **Self-hosted BSB fallback (2026-07-20).** `bible.helloao.org` is no longer a
+  single point of failure on the scripture read path. `scripts/build-bsb-bundle.mjs`
+  downloads the complete BSB from the publisher (`bereanbible.com/bsb.txt`,
+  public-domain / CC0) and emits `public/bible/bsb.json.gz` (~1.2 MB gzip, all
+  1,189 chapters). `SelfHostedBibleProvider` (`src/bible/self-hosted.ts`) serves
+  any chapter from it, wired as the FALLBACK behind helloao via
+  `FallbackBibleProvider` — fetched **lazily**, only after the primary throws,
+  and memoized for the session. It sits outside the cache-forever layer (safe to
+  cache since the text is real, but kept out so the cache mirrors helloao only —
+  see the code comment). Excluded from the PWA precache via `globIgnores` so users
+  don't download the whole Bible on first load. BSB attribution still owed in the
+  UI — see the note on the prefetch item below.
 
 - **Repo normalized with Prettier (2026-07-20).** Done as its own commit, alone,
   exactly as this item required: `npm run format` rewrote **39 files
