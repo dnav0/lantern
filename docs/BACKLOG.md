@@ -66,49 +66,6 @@ prioritized.
     go — deferred only so they stay diffable while the landing settles. They are
     in git history regardless.
 
-- **`hello@lanternword.com` does not route yet.** The LIVE `/privacy`, `/terms`
-  and `/about` pages all publish this as the contact address, so mail sent to it
-  currently goes nowhere — a broken contact on public legal pages. Fix is free and
-  quick: Cloudflare dashboard → the domain → Email → **Email Routing** → enable,
-  add a custom address `hello@` forwarding to the owner's Gmail, confirm the
-  destination via the verification email; Cloudflare adds the MX/SPF records
-  itself. Receive-only: to *reply* as `hello@`, add Gmail "Send mail as" using the
-  existing Brevo SMTP credentials. No conflict with Brevo — Brevo sending uses
-  TXT (SPF/DKIM/DMARC) and `send.lanternword.com`; routing uses MX.
-
-- **Legal-page substance needs an owner review before any real public launch.**
-  `public/privacy.html` and `public/terms.html` are written from the actual
-  architecture, but three things are placeholders/assumptions flagged in each
-  file's header comment: the contact address (see the item above), the
-  **governing-law / jurisdiction** line (deliberately left neutral — fill in a
-  specific venue if wanted), and the effective date (bump on any substantive
-  change). Also: the "no third-party tracking" claim is only true while the app
-  ships no analytics — revisit if that ever changes. Not legal advice; a pass by
-  someone qualified is worth it before a real launch.
-
-- **`prefers-reduced-motion` resting states never verified live.** Every motion
-  rule in `motion.css` is wrapped in `@media (prefers-reduced-motion:
-  no-preference)` with a global kill-switch backstop, and each landing clip has a
-  static resting state by construction — but nobody has actually looked at them
-  with the setting on. The available browser tooling can't emulate the query and
-  the flag is read at mount, so it can't be toggled in-page: this needs a manual
-  pass with the OS setting enabled, eyeballing each of the hero flythrough and the
-  three feature clips.
-
-- **Google OAuth — identity-linking acceptance test NEVER RUN.** Everything else
-  about Google sign-in is done and verified live (see Done): the provider works
-  end to end and consent-screen branding is verified. What was never exercised is
-  the acceptance test that matters most: **sign in by email, sign out, then sign
-  in with Google on the SAME address, and confirm the notes are still there and NO
-  second personal workspace was created.** Supabase auto-links identities sharing
-  a *verified* email into one `auth.users` row; that is what stops the signup
-  trigger (`supabase/migrations/0001_init.sql`) minting a duplicate workspace. If
-  linking ever fails, a user's data silently splits across two workspaces, which
-  is why this is the gate. Practical test: the marker note created under the email
-  session must still be visible after the Google sign-in; confirm in Supabase →
-  Authentication → Users that the address is ONE user with TWO identities.
-  Needs the owner to drive (it requires entering a real Google password).
-
 - **KJV + translation switcher.** Second `BibleProvider` implementation plus a UI
   to pick translation. The provider interface already exists for this; note
   versification papercuts across translations (verse numbers mostly line up).
@@ -181,6 +138,46 @@ prioritized.
   experience so it never feels crippled.
 
 ## Done
+
+- **Launch-readiness closeout (2026-07-20).** The last four open items from the
+  deploy/auth milestone, all now resolved:
+  - **Google identity linking VERIFIED.** The acceptance test finally ran: signing
+    in with Google on the same address as an existing email account showed the
+    same notes, so Supabase linked the identities into one `auth.users` row and
+    the signup trigger did NOT mint a duplicate workspace. This was the one
+    remaining correctness gate on the auth work — a failure here would have
+    silently split a user's data across two workspaces.
+  - **`hello@lanternword.com` routes.** Cloudflare Email Routing is configured as
+    a catch-all forwarding all `@lanternword.com` mail to the owner, so the
+    contact address published on the live `/privacy`, `/terms` and `/about` pages
+    is real. (Receive-only: replying *as* `hello@` would need Gmail "Send mail as"
+    over the existing Brevo SMTP credentials.)
+  - **Legal pages reviewed and finalised.** Contact address resolved as above.
+    Governing law deliberately stays NEUTRAL ("the laws applicable at the
+    operator's place of residence") rather than naming a venue — for a
+    personal-scale, single-operator app with no payments and no corporate entity
+    that is a valid choice-of-law clause and naming a specific jurisdiction buys
+    little; revisit if Lantern ever incorporates or takes payment. The privacy
+    claims were checked against the actual code, not assumed: the only
+    third-party host `src/` contacts is `bible.helloao.org`, runtime deps are
+    react/react-dom, `@supabase/supabase-js`, `fflate` and two self-hosted
+    `@fontsource` packages, and there is **no analytics, telemetry or tracking SDK
+    anywhere** — so "no ads / no third-party tracking" is accurate as written.
+    Standing constraint recorded in each file's header: adding ANY analytics, or
+    any new service touching user data, means updating the privacy page in the
+    same change.
+  - **`prefers-reduced-motion` VERIFIED** (previously "never verified live").
+    Audited rather than assumed: **32 of 32** `animation`/`transition`
+    declarations in `motion.css` sit inside a `prefers-reduced-motion:
+    no-preference` guard (zero outside), backed by a global
+    `*:not(.upd-spinner)` kill-switch using `!important` near-zero durations; and
+    the JS side is covered too — `usePrefersReducedMotion()` reads the flag at
+    mount and `useClipLoop` skips the script entirely. The resting states were
+    then inspected by temporarily forcing the flag in dev: all three feature
+    clips render real laid-out content at 498x290 (verse text, the four note
+    categories, the search-and-return result) and the hero renders its full
+    scene — none blank, collapsed or half-built. The temporary override was
+    reverted.
 
 - **Google OAuth live + consent-screen branding verified (2026-07-20).** Google
   sign-in works end to end, and brand verification finally PASSED, so the consent

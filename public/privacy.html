@@ -18,14 +18,26 @@
   documented fallback for the self-hosted Source Serif 4, which a standalone page
   can't load).
 
-  OWNER REVIEW BEFORE PUBLIC LAUNCH — these need your confirmation:
-    - Contact address (currently hello@lanternword.com). Make sure it routes to
-      you (Cloudflare Email Routing), or change it.
-    - Governing-law / jurisdiction line in the Terms page.
-    - The "no analytics / no third-party tracking" claim below is TRUE only as
-      long as the app ships none. If you add analytics later, update this.
-    - Effective date is set to first-draft date; bump it whenever you change the
-      substance.
+  REVIEWED AND FINALISED 2026-07-20. Resolved at that review:
+    - Contact address `hello@lanternword.com` now routes (Cloudflare Email
+      Routing catch-all forwards all @lanternword.com mail to the owner).
+    - The processor list below was checked against the actual code: the only
+      third-party host `src/` talks to is bible.helloao.org, and the runtime
+      dependencies are react/react-dom, @supabase/supabase-js, fflate and the two
+      self-hosted @fontsource packages. No analytics, telemetry or tracking SDK
+      is present anywhere, so the "no ads / no third-party tracking" claims are
+      accurate as written.
+    - Governing law is deliberately left neutral (see terms.html).
+
+  STANDING CONSTRAINTS — re-check these whenever the app changes:
+    - The "no third-party advertising or behavioral tracking" claim stays true
+      only while the app ships none. Adding ANY analytics means updating this
+      page in the same change.
+    - Adding a new service that touches user data (a new host, a new provider)
+      means adding it to the "Who processes your data" list.
+    - Bump the "Last updated" date whenever the substance changes.
+    - Not legal advice; a pass by someone qualified is still worth it if this
+      ever grows beyond a personal-scale app.
 -->
 <style>
   :root {
