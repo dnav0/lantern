@@ -12,11 +12,6 @@ prioritized.
 
 - **Lantern rebrand — remaining bits.** The user-visible rebrand landed (see
   Done). Left over:
-  - **Outline the wordmark to SVG paths.** `Wordmark.tsx` renders live text in
-    the self-hosted **static** Source Serif 4 (the variable package registers
-    under a different family name, so there's no `opsz` axis — see the font
-    self-host entry in Done). Real brands ship the wordmark as outlined vector
-    so it's font-independent and can use the display optical cut. Cosmetic.
   - **Internal `Berean*` identifiers left alone, deliberately.** `BereanApi`,
     `berean-api.ts`, `SupabaseBereanApi`, and the persisted keys
     (`berean.onboarded`, `berean-theme`, `berean-visual-theme`,
@@ -129,6 +124,19 @@ prioritized.
   experience so it never feels crippled.
 
 ## Done
+
+- **Outline the wordmark to SVG paths (2026-07-20).** `Wordmark.tsx` now
+  renders static `<path>` geometry instead of a live text node, so it no
+  longer depends on the self-hosted static Source Serif 4 having loaded.
+  Generated in the runner (not a repo dependency): HarfBuzz shaped the literal
+  string "Lantern" against the self-hosted 600-weight woff2 so the real GPOS
+  kerning and `.wordmark`'s `-0.02em` letter-spacing are baked into the glyph
+  coordinates, then fontTools' `SVGPathPen` traced each glyph outline; the
+  seven glyphs were composited into one path at their shaped positions. `fill`
+  stays `currentColor` on the `.wordmark` class, so `color: var(--text)` still
+  drives every theme exactly as before. No new package.json dependency —
+  `fonttools`/`uharfbuzz` were used only as one-off generation tools, not
+  shipped.
 
 - **Repo normalized with Prettier (2026-07-20).** Done as its own commit, alone,
   exactly as this item required: `npm run format` rewrote **39 files
