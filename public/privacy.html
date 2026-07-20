@@ -27,6 +27,18 @@
       self-hosted @fontsource packages. No analytics, telemetry or tracking SDK
       is present anywhere, so the "no ads / no third-party tracking" claims are
       accurate as written.
+      AMENDED 2026-07-21: that audit was run against the CODE, and missed
+      something a code audit structurally cannot see. Cloudflare Web Analytics
+      was enabled for lanternword.com in the dashboard on ~2026-07-19, so the app
+      shipped no analytics while the platform underneath it measured traffic
+      anyway. Verified on a real production page load: no beacon script, no
+      cloudflareinsights request, no data-cf-beacon attribute — it is collected
+      at Cloudflare's edge under "Automatic setup", so no third-party code runs
+      in the visitor's browser and the "no third-party tracking" claim survives.
+      It is now disclosed under Cloudflare in the processor list regardless,
+      because the standing rule below is about disclosure, not about whether a
+      claim technically holds. LESSON: auditing src/ is not the same as auditing
+      the deployed system; the host can add behaviour the repo has no record of.
     - Governing law is deliberately left neutral (see terms.html).
 
   STANDING CONSTRAINTS — re-check these whenever the app changes:
@@ -135,6 +147,9 @@
         <li>It does not show ads.</li>
         <li>It does not run third-party advertising or behavioral tracking, and
           it does not build a profile of you for marketing.</li>
+        <li>It does not record what you read, what you write, or which passages
+          you study. Traffic measurement (see Cloudflare, below) counts visits to
+          the site as a whole and cannot see inside your account.</li>
       </ul>
 
       <h2>Who processes your data</h2>
@@ -150,7 +165,11 @@
           sign-in link).</li>
         <li><strong>Google</strong> handles sign-in only if you choose "Continue
           with Google."</li>
-        <li><strong>Cloudflare</strong> serves the website and its network.</li>
+        <li><strong>Cloudflare</strong> serves the website and its network, and
+          measures aggregate traffic (page views and visits) through Cloudflare
+          Web Analytics. This is counted at Cloudflare's edge, not by a script
+          running in your browser: it sets no cookies, does not identify you, and
+          does not follow you to other websites.</li>
         <li><strong>bible.helloao.org</strong> provides the scripture text
           (Berean Standard Bible), which your browser fetches and caches locally.
           Your notes are never sent to it. If that service is unavailable,
