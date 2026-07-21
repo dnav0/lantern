@@ -10,29 +10,15 @@ prioritized.
 
 ## Deferred
 
-- **Privacy page re-check after the analytics views (2026-07-20).** The new
-  read-only SQL views (see Done) compute aggregates over data the app already
-  stores for its own function (signup/note timestamps, book numbers) — no new
-  data collected, no third party, nothing queryable by the client (SELECT is
-  revoked from `anon`/`authenticated`; only the owner via `service_role` can
-  read them). CLAUDE.md's standing rule is "adding ANY analytics... means
-  updating the privacy page in the same change," but this task's scope
-  deliberately excluded `public/**`, so that review didn't happen here. Worth
-  a deliberate pass to confirm `public/privacy.html`'s "no analytics" claim
-  still reads accurately given these views exist, even though they don't
-  contradict it as written (internal-only, no SDK, no third party).
-
-- **Lantern rebrand — remaining bits.** The user-visible rebrand landed (see
-  Done). Left over:
-  - **Internal `Berean*` identifiers left alone, deliberately.** `BereanApi`,
-    `berean-api.ts`, `SupabaseBereanApi`, and the persisted keys
-    (`berean.onboarded`, `berean-theme`, `berean-visual-theme`,
-    `berean-offline-mirror`, `berean-bible-cache`) were NOT renamed. Renaming
-    the storage keys/DB names would silently reset every user's prefs and
-    orphan their cached data; `BereanApi` is the documented seam in CLAUDE.md.
-    Purely cosmetic — do it only if it ever stops being churn-for-nothing. The
-    default theme's stored id also stays `berean` for the same reason (only its
-    visible label became "Lantern").
+- **Internal `Berean*` identifiers stay — standing decision, not pending work.**
+  `BereanApi`, `berean-api.ts`, `SupabaseBereanApi`, and the persisted keys
+  (`berean.onboarded`, `berean-theme`, `berean-visual-theme`,
+  `berean-offline-mirror`, `berean-bible-cache`) were NOT renamed in the Lantern
+  rebrand. Renaming the storage keys/DB names would silently reset every user's
+  prefs and orphan their cached data; `BereanApi` is the documented seam in
+  CLAUDE.md. The default theme's stored id also stays `berean` (only its visible
+  label became "Lantern"). Listed here so nobody "tidies" it, not because it is
+  queued.
 
 - **Design sweep — remaining work.** The visual/structural + motion polish
   passes are both done: token layer (F1 + F1b warm dark), serif reading
@@ -158,6 +144,29 @@ prioritized.
   experience so it never feels crippled.
 
 ## Done
+
+- **Privacy page brought back in line with reality, twice (2026-07-21).** The
+  standing rule ("adding ANY analytics, or any new service touching user data,
+  means updating the privacy page in the same change") was applied to two things
+  that had drifted past it:
+  - **The self-hosted BSB fallback.** The processor list named
+    `bible.helloao.org` as the scripture source, which stopped being the whole
+    truth once we began serving a fallback copy from `lanternword.com` itself.
+    Now stated. No new third party, so the tracking claims were unaffected.
+  - **Cloudflare Web Analytics, which was already live and undisclosed.** It was
+    enabled in the Cloudflare dashboard around 2026-07-19 and had been counting
+    traffic for two days. The 2026-07-20 privacy audit did not catch it, and
+    structurally could not have: **that audit was run against `src/`, and no code
+    audit can see behaviour the host injects at the edge.** Verified on a real
+    production page load rather than assumed — no beacon script, no
+    `cloudflareinsights` request, no `data-cf-beacon` attribute, one script tag
+    total — so it is edge-side collection under "Automatic setup" with no
+    third-party code in the visitor's browser, and the public "no third-party
+    advertising or behavioral tracking" claim survives intact. Disclosed anyway,
+    because the rule is about disclosure, not about whether a claim technically
+    holds. **Standing lesson: auditing the repo is not auditing the deployed
+    system.** Anything enabled in the Cloudflare or Supabase dashboards is
+    invisible to `grep` and needs its own periodic look.
 
 - **Outline the wordmark to SVG paths (2026-07-20).** `Wordmark.tsx` now
   renders static `<path>` geometry instead of a live text node, so it no
