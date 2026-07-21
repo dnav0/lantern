@@ -49,16 +49,6 @@ prioritized.
   ratio is better — so this needs a per-site measurement, not a blanket
   find-and-replace.
 
-- **Telemetry: user-facing opt-out toggle.** Diagnostic reports (see Done) ship
-  with no way for a user to turn them off. Deferred deliberately, not
-  overlooked, and the reasoning is written into `public/privacy.html`'s header
-  so it can't quietly become an oversight: the payload is content-free by
-  construction, aggregate, and diagnostic rather than behavioural, and the only
-  user today is the operator. That stops being a good enough answer the moment
-  Lantern has users who did not build it. **Revisit before any real user signs
-  up.** Implementation is small — a `berean.telemetry-optout` key checked in
-  `src/telemetry/client.ts`'s `send()`, plus a row in the profile/settings UI.
-
 - **Telemetry: hand HQ the bearer token, and re-verify after the first real
   deploy.** The endpoint is live and verified (see Done), but two things are
   outstanding. (1) `HQ_TELEMETRY_TOKEN` is set as a Supabase secret on the
@@ -191,6 +181,16 @@ prioritized.
   experience so it never feels crippled.
 
 ## Done
+
+- **Telemetry: user-facing opt-out toggle (2026-07-21).** A "Privacy" section
+  in Settings (`SettingsModal.tsx`, between Export and Account) with a "Send
+  diagnostic reports" checkbox, checked by default. Unchecking it calls
+  `setTelemetryOptedOut(true)` in `src/telemetry/client.ts`, which stores
+  `berean.telemetry-optout`; `send()` returns before any network call when
+  that key is set. Absence of the key means opted IN, matching the privacy
+  page's description of the default — this is an explicit opt-out, not an
+  explicit opt-in. `public/privacy.html` updated in the same commit to
+  disclose the control and where to find it, per the standing rule.
 
 - **Telemetry pipeline — buffer, endpoint and symbolication (2026-07-21).**
   The Lantern side of `D:/Projects/hq/TELEMETRY.md`, built end to end. HQ's

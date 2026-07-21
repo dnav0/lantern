@@ -62,6 +62,12 @@
     - NOT offered yet: a user-facing opt-out toggle. Deferred deliberately
       rather than overlooked (see docs/BACKLOG.md). Revisit before Lantern has
       users beyond the operator.
+      AMENDED 2026-07-21: the toggle shipped (Settings → Privacy, "Send
+      diagnostic reports"). Landed in the SAME commit as the "Diagnostic
+      reports" section update below, per the standing rule. Default is ON
+      (opted in) — absence of the stored preference means reports are still
+      sent, which matches every claim made above about what happens by
+      default.
 
   STANDING CONSTRAINTS — re-check these whenever the app changes:
     - The "no third-party advertising or behavioral tracking" claim stays true
@@ -254,6 +260,12 @@
         operator's private project dashboard. They are kept for about seven days
         on Lantern's side and are not shared with an advertising network or any
         third-party analytics company.
+      </p>
+      <p>
+        Diagnostic reports are on by default. You can turn them off at any time
+        from <strong>Settings → Privacy</strong> inside the app, right next to a
+        copy of this explanation. Turning them off takes effect immediately and
+        stops any further reports from being sent from your browser.
       </p>
 
       <h2>Where your notes are cached</h2>
