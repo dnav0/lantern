@@ -15,6 +15,14 @@ import { join, relative } from 'node:path'
 // other Error subclasses) called with a template literal. That is the exact
 // shape of the original bug — a native Error's message is the only thing a
 // generic handler (window.onerror, an error boundary) can read.
+//
+// This is now one of TWO layers, kept deliberately redundant rather than
+// merged: the `no-restricted-syntax` rule in `.eslintrc.cjs` is the AST-based,
+// comment-safe rule that also catches string concatenation, other native
+// subclasses (TypeError, RangeError, ...), and assign-then-throw — see that
+// file for the full four-shape coverage. This regex scan stays because it's
+// the one check `npm test` (and HQ's automated health probe) actually runs;
+// ESLint output is not wired into that path.
 
 const SRC_ROOT = join(__dirname, '.')
 
