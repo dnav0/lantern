@@ -325,6 +325,24 @@ prioritized.
     with service_role because the RLS policy correctly refuses to let anon
     backdate — an incidental re-confirmation of that guard.
 
+  - **Verified on the real deploy (2026-07-21, commit `1c593a2`).** The push
+    landed, Cloudflare picked up `SUPABASE_SERVICE_ROLE_KEY`, and all three maps
+    uploaded to the private bucket under the full commit sha within ~40s of the
+    build (`index-*.js.map` 2.1 MB, `Landing-*.js.map` 85 KB,
+    `workbox-window.prod.es5-*.js.map` 13 KB). Production 200 on `/` and
+    `/privacy`; zero `sourceMappingURL` references in the deployed bundle.
+    **Method lesson worth keeping: on this host you CANNOT test "is the source
+    map public?" with a status code.** `public/_redirects` has a SPA catch-all,
+    so Cloudflare Pages answers *every* unmatched path with `HTTP 200` and
+    `Content-Type: text/html` — the app shell. A first check asserting "the
+    `.map` URL must 404" therefore looked like a leak when nothing was leaking.
+    The correct test is to compare bodies: `/assets/index-<hash>.js.map` returns
+    **byte-identical** content to a deliberately nonsensical path
+    (`/assets/total-nonsense-xyz.map`), 5,100 bytes of HTML in both cases, and
+    neither parses as JSON. Same family of trap as the `_redirects` 308 loop
+    recorded under the Cloudflare Pages entry: this host's routing makes
+    status-code assertions misleading, so assert on content.
+
   - **A real bug was caught before it shipped.** The insert policy originally
     asserted `sample_weight = 1` to stop a client setting its own weight.
     PostgreSQL evaluates a policy's WITH CHECK expression AFTER BEFORE ROW
