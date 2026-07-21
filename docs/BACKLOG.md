@@ -405,6 +405,30 @@ prioritized.
   end-to-end ones over the real throw sites that would have caught the original
   bug without anyone remembering to check a particular string.
 
+- **Error code/detail discipline made self-enforcing (2026-07-21).** The
+  CodedError split above (see the entry directly above) was correct only as
+  long as every future contributor remembers it — and the entry itself proves
+  a human audit already failed once (`fixture.ts` was missed and "five" got
+  recorded where there were six). This closes that gap with two build-time
+  guardrails instead of a convention:
+  1. `src/errors.guardrail.test.ts` scans every non-test file under `src` for a
+     native `throw new Error(` called with a template literal — the exact
+     shape of the original leak — and fails the build naming the offending
+     file and line. Passes clean on the current tree (all six real sites use
+     `CodedError`). Verified as a NEGATIVE test, not just a passing one: an
+     interpolated throw was temporarily added to `src/utils/bibleBooks.ts`,
+     confirmed the guardrail failed and named `utils/bibleBooks.ts:579`
+     exactly, then reverted.
+  2. A new ESLint `no-restricted-syntax` override on `src/telemetry/**`
+     forbids calling `.detailForConsole()` from that directory, pointing the
+     reader at `src/errors.ts` in the message — the one place a future
+     telemetry change could reach for the human detail by mistake.
+  `src/errors.ts` itself was deliberately not touched — the guarantee it
+  provides was already correct; this only makes the build catch a regression
+  of it. One new test (124 total, was 123); lint's 3 pre-existing errors
+  (2 in `scripts/migrate-sqlite.ts`, 1 in `src/utils/richText.ts`) are
+  unchanged.
+
 - **Category/accent text contrast fixed with an `-ink` token (2026-07-21).**
   Measured, not eyeballed. Every light theme failed WCAG AA for category text:
   2.98–3.68:1 on the pill's own 12% tint and 3.39–4.25:1 on the canvas, against
