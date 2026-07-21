@@ -84,6 +84,14 @@ so cache forever). The memory stub fakes this inside `memory.ts.getBibleVerse`;
 in dev a `FixtureBibleProvider` bundles a few chapters so contributors without
 network egress still see real verses (it tree-shakes out of production).
 
+The shipped composition is `FallbackBibleProvider(cache(helloao), selfHosted)`:
+`self-hosted.ts` serves the complete BSB from `public/bible/bsb.json.gz` when
+helloao fails, so the read path has no single point of failure. It is fetched
+lazily (never on a successful read) and deliberately excluded from the PWA
+precache. **This fixes availability, not offline reading** — a genuinely offline
+user can't fetch the bundle either. See `docs/ARCHITECTURE.md` for the gzip
+byte-sniffing gotcha, which is load-bearing and not obvious.
+
 ## Conventions
 
 - Ids are client-generated UUIDs (`crypto.randomUUID()`); timestamps are
@@ -141,9 +149,27 @@ defused, and the rule going forward is simple:
 ## Layout
 
 `src/App.tsx` holds view state and routing between capture/reading modes.
-`src/components/` is the UI. `src/api/` is the data seam. `src/utils/` is pure
-logic (book metadata, note parsing, rich-text serialization, dark mode). Design,
-schema, and the decision log live in `docs/ARCHITECTURE.md`; deferred work in
-`docs/BACKLOG.md`. The original phased migration (scaffold+stub → Supabase →
-scripture → mobile UI → PWA/offline → deploy) is complete; the app is live, so
-`docs/BACKLOG.md` is now the map of what's left rather than a phase plan.
+`src/components/` is the UI. `src/api/` is the data seam. `src/bible/` is the
+scripture seam. `src/utils/` is pure logic (book metadata, note parsing,
+rich-text serialization, dark mode). `src/offline/` is the local-persistence
+layer: `status.ts` (fetch-failure-based connectivity, not `navigator.onLine`),
+`mirror.ts` (read mirror), and `draft.ts` (in-progress note drafts, so a reload
+can't destroy unsaved work). `src/platform/` holds capabilities a native wrapper
+would reimplement (export today; TTS later). `supabase/migrations/` is schema:
+`0001_init.sql` is the app, `0002_analytics_views.sql` is six owner-only
+analytics views (revoked from `anon`/`authenticated` — query them in the
+Supabase SQL editor).
+
+Design, schema, and the decision log live in `docs/ARCHITECTURE.md`; deferred
+work in `docs/BACKLOG.md`; and `docs/proposals/` holds research written *before*
+building — currently `study-id.md`, `offline-write-outbox.md`,
+`onboarding-hints.md` and `scripture-search.md`. Those are worth reading before
+touching their areas: two of them concluded the work should NOT be done as
+specified, which is why no `study_id` column exists and why only draft
+persistence shipped instead of a full write outbox.
+
+The original phased migration (scaffold+stub → Supabase → scripture → mobile UI
+→ PWA/offline → deploy) is complete; the app is live, so `docs/BACKLOG.md` is
+now the map of what's left rather than a phase plan. As of 2026-07-21 everything
+remaining in it is demand-gated: nothing is blocking, and the next priorities
+should come from what real users do rather than from the list.

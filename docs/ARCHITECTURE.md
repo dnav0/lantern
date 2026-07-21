@@ -188,6 +188,28 @@ Scripture access is a second interface, `src/bible/provider.ts`:
   single thing components import for data, avoids call-site churn across
   `CaptureMode`/`NoteEditor`/`ReadingMode`/`BookDetailPage`, and scripture
   lookup is still trivially separable later if it ever needs to move.
+- `src/bible/self-hosted.ts` — `SelfHostedBibleProvider` (2026-07-21), serving
+  the complete BSB from `public/bible/bsb.json.gz` (~1.2 MB gzip, 66 books /
+  1,189 chapters / 31,086 verses), built by `scripts/build-bsb-bundle.mjs` from
+  bereanbible.com. Composed as `FallbackBibleProvider(cache(helloao),
+  selfHosted)`: helloao stays PRIMARY, this is the fallback, so it is fetched
+  **lazily** — never on a successful read — and memoized for the session.
+  Three things that are easy to get wrong here:
+  - **It sniffs the gzip magic bytes rather than trusting `Content-Encoding`,
+    and this is load-bearing.** The two environments behave in *opposite* ways:
+    Vite dev sends `Content-Encoding: gzip` so the browser pre-decompresses and
+    the bytes arrive as `{"`; Cloudflare Pages sends no encoding header so the
+    raw `1f 8b` gzip stream arrives. Header-trusting code works in exactly one
+    of them. Both verified live.
+  - **It is excluded from the PWA precache** (`globIgnores` in
+    `vite.config.ts`). Precaching it would push the entire Bible onto every
+    first load, which defeats the point of fetching it lazily.
+  - **This fixes availability, NOT offline reading.** If helloao is down and the
+    user is online, the fallback works. If the user is genuinely offline the
+    bundle fetch fails too, since it is in neither the precache nor any
+    `runtimeCaching` rule. Guaranteed offline reading is still the deferred
+    prefetch item in `docs/BACKLOG.md`, now much cheaper because the asset
+    already exists and ships.
 - KJV, or ESV-with-user-key, are future providers behind the same
   `BibleProvider` interface — nothing about the seam is BSB-specific except
   `helloao.ts`'s own USFM table.
@@ -412,6 +434,40 @@ mounted once in `App.tsx`'s shell:
 - A **non-blocking toast** ("You're offline — changes can't be saved yet."),
   fired once per failed mutation attempt, auto-dismissing after a few seconds.
 
+#### Draft persistence (2026-07-21) — what the toast alone did not cover
+
+The behaviour above is necessary but was not sufficient, and the gap was only
+found by observing it rather than reading it. On a failed save the typed note
+*stays on screen*, because nothing on the failure path clears `lines`. That
+looks like the content is safe. It is not: it existed **only in React state**,
+so closing the tab or reloading destroyed it. The pill and toast correctly said
+"can't be saved yet" while the work was one refresh away from being gone.
+
+`src/offline/draft.ts` closes that window. It is a small IndexedDB store
+(`berean-note-drafts`) following the same shape as `mirror.ts` and
+`bible/cache.ts` — write-through, best-effort, errors swallowed. `StudyMode`
+persists the in-progress draft debounced (600ms) while `isLinesDirty` is true,
+restores it on returning to the same study, and clears it once a save lands.
+Keyed by `passage:<id>` once a passage exists, or `new:<reference>` for a study
+that has not been saved yet.
+
+Two things worth knowing before touching it:
+
+- **A restored draft is labelled**, deliberately distinct from the per-line
+  "saved Xh ago" stamp, so recovered content is never mistaken for something
+  already on the server.
+- **There is a generation counter (`draftSaveGenRef`) and its ordering is
+  load-bearing.** A debounced write scheduled just before a save can otherwise
+  fire *after* that save cleared the draft, resurrecting stale content. The
+  counter is bumped **synchronously before** `await clearDraft(...)`, not after
+  — bumping it after leaves the timer able to race a competing write against
+  the same key while the clear is in flight.
+
+This is the small first step recommended by `docs/proposals/offline-write-outbox.md`,
+not the full write outbox. Queue replay, conflict reconciliation and delete
+handling remain deferred, and that proposal is the design doc if they are picked
+up.
+
 ### Markdown export
 
 `src/platform/export.ts` reuses the legacy Electron vault's serialization
@@ -537,5 +593,20 @@ it the shell reflows for a phone (primary target: Android Chrome, ~360–430px).
 - **SQLite→Supabase migration fidelity** — tiny dataset; the migration script
   prints a before/after count-and-sample diff, and the legacy branch stays
   runnable as source-of-record until confirmed.
-- **helloao dependency** — mitigated by the provider interface + cache-forever;
-  self-hosting the BSB dump is a backlog fallback.
+- **helloao dependency** — RESOLVED 2026-07-21. Was mitigated only by the
+  provider interface + cache-forever (which protects chapters already read).
+  The complete BSB now ships as `public/bible/bsb.json.gz` and serves as the
+  fallback, so an outage no longer throws. Note the residual risk is *offline
+  reading*, not availability — see the `BibleProvider` seam above for why those
+  are different failure modes.
+- **Crashes are invisible to the operator** — `ErrorBoundary` (app-level and
+  scripture-pane) means a render throw degrades gracefully instead of blanking
+  the page, but nothing reports it. Deliberate: error reporting means a service
+  receiving data, and `public/privacy.html` would need to change in the same
+  commit. `TELEMETRY.md` in the `hq` repo is the agreed contract for closing
+  this; not built on either side yet.
+- **The deployed system can drift from the repo** — learned the hard way on
+  2026-07-21. A privacy audit run against `src/` passed while Cloudflare Web
+  Analytics had been enabled in the dashboard and counting traffic for two days.
+  Anything configured in the Cloudflare or Supabase dashboards is invisible to
+  `grep`, so auditing the code is not auditing the product.
