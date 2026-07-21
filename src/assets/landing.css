@@ -1103,7 +1103,7 @@
 }
 .ll-error {
   font-size: var(--text-sm);
-  color: var(--cat-personal);
+  color: var(--cat-personal-ink);
   text-align: left;
 }
 

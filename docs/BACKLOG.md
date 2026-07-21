@@ -36,18 +36,18 @@ prioritized.
     and reconcile the library vs. journal vs. book-detail max-widths for a fully
     consistent measure across every page. Optional, skip for the deploy pass.
 
-  - **Category-token contrast in light mode (measured 2026-07-21).** The
-    established pairing `color: var(--cat-X)` on `background: var(--cat-X-weak)`
-    — used by `.pill-tag-*` and now by StudyMode's draft-restored banner —
-    measures about **2.98:1 in light mode**, below the WCAG AA 4.5:1 floor for
-    text under 18pt. Dark mode is fine at about **5.81:1**, because the weak
-    background composites against a dark surface instead of a near-white one.
-    This is app-wide and pre-existing, not caused by any one component, so it is
-    a deliberate single sweep rather than a per-element fix: either darken the
-    `--cat-*` hues in the light themes, or pair the weak background with
-    `--text`/`--text-muted` instead of the category hue and let the hue carry
-    only the border and any icon. Worth checking the other three visual themes
-    at the same time, since each redefines these tokens.
+- **Accent-as-text contrast sweep (measured 2026-07-21).** The category fix
+  above introduced `--accent-ink` and used it for the observation pill, but
+  roughly **19 other `color: var(--accent)` sites** — links, buttons, active
+  states — were left alone. As text on the light canvas `--accent` measures
+  about **4.25:1**, below the 4.5:1 AA floor, so those are genuinely
+  non-compliant today. The token to fix them already exists; what stopped it
+  being done in the same pass is that `--accent` is the app's primary colour and
+  swapping it across every link and button is a visible design change that
+  should be looked at, not merged sight-unseen. Note some of those sites sit on
+  `--surface` (white in scholarly/modern) rather than the canvas, where the
+  ratio is better — so this needs a per-site measurement, not a blanket
+  find-and-replace.
 
 - **Offline write outbox.** Queue failed mutations locally and replay them on
   reconnect. `docs/proposals/offline-write-outbox.md` researched this in full
@@ -167,6 +167,37 @@ prioritized.
   experience so it never feels crippled.
 
 ## Done
+
+- **Category/accent text contrast fixed with an `-ink` token (2026-07-21).**
+  Measured, not eyeballed. Every light theme failed WCAG AA for category text:
+  2.98–3.68:1 on the pill's own 12% tint and 3.39–4.25:1 on the canvas, against
+  a 4.5:1 floor. The pills are **12px/500**, nowhere near the large-text
+  exemption that would have allowed 3:1. `--accent` shares the observation hue,
+  so accent-coloured text failed too. Dark mode was never affected (4.65–6.72:1)
+  because the weak tint composites over a dark surface rather than a near-white
+  one.
+  **The fix is a separate token, not a darker palette.** `--cat-X` also paints
+  every solid fill, rail bracket, dot and left-border in the app, where contrast
+  is irrelevant and the current hues are correct. Darkening it would have been a
+  palette-wide design change to fix a text problem. Instead each theme gained
+  `--cat-{observation,historical,application,personal}-ink` and `--accent-ink`,
+  hue and saturation preserved with HSL lightness lowered until it passes, and
+  the 14 `color:` sites were switched. Fields are byte-identical to before —
+  verified in-browser that `--cat-application` still resolves to `#b5732a`
+  (default), `#ba7517` (scholarly), `#c07b12` (modern). In the four dark blocks
+  `-ink` aliases straight back to `--cat-X`, so dark is untouched by
+  construction rather than by coincidence.
+  Verified live via computed styles in a real browser, not calculated: light
+  went **2.98–3.46 → 4.64–4.65**, dark unchanged at **5.75–6.20**. The measured
+  result beats the solved target because pills sit on a card surface rather than
+  the canvas, so the solver was given the pessimistic case on purpose.
+  **Rule going forward: `--cat-X` for backgrounds and borders, `--cat-X-ink` for
+  text.** Documented in `tokens.css` at the declaration.
+  Still open, and deliberately not swept here: roughly 19 other
+  `color: var(--accent)` sites (links, buttons, active states) measure ~4.25:1
+  as text on the light canvas. `--accent-ink` now exists for them, but switching
+  primary UI colour app-wide is a visible design change that wants the owner's
+  eye rather than a drive-by edit. See Deferred.
 
 - **Point-of-use onboarding hints + Onboarding.tsx trim (2026-07-21).**
   Implements `docs/proposals/onboarding-hints.md`'s two recommended hints —

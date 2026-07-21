@@ -1308,7 +1308,7 @@ body.dark .search-backdrop {
   display: inline-flex;
   align-items: center;
   background: var(--cat-historical-weak);
-  color: var(--cat-historical);
+  color: var(--cat-historical-ink);
   border-radius: 4px;
   padding: 1px 6px;
   font-size: 12px;
@@ -1325,7 +1325,7 @@ body.dark .search-backdrop {
 
 .pill-tag-observation {
   background: var(--accent-weak);
-  color: var(--accent);
+  color: var(--accent-ink);
   border-radius: 4px;
   padding: 1px 6px;
   font-size: 12px;
@@ -1336,7 +1336,7 @@ body.dark .search-backdrop {
 }
 .pill-tag-historical {
   background: var(--cat-historical-weak);
-  color: var(--cat-historical);
+  color: var(--cat-historical-ink);
   border-radius: 4px;
   padding: 1px 6px;
   font-size: 12px;
@@ -1347,7 +1347,7 @@ body.dark .search-backdrop {
 }
 .pill-tag-application {
   background: var(--cat-application-weak);
-  color: var(--cat-application);
+  color: var(--cat-application-ink);
   border-radius: 4px;
   padding: 1px 6px;
   font-size: 12px;
@@ -1358,7 +1358,7 @@ body.dark .search-backdrop {
 }
 .pill-tag-personal {
   background: var(--cat-personal-weak);
-  color: var(--cat-personal);
+  color: var(--cat-personal-ink);
   border-radius: 4px;
   padding: 1px 6px;
   font-size: 12px;
@@ -1713,13 +1713,13 @@ body.dark .search-backdrop {
   color: var(--accent);
 }
 .reading-note-meta.cat-historical {
-  color: var(--cat-historical);
+  color: var(--cat-historical-ink);
 }
 .reading-note-meta.cat-application {
-  color: var(--cat-application);
+  color: var(--cat-application-ink);
 }
 .reading-note-meta.cat-personal {
-  color: var(--cat-personal);
+  color: var(--cat-personal-ink);
 }
 .reading-note-meta.cat-none {
   color: var(--text-faint);
@@ -1736,13 +1736,13 @@ body.dark .search-backdrop {
   color: var(--accent);
 }
 .reading-subnote-meta.cat-historical {
-  color: var(--cat-historical);
+  color: var(--cat-historical-ink);
 }
 .reading-subnote-meta.cat-application {
-  color: var(--cat-application);
+  color: var(--cat-application-ink);
 }
 .reading-subnote-meta.cat-personal {
-  color: var(--cat-personal);
+  color: var(--cat-personal-ink);
 }
 
 /* Sub-notes nested inside a note card */
@@ -2599,12 +2599,12 @@ body.dark .search-backdrop {
 
 /* ─── Reference input error ──────────────────────────────────────────────────── */
 .reference-input--error {
-  color: var(--cat-personal);
+  color: var(--cat-personal-ink);
 }
 .reference-input-error {
   margin-top: 6px;
   font-size: 12px;
-  color: var(--cat-personal);
+  color: var(--cat-personal-ink);
 }
 
 /* ─── Note discoverability: first-use hint + mobile chip row ──────────────────── */
@@ -3884,7 +3884,7 @@ body.dark .upd-spinner {
 .upd-check {
   display: inline-flex;
   align-items: center;
-  color: var(--cat-historical);
+  color: var(--cat-historical-ink);
 }
 
 .upd-btn {
