@@ -59,22 +59,19 @@ prioritized.
   up.** Implementation is small — a `berean.telemetry-optout` key checked in
   `src/telemetry/client.ts`'s `send()`, plus a row in the profile/settings UI.
 
-- **Telemetry: the endpoint has not been exercised against a live database.**
-  Migrations 0003-0006 and `supabase/functions/hq-telemetry` are written but
-  have never run against real Postgres. Docker Desktop could not start in the
-  session that built them (WSL reported no installed distributions), so the
-  `supabase db reset` path that verified the 0002 analytics views was
-  unavailable, and applying migrations to the hosted project was not something
-  to do unilaterally. What IS verified: the whole client side in a real browser,
-  the build/strip pipeline, and the symbolicator's hand-written Base64-VLQ
-  decoder against a real esbuild-generated source map (123 tests). What is NOT:
-  the SQL parses and returns the contract's shape, the guard trigger actually
-  drops rows past its limits, RLS really is insert-only, and the three curl
-  checks the contract calls for — wrong bearer token rejected, `since` genuinely
-  filtering, and a deliberately-thrown error arriving with a code and NO passage
-  reference anywhere in the grepped response body. Do this before pointing HQ at
-  it. Nothing degrades in the meantime: the endpoint is inert standing alone and
-  nothing in the app reads it.
+- **Telemetry: hand HQ the bearer token, and re-verify after the first real
+  deploy.** The endpoint is live and verified (see Done), but two things are
+  outstanding. (1) `HQ_TELEMETRY_TOKEN` is set as a Supabase secret on the
+  `berean` project and the value was handed to Dennis in-session — it is not in
+  the repo, not in `.env`, and not recoverable from the dashboard, so if it is
+  lost, generate a new one and `supabase secrets set` it again. HQ's ingest is
+  P2 and not built, so nothing consumes it yet. (2) Source-map upload has only
+  been exercised with a hand-set `COMMIT_SHA`; on Cloudflare Pages the sha comes
+  from `CF_PAGES_COMMIT_SHA`, and `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`
+  must be added to the Pages build environment or every deploy silently skips
+  the upload and symbolication degrades to raw frames. **That skip is by design
+  and is not an error**, so it will not fail a build — check the build log for
+  `[sourcemaps] uploaded N/N` after the first deploy rather than assuming.
 
 - **Offline write outbox.** Queue failed mutations locally and replay them on
   reconnect. `docs/proposals/offline-write-outbox.md` researched this in full
@@ -262,8 +259,58 @@ prioritized.
     because a passage reference cannot reach a report even if someone later
     writes a new error message mentioning one. A user-facing opt-out is
     deliberately deferred — see Deferred.
-  - **Not yet exercised against a live database** — see Deferred for exactly
-    what is and isn't verified, and the three curl checks still owed.
+  - **Verified against the LIVE hosted project**, not reasoned about. Docker
+    could not start in this session (WSL reported no installed distributions),
+    so the `supabase db reset` path that verified the 0002 views was
+    unavailable; with the owner's approval, migrations 0002-0006 were pushed to
+    the `berean` project instead and the function deployed. All five migrations
+    are idempotent by construction (`create or replace` / `if not exists` /
+    `on conflict`), which is what made re-applying 0002 — recorded locally but
+    absent from the remote migration history — safe rather than a gamble.
+    What the live run actually proved:
+    - Wrong bearer token → 401. Missing header → 401. Bad `since` → 400.
+    - Correct token → all seven scalars in the contract's exact
+      `{key, value, unit, window}` shape, with `signups = 1` (a real row).
+    - `since` genuinely filters: epoch → 2 events, first event's own timestamp
+      → 1, a future timestamp → 0.
+    - Two deliberately-thrown errors carrying passage references in their
+      MESSAGES ("...404 Not Found (JHN 3)" and a note-shaped
+      "Genesis 1:1 the darkness has not overcome it") arrived with
+      `code: UNKNOWN_ERROR`, the class, and frames only. The RAW response body
+      was then grepped — not asserted on parsed fields — for JHN, John,
+      Genesis, darkness, overcome, helloao, 404, "Not Found": **zero hits.**
+    - RLS is genuinely write-only: anon INSERT → 201; anon SELECT → 401,
+      `42501 permission denied for table telemetry_events`.
+    - Every payload guard rejects: far-future and far-past `occurred_at` (401,
+      policy), malformed `install_id`, unknown `kind`, and a 9,000-character
+      stack (400, CHECK).
+    - A hostile client-supplied `sample_weight: 9999` was accepted and stored
+      as **1** — the trigger's override working as intended.
+    - Burst limit exact: 25 rapid inserts from one install, **20 stored, 5
+      silently dropped**, and all 25 POSTs returned success to the client,
+      which is the required fire-and-forget behaviour.
+    - Both non-error kinds flowed through and moved their scalars to 1,
+      confirming `kind` is not always `"error"` end to end.
+    - Symbolication end to end through PRIVATE storage: a raw frame
+      `index-B3wapBga.js:74:59833` came back as
+      `at getChapter (src/bible/helloao.ts:144:9)` — the actual
+      `throw new CodedError` site. The maps were confirmed unfetchable both
+      anonymously and with the anon key (400 both ways), absent from `dist/`,
+      and untracked by git.
+    All test rows and test maps were deleted afterwards; the buffer is back to
+    zero. **The function must be deployed with `--no-verify-jwt`** — HQ presents
+    a bearer token, not a Supabase JWT, so the platform gateway would otherwise
+    401 every legitimate call before our own constant-time check ran. This is
+    documented at the top of the function; redeploying without the flag breaks
+    the endpoint while looking like a tightening.
+  - **A real bug was caught before it shipped.** The insert policy originally
+    asserted `sample_weight = 1` to stop a client setting its own weight.
+    PostgreSQL evaluates a policy's WITH CHECK expression AFTER BEFORE ROW
+    triggers, so that would have rejected exactly the rows the sampling branch
+    had just legitimately stamped — sampling would have failed closed under
+    load, which is precisely when it is needed. The guard now forces the weight
+    to 1 at the top of the trigger instead, making a client-supplied value
+    irrelevant by construction rather than a failed insert.
 
 - **Telemetry indexes — migration 0003 (2026-07-21).** Three additive indexes
   (`notes(created_at)`, `notes(created_by)`, `profiles(created_at)`) that four of

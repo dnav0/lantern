@@ -26,6 +26,17 @@
 // The project invents NO retry logic. A failed fetch, an auth failure or a 5xx
 // is itself a health signal that folds into the checks HQ already runs.
 //
+// ─── DEPLOY WITH --no-verify-jwt ─────────────────────────────────────────────
+//
+//   supabase functions deploy hq-telemetry --no-verify-jwt
+//
+// This is REQUIRED and is not a weakening. HQ presents a narrow bearer token,
+// not a Supabase JWT, so the platform's default gateway check would reject
+// every legitimate call with a 401 before this code ever ran. Auth is done
+// below instead: a constant-time compare against HQ_TELEMETRY_TOKEN that fails
+// CLOSED when the secret is unset. Redeploying without the flag silently breaks
+// the endpoint for HQ while looking like a tightening.
+//
 // ─── FINGERPRINTS ARE HQ'S JOB ───────────────────────────────────────────────
 //
 // This sends raw-ish fields and deliberately computes no fingerprint.

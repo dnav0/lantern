@@ -126,6 +126,15 @@ declare
   recent_day    int;
   recent_hour   int;
 begin
+  -- Ignore any weight the client supplied. Only this trigger may set it, and
+  -- forcing it here rather than rejecting a bad value in the RLS policy is
+  -- deliberate: PostgreSQL evaluates a policy's WITH CHECK expression AFTER
+  -- BEFORE ROW triggers, so a policy asserting `sample_weight = 1` would reject
+  -- exactly the rows the sampling branch below had just legitimately stamped.
+  -- Overriding makes a client-supplied weight irrelevant by construction
+  -- instead of turning it into a failed insert.
+  new.sample_weight := 1;
+
   -- Hard daily ceiling first: it is the cheapest way to stop a sustained flood,
   -- and an install that has blown it should not get a sampling reprieve.
   select count(*) into recent_day
@@ -192,9 +201,10 @@ create policy telemetry_events_insert on public.telemetry_events
     -- one would resurrect rows HQ has already consumed.
     occurred_at > now() - interval '1 hour'
     and occurred_at <= now() + interval '5 minutes'
-    -- The client never sets its own weight; only the guard trigger does.
-    and sample_weight = 1
   );
+-- NOTE: sample_weight is deliberately NOT constrained here. It is forced to 1
+-- at the top of the guard trigger and only that trigger may raise it. See the
+-- comment there for why a WITH CHECK on it would be actively wrong.
 
 -- Deliberately NO select/update/delete policy. See the header: this table is
 -- write-only to every public role, and readable only by service_role.
