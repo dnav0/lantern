@@ -407,8 +407,12 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
     // Everything above landed on the server — the local draft is now stale
     // (and would otherwise resurface later and overwrite newer server state).
     if (draftStorageKey) {
-      await clearDraft(draftStorageKey)
+      // Bump the generation BEFORE awaiting. Any debounced save already
+      // scheduled is invalidated synchronously, before this function yields —
+      // otherwise a timer firing while clearDraft is in flight still passes
+      // the guard and races a competing writeDraft against the same key.
       draftSaveGenRef.current += 1
+      await clearDraft(draftStorageKey)
       setDraftRestored(false)
     }
   }
