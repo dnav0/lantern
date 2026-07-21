@@ -27,6 +27,16 @@ function MemoryRoot(): React.ReactElement {
     seedMemoryApi()
     return a
   })
+  // TEMP verification-only hack: force the onboarding screen so it can be
+  // screenshotted against the memory stub, which normally never shows it
+  // (see docs/proposals/onboarding-hints.md). NOT part of the real change —
+  // reverted before this task's diff is finalized.
+  const [showOnboarding, setShowOnboarding] = useState(
+    () => localStorage.getItem('berean.onboarded') !== '1'
+  )
+  if (showOnboarding) {
+    return <Onboarding onDone={() => setShowOnboarding(false)} />
+  }
   return (
     <ApiProvider api={api}>
       <App displayName={null} onSignOut={null} />
