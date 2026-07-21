@@ -37,10 +37,16 @@ prioritized.
     consistent measure across every page. Optional, skip for the deploy pass.
 
 - **Offline write outbox.** Queue failed mutations locally and replay them on
-  reconnect. The `BereanApi` seam is the single place this slots in — phase-1
-  behavior (catch a failed write, show a friendly message) is the stub it
-  replaces. Needs conflict handling and last-write-wins (or better) reconciliation
-  given client-set timestamps.
+  reconnect. `docs/proposals/offline-write-outbox.md` researched this in full
+  and recommended waiting: the narrower, actually-dangerous gap (in-progress
+  note content lost on tab close/reload before a failed save can be retried)
+  is closed — see Done, "Persist in-progress note drafts." What's left here is
+  the full queue-and-replay design: idempotent upserts on the create methods,
+  replay-on-reconnect, and conflict handling / last-write-wins (or better)
+  reconciliation given client-set timestamps. Revisit when either a second
+  device becomes a real regular pattern for a user, or draft-persistence
+  alone turns out not to be covering real losses (see the proposal's own
+  "Trigger to revisit" section).
 
 - **KJV + translation switcher.** Second `BibleProvider` implementation plus a UI
   to pick translation. The provider interface already exists for this; note
@@ -144,6 +150,27 @@ prioritized.
   experience so it never feels crippled.
 
 ## Done
+
+- **Persist in-progress note drafts to IndexedDB (2026-07-20).** Closed the
+  actual data-loss window `docs/proposals/offline-write-outbox.md` identified:
+  a failed save left typed content only in `StudyMode`'s React `lines` state,
+  so a reload or tab close before reconnecting destroyed it with no trace.
+  `src/offline/draft.ts` (same shape as `mirror.ts`/`cache.ts`: one small
+  IndexedDB store, write-through, best-effort) now persists the in-progress
+  draft debounced as the user types, keyed by passage id once one exists or
+  by the committed reference before that. Restored on return to the same
+  study, cleared the moment a save actually reaches the server so a stale
+  draft can never resurface and overwrite newer server state. A restored
+  draft shows an explicit "nothing here is on the server yet" notice — never
+  the per-line "saved Xh ago" stamp, which only ever reflects confirmed
+  server content. This is deliberately the small first step the proposal
+  recommended, not the full write outbox (queue/replay, idempotent retries,
+  conflict reconciliation) — that remains deferred, see "Offline write
+  outbox" above. `ErrorBoundary.tsx`'s "copy the text somewhere before you
+  reload" line was deliberately left unchanged: draft protection only
+  applies once a reference has been committed and the user has navigated
+  back to the same study by hand (app-level navigation state itself doesn't
+  survive a reload), so the instruction still holds rather than overpromising.
 
 - **Privacy page brought back in line with reality, twice (2026-07-21).** The
   standing rule ("adding ANY analytics, or any new service touching user data,

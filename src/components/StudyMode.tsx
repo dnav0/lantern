@@ -7,6 +7,50 @@ import { BiblePassage, Note } from '../types'
 import { parseNoteLine, parseReferenceLabel } from '../utils/noteParser'
 import { findBookByAlias } from '../utils/bibleBooks'
 import { useApi } from '../api/context'
+import {
+  draftKey,
+  draftLinesEqual,
+  readDraft,
+  writeDraft,
+  clearDraft,
+  type DraftLine
+} from '../offline/draft'
+
+const DRAFT_SAVE_DEBOUNCE_MS = 600
+
+function toDraftLines(lines: LineData[]): DraftLine[] {
+  return lines.map(l => ({ text: l.text, indent: l.indent, noteId: l.noteId }))
+}
+
+function fromDraftLines(draftLines: DraftLine[]): LineData[] {
+  return draftLines.map(l => ({
+    id: makeLineId(),
+    text: l.text,
+    indent: l.indent,
+    noteId: l.noteId
+  }))
+}
+
+// Same "does this diverge from what's already persisted" question the
+// per-line "saved Xh ago" timestamp answers (NoteEditor.tsx) — reused here to
+// decide whether there's a draft worth persisting at all, so a freshly
+// opened, unedited study doesn't write a no-op draft on every render.
+function isLinesDirty(lines: LineData[], existingNotes: Map<string, Note>): boolean {
+  if (existingNotes.size > 0) {
+    const kept = new Set<string>()
+    for (const l of lines) {
+      if (l.noteId && existingNotes.has(l.noteId)) {
+        kept.add(l.noteId)
+        const src = existingNotes.get(l.noteId)!
+        if (src.content !== l.text || (src.indent_level ?? 0) !== l.indent) return true
+      } else if (l.text.trim() !== '') {
+        return true
+      }
+    }
+    return kept.size !== existingNotes.size
+  }
+  return lines.some(l => l.text.trim() !== '')
+}
 
 interface LineData {
   id: string
@@ -70,6 +114,17 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
   // The notes this study opened with, keyed by id — the baseline the reconciling
   // save diffs against (to know what changed and what was removed).
   const [existingNotes, setExistingNotes] = useState<Map<string, Note>>(new Map())
+  // What this study's in-progress draft is keyed by in IndexedDB: stable for
+  // the life of this mount once known (App.tsx remounts StudyMode via a `key`
+  // on passage/reference change, see App.tsx). null until a passage id or a
+  // committed reference exists to key a draft by.
+  const [draftStorageKey, setDraftStorageKey] = useState<string | null>(() =>
+    draftKey(initialPassageId, initialReference)
+  )
+  // True once a draft was restored this mount and hasn't been saved or
+  // superseded yet — drives the "this isn't on the server" banner so a
+  // recovered draft is never mistaken for saved content.
+  const [draftRestored, setDraftRestored] = useState(false)
   const [noteFocusNonce, setNoteFocusNonce] = useState(0)
   // Mobile only: the pinned scripture panel starts collapsed (peek) so the notes
   // get the room; tap the header to expand. Ignored by the desktop side-by-side
@@ -113,6 +168,25 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
     if (initialReference) {
       loadPassageByReference(initialReference)
     }
+    // A blank study prefilled with a reference (Save & Next, or the reading-view
+    // "study this" bridge) already has a stable draft key from mount — restore
+    // it here. A study opened on an existing passage is handled inside
+    // loadExisting below instead, once the server notes it hydrates against
+    // are known (needed to tell a genuine draft apart from a no-op one).
+    if (!initialPassageId && draftStorageKey) {
+      const baseline = toDraftLines(lines)
+      void readDraft(draftStorageKey).then(draft => {
+        if (draft && !draftLinesEqual(draft.lines, baseline)) {
+          const restored = fromDraftLines(draft.lines)
+          setLines(restored)
+          // Focus the last restored line, cursor at the end, so the user can
+          // pick up typing immediately rather than having to click in first.
+          setFocusedLineId(restored[restored.length - 1].id)
+          setDraftRestored(true)
+        }
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Opening an existing passage (from the Journal, the reading-view bridge, or
@@ -142,24 +216,72 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
       const allNotes = noteLists
         .flat()
         .sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id))
+      const hydratedLines: LineData[] = allNotes.map(n => ({
+        id: makeLineId(),
+        text: n.content,
+        indent: n.indent_level ?? 0,
+        noteId: n.id
+      }))
       if (allNotes.length > 0) {
         setExistingNotes(new Map(allNotes.map(n => [n.id, n])))
-        setLines(
-          allNotes.map(n => ({
-            id: makeLineId(),
-            text: n.content,
-            indent: n.indent_level ?? 0,
-            noteId: n.id
-          }))
-        )
+        setLines(hydratedLines)
         setFocusedLineId(null)
+      }
+
+      // Restore a draft over the just-hydrated server state, but only if it
+      // actually diverges — a draft written right after a clean load (no
+      // edits since) would otherwise trip the "restored" banner for nothing.
+      const key = draftKey(initialPassageId, reference)
+      setDraftStorageKey(key)
+      if (key) {
+        const draft = await readDraft(key)
+        if (cancelled) return
+        // A passage that hydrated zero notes still starts from one blank
+        // line (the component's initial state), not an empty array.
+        const baseline: DraftLine[] =
+          hydratedLines.length > 0 ? toDraftLines(hydratedLines) : [{ text: '', indent: 0 }]
+        if (draft && !draftLinesEqual(draft.lines, baseline)) {
+          const restored = fromDraftLines(draft.lines)
+          setLines(restored)
+          setFocusedLineId(restored[restored.length - 1].id)
+          setDraftRestored(true)
+        }
       }
     }
     void loadExisting()
     return () => {
       cancelled = true
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPassageId])
+
+  // Write-through the in-progress draft as the user types, debounced so a
+  // fast typist doesn't hit IndexedDB on every keystroke. Only persists while
+  // there's actual unsaved content (isLinesDirty); once the user backs out
+  // their edits back to nothing (or to exactly what's already saved), the
+  // stale draft is cleared instead of being kept around forever.
+  //
+  // draftSaveGenRef guards against a real race: a save can complete (and
+  // clearDraft) while a debounced write from just-before-the-click is still
+  // in flight. Without this, that stale timer fires after the clear and
+  // silently resurrects the draft it just erased. reconcileNotes bumps the
+  // generation on every successful clear; a timer only writes/clears if the
+  // generation is still what it was when the timer was scheduled.
+  const draftSaveGenRef = useRef(0)
+  useEffect(() => {
+    if (!draftStorageKey) return
+    const dirty = isLinesDirty(lines, existingNotes)
+    const genAtSchedule = draftSaveGenRef.current
+    const timer = setTimeout(() => {
+      if (draftSaveGenRef.current !== genAtSchedule) return
+      if (dirty) {
+        void writeDraft(draftStorageKey, { reference, lines: toDraftLines(lines) })
+      } else {
+        void clearDraft(draftStorageKey)
+      }
+    }, DRAFT_SAVE_DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [lines, existingNotes, reference, draftStorageKey])
 
   async function loadPassageByReference(ref: string): Promise<void> {
     if (!ref.trim()) return
@@ -185,9 +307,27 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
       setFocusedLineId(lines[0].id)
       setNoteFocusNonce(n => n + 1)
       void loadPassageByReference(trimmed)
+      // A blank study (no initialPassageId) has no draft key until a
+      // reference is committed for the first time — pick it up now and check
+      // for a draft left from an earlier attempt at this same reference.
+      if (!initialPassageId && !draftStorageKey) {
+        const key = draftKey(null, trimmed)
+        setDraftStorageKey(key)
+        if (key) {
+          const baseline = toDraftLines(lines)
+          void readDraft(key).then(draft => {
+            if (draft && !draftLinesEqual(draft.lines, baseline)) {
+              const restored = fromDraftLines(draft.lines)
+              setLines(restored)
+              setFocusedLineId(restored[restored.length - 1].id)
+              setDraftRestored(true)
+            }
+          })
+        }
+      }
       return true
     },
-    [lines]
+    [lines, initialPassageId, draftStorageKey]
   )
 
   const handleCursorLine = useCallback(
@@ -264,6 +404,17 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
     for (const id of existingNotes.keys()) {
       if (!kept.has(id)) await api.deleteNote(id)
     }
+    // Everything above landed on the server — the local draft is now stale
+    // (and would otherwise resurface later and overwrite newer server state).
+    if (draftStorageKey) {
+      // Bump the generation BEFORE awaiting. Any debounced save already
+      // scheduled is invalidated synchronously, before this function yields —
+      // otherwise a timer firing while clearDraft is in flight still passes
+      // the guard and races a competing writeDraft against the same key.
+      draftSaveGenRef.current += 1
+      await clearDraft(draftStorageKey)
+      setDraftRestored(false)
+    }
   }
 
   // Resolve the passage + write session, creating them for a blank study. For an
@@ -305,24 +456,9 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
   useImperativeHandle(
     ref,
     () => ({
-      isDirty: () => {
-        // A hydrated study is dirty when any line diverges from its source note,
-        // or a note was removed; a blank study is dirty once any text is entered.
-        if (existingNotes.size > 0) {
-          const kept = new Set<string>()
-          for (const l of lines) {
-            if (l.noteId && existingNotes.has(l.noteId)) {
-              kept.add(l.noteId)
-              const src = existingNotes.get(l.noteId)!
-              if (src.content !== l.text || (src.indent_level ?? 0) !== l.indent) return true
-            } else if (l.text.trim() !== '') {
-              return true
-            }
-          }
-          return kept.size !== existingNotes.size
-        }
-        return lines.some(l => l.text.trim() !== '')
-      },
+      // A hydrated study is dirty when any line diverges from its source note,
+      // or a note was removed; a blank study is dirty once any text is entered.
+      isDirty: () => isLinesDirty(lines, existingNotes),
       save: async () => {
         const ids = await ensureIds()
         if (!ids) return null
@@ -330,7 +466,7 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
         return ids.passageId
       }
     }),
-    [lines, reference, existingNotes, editSessionId]
+    [lines, reference, existingNotes, editSessionId, draftStorageKey]
   )
 
   const handleSaveRead = async (): Promise<void> => {
@@ -379,6 +515,32 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
             <span className="hint-text-mobile">Press Enter to load verse text</span>
           </div>
         </div>
+
+        {draftRestored && (
+          // Inline-styled rather than a new CSS class: this file's fence for
+          // this task doesn't include src/assets/**. Colors are still theme
+          // tokens (not literals) via var(--cat-application*) — every visual
+          // theme (dark/scholarly/paper) redefines those, so a hardcoded hex
+          // here wouldn't just clash with dark mode, it would look wrong in
+          // every theme but the default. Deliberately distinct from the
+          // per-line "saved Xh ago" timestamp (NoteEditor.tsx) so a recovered
+          // draft is never mistaken for something already on the server — it
+          // disappears the moment this study is saved.
+          <div
+            role="status"
+            style={{
+              fontSize: '0.8rem',
+              color: 'var(--cat-application)',
+              background: 'var(--cat-application-weak)',
+              border: '1px solid var(--cat-application)',
+              borderRadius: 6,
+              padding: '6px 10px',
+              margin: '0 0 8px'
+            }}
+          >
+            Restored an unsaved draft from before — nothing here is on the server yet.
+          </div>
+        )}
 
         <NoteEditor
           lines={lines}
