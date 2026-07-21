@@ -3,6 +3,7 @@ import { useApi } from '../api/context'
 import { exportAllNotesAsZip } from '../platform/export'
 import { THEMES, type ThemeId } from '../utils/useTheme'
 import { TEXT_SIZES, type TextSizeId } from '../utils/useTextSize'
+import { isTelemetryOptedOut, setTelemetryOptedOut } from '../telemetry/client'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -31,6 +32,12 @@ export default function SettingsModal({
 }: SettingsModalProps): React.ReactElement | null {
   const api = useApi()
   const [exportState, setExportState] = useState<'idle' | 'exporting' | 'error'>('idle')
+  const [diagnosticsEnabled, setDiagnosticsEnabled] = useState(() => !isTelemetryOptedOut())
+
+  const handleDiagnosticsToggle = useCallback((checked: boolean) => {
+    setDiagnosticsEnabled(checked)
+    setTelemetryOptedOut(!checked)
+  }, [])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -170,6 +177,34 @@ export default function SettingsModal({
                 Export failed. Check your connection and try again.
               </p>
             )}
+          </div>
+
+          <div className="smodal-divider" />
+
+          {/* Privacy */}
+          <div className="smodal-section">
+            <div className="smodal-section-label">Privacy</div>
+            <label className="smodal-checkbox-row">
+              <input
+                type="checkbox"
+                className="smodal-checkbox"
+                checked={diagnosticsEnabled}
+                onChange={e => handleDiagnosticsToggle(e.target.checked)}
+              />
+              <span className="smodal-checkbox-label">Send diagnostic reports</span>
+            </label>
+            <p className="smodal-vault-desc">
+              When something breaks, Lantern sends a short report so it can be fixed. Reports never
+              include your notes or the passages you read.
+            </p>
+            <a
+              className="smodal-privacy-link"
+              href="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Read what&apos;s in one
+            </a>
           </div>
 
           <div className="smodal-divider" />

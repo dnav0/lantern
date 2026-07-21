@@ -52,6 +52,37 @@ export type TelemetryKind = 'error' | 'scripture_fallback_serve' | 'draft_recove
 
 const enabled = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY)
 
+// ─── User opt-out ────────────────────────────────────────────────────────────
+
+const OPTOUT_KEY = 'berean.telemetry-optout'
+
+/**
+ * Explicit opt-OUT, not opt-in: absence of the key means telemetry is ON,
+ * matching the published privacy page's description of the default. Only the
+ * string '1' counts as opted out, so an unexpected stored value fails open to
+ * "still sending" rather than silently going dark.
+ */
+export function isTelemetryOptedOut(): boolean {
+  try {
+    return localStorage.getItem(OPTOUT_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function setTelemetryOptedOut(optedOut: boolean): void {
+  try {
+    if (optedOut) {
+      localStorage.setItem(OPTOUT_KEY, '1')
+    } else {
+      localStorage.removeItem(OPTOUT_KEY)
+    }
+  } catch {
+    // Storage unavailable — same fate as a missing install id: telemetry
+    // already no-ops without one, so failing open here changes nothing.
+  }
+}
+
 // ─── Coarse environment ──────────────────────────────────────────────────────
 
 /**
@@ -121,6 +152,7 @@ function send(
   extra: { errorClass?: string; stack?: string; boundary?: string } = {}
 ): void {
   if (!enabled) return
+  if (isTelemetryOptedOut()) return
   const installId = getInstallId()
   if (!installId) return
 
