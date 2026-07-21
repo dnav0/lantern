@@ -36,6 +36,19 @@ prioritized.
     and reconcile the library vs. journal vs. book-detail max-widths for a fully
     consistent measure across every page. Optional, skip for the deploy pass.
 
+  - **Category-token contrast in light mode (measured 2026-07-21).** The
+    established pairing `color: var(--cat-X)` on `background: var(--cat-X-weak)`
+    — used by `.pill-tag-*` and now by StudyMode's draft-restored banner —
+    measures about **2.98:1 in light mode**, below the WCAG AA 4.5:1 floor for
+    text under 18pt. Dark mode is fine at about **5.81:1**, because the weak
+    background composites against a dark surface instead of a near-white one.
+    This is app-wide and pre-existing, not caused by any one component, so it is
+    a deliberate single sweep rather than a per-element fix: either darken the
+    `--cat-*` hues in the light themes, or pair the weak background with
+    `--text`/`--text-muted` instead of the category hue and let the hue carry
+    only the border and any icon. Worth checking the other three visual themes
+    at the same time, since each redefines these tokens.
+
 - **Offline write outbox.** Queue failed mutations locally and replay them on
   reconnect. `docs/proposals/offline-write-outbox.md` researched this in full
   and recommended waiting: the narrower, actually-dangerous gap (in-progress
