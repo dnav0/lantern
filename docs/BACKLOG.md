@@ -182,6 +182,36 @@ prioritized.
 
 ## Done
 
+- **Interpolated-throw guardrail widened to all leak shapes (2026-07-21).** The
+  guardrail added just above (`errors.guardrail.test.ts`) only caught
+  `throw new Error(` + template literal — the exact letter of the spec it was
+  built from, but string concatenation, `TypeError`/`RangeError`, and
+  assign-then-throw (`const e = new Error(...); throw e`) all defeated it just
+  as easily. Closed with a new `no-restricted-syntax` override on `src/**` in
+  `.eslintrc.cjs`: two selectors match any `NewExpression` of a native
+  `Error`/`TypeError`/`RangeError`/`EvalError`/`ReferenceError`/`SyntaxError`/
+  `URIError` constructor whose first argument is an interpolated template
+  literal or a `+` string concatenation. Matching the construction itself
+  (not its parent `throw`) catches subclasses and assign-then-throw for free,
+  and it's AST-based so it's comment-safe — a matching string inside a `//`
+  comment or a string constant does not false-positive (checked). `CodedError`
+  is never matched. Scoped to `src/**` only, so `scripts/migrate-sqlite.ts`
+  (which does interpolate into thrown errors, and is out of scope) is
+  unaffected. Verified as four separate NEGATIVE tests, each temporarily
+  injected into `src/utils/bibleBooks.ts` and reverted: template literal
+  (`579:9`), string concatenation (`579:9`), `TypeError`+`RangeError`
+  (`579:9`+`583:9`), assign-then-throw (`579:13`) — all four failed lint and
+  named the file:line, and lint returned to the 3 pre-existing baseline errors
+  (`scripts/migrate-sqlite.ts` ×2, `src/utils/richText.ts` ×1) after each
+  revert. The telemetry-only `detailForConsole()` override needed the same two
+  selectors duplicated into it, since ESLint's per-file rule cascade replaces
+  a rule wholesale rather than merging overlapping overrides. The older
+  regex-based `errors.guardrail.test.ts` was deliberately kept rather than
+  removed: it is the one check that runs under `npm test`, which is what
+  `.status.yml`'s automated health probe actually executes — the new ESLint
+  rule is strictly broader but only runs under `npm run lint`, which nothing
+  currently automates.
+
 - **Telemetry: user-facing opt-out toggle (2026-07-21).** A "Privacy" section
   in Settings (`SettingsModal.tsx`, between Export and Account) with a "Send
   diagnostic reports" checkbox, checked by default. Unchecking it calls
