@@ -102,28 +102,32 @@ prioritized.
   index (the Full-Bible offline prefetch item above) plus a client-side index
   strategy. Deferred deliberately.
 
-- **Multiple study instances over the same verses — NO schema change needed.**
-  This item previously proposed a nullable `study_id` stamp on notes and was
-  described as "the one part of the model that needs a schema touch." That was
-  wrong, and `docs/proposals/study-id.md` (2026-07-20) proves it by driving the
-  running app rather than reasoning about it:
-  - Starting a **distinct second study** over already-studied verses **already
-    works today**. `StudyMode`'s manual `+ Study` entry does not consult
-    `findOverlappingPassage`, so typing an overlapping reference by hand creates
-    a genuinely separate `Passage` (verified: the Journal went 4 → 5 studies with
-    two independent `John 1:1-5` cards).
-  - **Merging by anchor overlap already works too.** `BookDetailPage`'s
-    `ChapterView` renders notes from every overlapping passage together under
-    their verses via `getNotesByBook` (verified with two overlapping studies).
-  So both halves of what `study_id` was going to buy are already provided by
-  `notes → sessions → passages`. A column would have been redundant, and adding
-  one to live user data would have been a migration for nothing.
-  What actually remains is one small **UI-only** choice, tracked here:
-  `BookDetailPage`'s selection-driven "Start study on {ref}" always *reopens* an
-  overlapping passage, so the "start a fresh study on these verses" path is only
-  reachable by manually retyping the reference in `+ Study`. Optionally surface
-  both (reopen as the default action, "start a new study instead" as a secondary).
-  Small, additive, no schema or `BereanApi` change.
+- **Multiple study instances over the same verses — UI-only follow-up shipped
+  in `BookDetailPage`; ReadingMode's equivalent secondary affordance still
+  deferred.** This item previously proposed a nullable `study_id` stamp on
+  notes and was described as "the one part of the model that needs a schema
+  touch." That was wrong, and `docs/proposals/study-id.md` (2026-07-20) proves
+  it by driving the running app rather than reasoning about it — both halves of
+  what `study_id` was going to buy (distinct second studies, merge-by-overlap
+  reading) were already provided by `notes → sessions → passages`; no column,
+  no migration.
+  What actually remained was the one small **UI-only** gap the proposal
+  identified: `BookDetailPage`'s selection-driven "Start study on {ref}" and
+  "Study chapter" always *reopened* an overlapping passage while still saying
+  "Start"/using neutral wording, with no way to reach a genuinely new study
+  short of retyping the reference in `+ Study`. **Fixed:** both buttons now
+  read "Continue…" when `findOverlappingPassage` finds a match (unchanged
+  "Start study on {ref}" / "Study chapter" wording when it doesn't), and the
+  overlap case shows a subordinate "Or start a new study on these verses" link
+  that takes the same no-`passageId` path `+ Study` already used.
+  `ReadingMode`'s selection button had the identical label bug (it always
+  resolves to the currently-open passage, so it always said "Start" while
+  always resuming) — also fixed, unconditionally reading "Continue study on
+  {ref}" now. Its secondary "start a new study" link was deliberately **not**
+  added — doing so needs a new prop/`App.tsx` wiring change (rather than the
+  `BookDetailPage` in-component branch), so it's left here as the remaining
+  optional follow-up if Dennis wants it discoverable from the per-study
+  reading view too.
 
 - **Postgres full-text index for note search.** `SupabaseBereanApi.searchNotes`
   is a case-insensitive `ilike '%q%'` scan (v1, acceptable per the plan). For

@@ -268,6 +268,13 @@ function ChapterView({
       : `v${selRange[0]}-${selRange[1]} `
     : ''
 
+  // The overlap check that decides "Start" vs "Continue" wording for the
+  // selection action bar — computed here (not just inside the click handler)
+  // so the label can react to it before the button is ever pressed.
+  const selectionOverlap = selRange
+    ? findOverlappingPassage(passages, chapter, selRange[0], selRange[1])
+    : undefined
+
   const clearSelection = (): void => {
     setSelAnchor(null)
     setSelFocus(null)
@@ -337,7 +344,7 @@ function ChapterView({
 
   const handleStartStudyOnSelection = (): void => {
     if (!selReference || !selRange) return
-    const existing = findOverlappingPassage(passages, chapter, selRange[0], selRange[1])
+    const existing = selectionOverlap
     clearSelection()
     // When reopening an existing passage, pass ITS OWN reference_label, not
     // the freshly-dragged selection's — StudyMode only ever reads the
@@ -347,6 +354,16 @@ function ChapterView({
     // visible flicker between "1 Cor 5:3-5" and the existing passage's real
     // "1 Cor 5:2-6" while that resolves.
     onStudyChapter(existing?.reference_label ?? selReference, existing?.id)
+  }
+
+  // The secondary "Or start a new study on these verses" affordance — only
+  // ever shown when selectionOverlap is set. Deliberately omits a passageId
+  // so onStudyChapter takes the same "+ Study" manual-entry path that already
+  // creates a genuinely distinct Passage (see docs/proposals/study-id.md).
+  const handleStartNewStudyOnSelection = (): void => {
+    if (!selReference) return
+    clearSelection()
+    onStudyChapter(selReference)
   }
 
   const handleQuickNoteFromSelection = (): void => {
@@ -716,6 +733,11 @@ function ChapterView({
   // rail is desktop-only), so a note about vv.2-6 sits under v6 — with the verses
   // it covers — rather than being dumped at the bottom of the whole chapter.
   const lastVerse = verses[verses.length - 1]?.verse
+  // Same overlap check as the selection action bar, applied to the whole
+  // chapter — "Study chapter" silently reopens an existing passage the same
+  // way "Start study on {ref}" does, so it needs the same verb treatment.
+  const chapterOverlap =
+    lastVerse !== undefined ? findOverlappingPassage(passages, chapter, 1, lastVerse) : undefined
   const mobileRangeByVerse = new Map<number, NoteGroup[]>()
   for (const g of rangeGroups) {
     const s = g.main.anchor_start_verse!
@@ -767,9 +789,10 @@ function ChapterView({
           <button
             className="btn-study-chapter"
             onClick={() => {
-              const lastVerse = verses[verses.length - 1]?.verse ?? 1
-              const existing = findOverlappingPassage(passages, chapter, 1, lastVerse)
-              onStudyChapter(existing?.reference_label ?? `${bookName} ${chapter}`, existing?.id)
+              onStudyChapter(
+                chapterOverlap?.reference_label ?? `${bookName} ${chapter}`,
+                chapterOverlap?.id
+              )
             }}
           >
             <svg
@@ -785,7 +808,7 @@ function ChapterView({
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            Study chapter
+            {chapterOverlap ? 'Continue chapter study' : 'Study chapter'}
           </button>
         </div>
 
@@ -922,8 +945,15 @@ function ChapterView({
               Quick note
             </button>
             <button className="verse-action-btn" onClick={handleStartStudyOnSelection}>
-              Start study on {selReference}
+              {selectionOverlap
+                ? `Continue study on ${selReference}`
+                : `Start study on ${selReference}`}
             </button>
+            {selectionOverlap && (
+              <button className="verse-action-secondary" onClick={handleStartNewStudyOnSelection}>
+                Or start a new study on these verses
+              </button>
+            )}
           </div>
           <button
             className="verse-action-clear"

@@ -2131,6 +2131,7 @@ body.dark .search-backdrop {
 }
 .verse-action-btns {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 /* Secondary action ("Start study on…") — was accidentally set to
@@ -2158,6 +2159,26 @@ body.dark .search-backdrop {
 }
 .verse-action-btn.primary:hover {
   background: var(--accent-hover);
+}
+/* Quiet "start a new study instead" link — only rendered when the primary
+   button above already resolved to "Continue…". Forced onto its own row
+   (flex-basis: 100% inside the now-wrapping .verse-action-btns) so it reads
+   as subordinate to the two real buttons rather than competing with them. */
+.verse-action-secondary {
+  flex-basis: 100%;
+  border: none;
+  background: none;
+  padding: 2px 0 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--accent);
+  text-decoration: underline;
+  text-align: left;
+  cursor: pointer;
+}
+.verse-action-secondary:hover {
+  color: var(--accent-hover);
 }
 .verse-action-clear {
   display: inline-flex;
@@ -4463,6 +4484,10 @@ body.dark .upd-popover-btn-ghost:hover {
     flex: 1;
     padding: 12px 10px;
     text-align: center;
+  }
+  .verse-action-secondary {
+    text-align: center;
+    padding-top: 6px;
   }
 
   /* Note action icons: bigger touch targets. */
