@@ -178,13 +178,20 @@ Deno.serve(async req => {
   }
 
   // ─── Retention sweep ──────────────────────────────────────────────────────
-  // Done here rather than in pg_cron, an extension this project does not
-  // otherwise need. Wrapped so a failed sweep can never fail a pull: the sweep
-  // is housekeeping, the pull is the contract.
+  // Wrapped so a failed sweep can never fail a pull: the sweep is housekeeping,
+  // the pull is the contract.
   //
-  // Note this only runs when HQ actually calls. Until HQ's ingest exists,
-  // nothing sweeps — which is fine, because nothing is writing at volume
-  // either, and the guard trigger's daily ceiling bounds the table regardless.
+  // This is the SECOND of two independent sweepers, and deliberately so. It
+  // only runs when HQ actually calls, which was the whole problem — HQ's ingest
+  // is P2 and not built, so on its own this guarantees nothing. A pg_cron job
+  // (migration 0007) runs public.prune_telemetry_events() daily regardless of
+  // whether anyone pulls, and is the one that actually backs the "kept for
+  // about seven days" sentence on the privacy page.
+  //
+  // Keeping both: cron covers nobody-is-pulling, this covers cron being
+  // disabled or pg_cron being unavailable in some environment. Both are cheap
+  // and neither depends on the other. RETENTION_DAYS below must stay in sync
+  // with the interval in 0007.
   try {
     const cutoff = new Date(Date.now() - RETENTION_DAYS * 86_400_000).toISOString()
     await db.from('telemetry_events').delete().lt('occurred_at', cutoff)

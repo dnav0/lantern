@@ -303,6 +303,28 @@ prioritized.
     401 every legitimate call before our own constant-time check ran. This is
     documented at the top of the function; redeploying without the flag breaks
     the endpoint while looking like a tightening.
+  - **Retention no longer depends on a consumer that does not exist
+    (`0007_telemetry_retention.sql`).** The original design swept old rows
+    inside the edge function's pull. Sound, but insufficient alone: the sweep
+    only runs during a pull, and HQ's ingest is P2, so until something called
+    the endpoint nothing aged out and `public/privacy.html`'s "kept for about
+    seven days on Lantern's side" was backed by a caller that did not exist.
+    Not a capacity problem — the guard trigger caps an install at 500 rows a day
+    and a healthy app generates roughly none — a correctness one. A pg_cron job
+    now runs `public.prune_telemetry_events()` daily at 03:17 UTC regardless of
+    whether anyone pulls. The extension check is defensive (a migration that
+    hard-fails on a missing extension would block every later migration), and it
+    reports via `raise notice` so the outcome is visible at apply time rather
+    than inferred; the live apply printed `pg_cron: scheduled
+    prune-telemetry-events daily at 03:17 UTC`. The edge-function sweep is
+    KEPT — cron covers nobody-is-pulling, the in-request sweep covers cron being
+    disabled, and neither depends on the other. Verified live: two rows in (one
+    current, one backdated 9 days), prune returned 1, the current row survived;
+    and both `prune_telemetry_events` and `hq_telemetry_scalars` reject anon
+    with `42501 permission denied`. Note the backdated row had to be inserted
+    with service_role because the RLS policy correctly refuses to let anon
+    backdate — an incidental re-confirmation of that guard.
+
   - **A real bug was caught before it shipped.** The insert policy originally
     asserted `sample_weight = 1` to stop a client setting its own weight.
     PostgreSQL evaluates a policy's WITH CHECK expression AFTER BEFORE ROW
