@@ -304,7 +304,10 @@ export default function ReadingMode({
     clearSelection()
   }
 
-  const handleStartStudyOnSelection = (): void => {
+  // Unlike ChapterView's selection button, this one has no "no overlap" case:
+  // ReadingMode only ever shows verses from the passage already open, so any
+  // selection here is always inside it — the label reflects that unconditionally.
+  const handleContinueStudyOnSelection = (): void => {
     if (selRange === null) return
     clearSelection()
     onOpenStudy()
@@ -840,8 +843,8 @@ export default function ReadingMode({
             <button className="verse-action-btn primary" onClick={handleQuickNoteFromSelection}>
               Quick note
             </button>
-            <button className="verse-action-btn" onClick={handleStartStudyOnSelection}>
-              Start study on {selReference}
+            <button className="verse-action-btn" onClick={handleContinueStudyOnSelection}>
+              Continue study on {selReference}
             </button>
           </div>
           <button
