@@ -23,7 +23,12 @@ function toDraftLines(lines: LineData[]): DraftLine[] {
 }
 
 function fromDraftLines(draftLines: DraftLine[]): LineData[] {
-  return draftLines.map(l => ({ id: makeLineId(), text: l.text, indent: l.indent, noteId: l.noteId }))
+  return draftLines.map(l => ({
+    id: makeLineId(),
+    text: l.text,
+    indent: l.indent,
+    noteId: l.noteId
+  }))
 }
 
 // Same "does this diverge from what's already persisted" question the
@@ -509,17 +514,21 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
 
         {draftRestored && (
           // Inline-styled rather than a new CSS class: this file's fence for
-          // this task doesn't include src/assets/**. Deliberately distinct
-          // from the per-line "saved Xh ago" timestamp (NoteEditor.tsx) so a
-          // recovered draft is never mistaken for something already on the
-          // server — it disappears the moment this study is saved.
+          // this task doesn't include src/assets/**. Colors are still theme
+          // tokens (not literals) via var(--cat-application*) — every visual
+          // theme (dark/scholarly/paper) redefines those, so a hardcoded hex
+          // here wouldn't just clash with dark mode, it would look wrong in
+          // every theme but the default. Deliberately distinct from the
+          // per-line "saved Xh ago" timestamp (NoteEditor.tsx) so a recovered
+          // draft is never mistaken for something already on the server — it
+          // disappears the moment this study is saved.
           <div
             role="status"
             style={{
               fontSize: '0.8rem',
-              color: '#8a6d3b',
-              background: '#fdf6e3',
-              border: '1px solid #f0e0b8',
+              color: 'var(--cat-application)',
+              background: 'var(--cat-application-weak)',
+              border: '1px solid var(--cat-application)',
               borderRadius: 6,
               padding: '6px 10px',
               margin: '0 0 8px'
