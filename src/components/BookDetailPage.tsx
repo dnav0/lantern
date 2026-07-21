@@ -74,6 +74,25 @@ function verseRangeLabel(start: number, end: number): string {
   return start === end ? `v${start}` : `vv.${start}-${end}`
 }
 
+// One-time discoverability hint: verses are tappable/clickable to select a
+// range. Mirrors NoteEditor's hintAlreadySeen/markHintSeen pattern — plain
+// localStorage, non-critical (worst case the hint reappears).
+const VERSE_HINT_SEEN_KEY = 'berean.verseSelectHintSeen'
+function verseHintAlreadySeen(): boolean {
+  try {
+    return localStorage.getItem(VERSE_HINT_SEEN_KEY) === '1'
+  } catch {
+    return true
+  }
+}
+function markVerseHintSeen(): void {
+  try {
+    localStorage.setItem(VERSE_HINT_SEEN_KEY, '1')
+  } catch {
+    /* ignore */
+  }
+}
+
 // Horizontal step (px) between overlapping rail-note lanes.
 const LANE_STEP = 14
 
@@ -167,6 +186,9 @@ function ChapterView({
   // tap another to extend; the range spans min..max of the two anchors.
   const [selAnchor, setSelAnchor] = useState<number | null>(null)
   const [selFocus, setSelFocus] = useState<number | null>(null)
+  // Point-of-use hint: shown once near the verse list until the reader's first
+  // real selection, then auto-dismissed (also dismissible explicitly).
+  const [showVerseHint, setShowVerseHint] = useState(() => !verseHintAlreadySeen())
   const [localNotes, setLocalNotes] = useState<NoteWithPassageInfo[]>(notes)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
@@ -230,6 +252,14 @@ function ChapterView({
   useEffect(() => {
     setLocalNotes(notes)
   }, [notes])
+
+  // A real selection is itself proof the hint did its job — dismiss automatically.
+  useEffect(() => {
+    if (selAnchor !== null) {
+      markVerseHintSeen()
+      setShowVerseHint(false)
+    }
+  }, [selAnchor])
 
   // Note-highlight and range-selection are mutually exclusive dimming systems.
   // Entering either fully clears the other so a verse is never in a stacked,
@@ -811,6 +841,29 @@ function ChapterView({
             {chapterOverlap ? 'Continue chapter study' : 'Study chapter'}
           </button>
         </div>
+
+        {showVerseHint && (
+          <div className="verse-select-hint" role="note">
+            <span className="verse-select-hint-text">
+              <span className="hint-text-desktop">
+                Click a verse to select it. Click another to extend the range.
+              </span>
+              <span className="hint-text-mobile">
+                Tap a verse to select it. Tap another to extend the range.
+              </span>
+            </span>
+            <button
+              type="button"
+              className="verse-select-hint-dismiss"
+              onClick={() => {
+                markVerseHintSeen()
+                setShowVerseHint(false)
+              }}
+            >
+              Got it
+            </button>
+          </div>
+        )}
 
         {/* Passage-level (anchorless) notes render above the grid, not bracketed. */}
         {passageGroups.length > 0 && (

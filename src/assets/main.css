@@ -2198,6 +2198,47 @@ body.dark .search-backdrop {
   color: #4a4650;
 }
 
+/* ─── Verse-selection discoverability hint ─────────────────────────────────────
+   Same visual language as .note-hint-popover (NoteEditor's @/v4 tip), but in
+   normal flow at the top of the verse list rather than anchored to a focused
+   line — there's no single element to hang an absolute popover off here. */
+.verse-select-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 420px;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.1),
+    0 1px 4px rgba(0, 0, 0, 0.04);
+  animation: fadeIn 0.12s ease;
+}
+.verse-select-hint-text {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.verse-select-hint-dismiss {
+  flex-shrink: 0;
+  align-self: center;
+  border: none;
+  background: var(--accent-weak);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.verse-select-hint-dismiss:hover {
+  background: var(--accent-soft);
+}
+
 /* ─── Empty states ──────────────────────────────────────────────────────────── */
 .empty-state {
   display: flex;
@@ -4322,6 +4363,11 @@ body.dark .upd-popover-btn-ghost:hover {
   }
   .hint-text-mobile {
     display: inline;
+  }
+  /* Sub-note indenting is Tab-driven — no Tab key on touch, so the hint
+     teaching it has nothing to teach here. */
+  .note-hint-popover--indent {
+    display: none;
   }
   /* Now a real flex sibling of .notes-list in .study-left (not its scrolled
      last child) — always sits directly above .study-actions, never moves as
