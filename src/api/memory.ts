@@ -1,4 +1,5 @@
 import type { BereanApi } from './types'
+import { CodedError } from '../errors'
 import type {
   Passage,
   Session,
@@ -151,7 +152,7 @@ export function createMemoryApi(): BereanApi {
 
     async updateNote(id, data: UpdateNoteInput) {
       const existing = notes.get(id)
-      if (!existing) throw new Error(`Note ${id} not found`)
+      if (!existing) throw new CodedError('NOTE_NOT_FOUND', `Note ${id} not found`)
       const updated: Note = { ...existing, ...data, updated_at: now() }
       notes.set(id, updated)
       return updated

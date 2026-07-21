@@ -1,4 +1,5 @@
 import type { BibleProvider, BibleVerseLine } from './provider'
+import { CodedError } from '../errors'
 
 // Serves `primary`, dropping to `fallback` only when primary throws.
 //
@@ -23,10 +24,16 @@ export class FallbackBibleProvider implements BibleProvider {
         // Generic wording: the same class now backs two different fallbacks —
         // the dev-only fixture (four seeded chapters) and the self-hosted
         // complete-BSB bundle — so the message can't claim to be either one.
+        //
+        // A CodedError's message is only its machine code (see src/errors.ts),
+        // so the useful half is pulled out explicitly here. This is a console
+        // call — local to the device, never transmitted — which is exactly the
+        // place the detail is meant to surface.
         console.warn(
           `[lantern] scripture fetch failed for ${bookNumber}/${chapter} — serving ` +
             'offline fallback text (real BSB).',
-          primaryError
+          primaryError,
+          primaryError instanceof CodedError ? primaryError.detailForConsole() : ''
         )
         return verses
       } catch {

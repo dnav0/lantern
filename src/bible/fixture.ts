@@ -1,4 +1,5 @@
 import type { BibleProvider, BibleVerseLine } from './provider'
+import { CodedError } from '../errors'
 
 // Offline BSB text for the handful of chapters seedMemoryApi references, so a
 // dev or an agent with no network still sees real scripture instead of a thrown
@@ -454,7 +455,8 @@ export class FixtureBibleProvider implements BibleProvider {
   async getChapter(bookNumber: number, chapter: number): Promise<BibleVerseLine[]> {
     const verses = CHAPTERS[`${bookNumber}/${chapter}`]
     if (!verses) {
-      throw new Error(
+      throw new CodedError(
+        'BIBLE_FIXTURE_CHAPTER_MISSING',
         `No offline fixture for book ${bookNumber} chapter ${chapter}. ` +
           'Only the seeded chapters are bundled — see src/bible/fixture.ts.'
       )

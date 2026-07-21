@@ -1,4 +1,5 @@
 import type { BibleProvider, BibleVerseLine } from './provider'
+import { CodedError } from '../errors'
 
 // BSB scripture via the free, keyless bible.helloao.org API.
 // Endpoint: GET https://bible.helloao.org/api/BSB/{USFM}/{chapter}.json
@@ -133,11 +134,16 @@ function flattenVerseContent(content: VerseContentItem[]): string {
 export class HelloaoBibleProvider implements BibleProvider {
   async getChapter(bookNumber: number, chapter: number): Promise<BibleVerseLine[]> {
     const usfm = usfmForBookNumber(bookNumber)
-    if (!usfm) throw new Error(`Unknown book_number ${bookNumber}`)
+    if (!usfm) throw new CodedError('BIBLE_UNKNOWN_BOOK', `book_number ${bookNumber}`)
 
     const res = await fetch(`${BASE_URL}/${usfm}/${chapter}.json`)
     if (!res.ok) {
-      throw new Error(`helloao fetch failed: ${res.status} ${res.statusText} (${usfm} ${chapter})`)
+      // The book and chapter are what the reader was reading, so they go in the
+      // detail, which never leaves the device. See src/errors.ts.
+      throw new CodedError(
+        'BIBLE_FETCH_FAILED',
+        `${res.status} ${res.statusText} (${usfm} ${chapter})`
+      )
     }
     const data = (await res.json()) as HelloaoChapterResponse
 

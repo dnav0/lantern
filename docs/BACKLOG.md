@@ -168,6 +168,59 @@ prioritized.
 
 ## Done
 
+- **Telemetry indexes — migration 0003 (2026-07-21).** Three additive indexes
+  (`notes(created_at)`, `notes(created_by)`, `profiles(created_at)`) that four of
+  the seven agreed telemetry scalars need to avoid a full table scan: weekly
+  active writers, median notes per writer, returned-studies % and 30-day signups
+  all filter or group on a column with no index. `notes` had only
+  `notes_session_idx`; `profiles` had nothing beyond its primary key. Purely
+  additive — no table, column, policy, trigger, function or row touched — and
+  every statement is `if not exists`, so re-running the file is safe. Deliberately
+  two single-column indexes rather than one `notes(created_by, created_at)`
+  composite: between them they serve more query shapes, and index maintenance on
+  insert is irrelevant at this row count. See `D:/Projects/hq/TELEMETRY.md`,
+  "Known cost before adopting".
+
+- **Thrown errors split into machine `code` + local `detail` (2026-07-21).**
+  SAFETY-CRITICAL groundwork, landed deliberately BEFORE any code that transmits
+  anything. Every interpolated `throw` in `src/` was re-enumerated (six, not the
+  five previously recorded — `fixture.ts` was missed by the earlier audit) and
+  three of them embedded a passage reference, i.e. what the person was reading in
+  a private study journal:
+  `helloao fetch failed: 404 Not Found (JHN 3)`.
+  Those messages were written for developer debugging long before telemetry
+  existed and are correct for that purpose, which is exactly why a convention
+  could not have caught them — a convention cannot reach backwards into code
+  written before it, and regex scrubbing fails because "JHN 3" is not safely
+  pattern-matchable.
+  **The fix is structural, in three layers** (`src/errors.ts`): (1) a
+  `CodedError`'s `message` IS its stable machine code and nothing else, so any
+  generic `.message` reader — `window.onerror`, an error boundary, a logging
+  wrapper someone adds next year — gets `BIBLE_FETCH_FAILED` without having to
+  know the rule exists; (2) the human detail lives in an ES `#private` field,
+  unreachable by every generic mechanism a payload builder would use (`{...err}`,
+  `JSON.stringify`, `Object.keys/entries`, `err['detail']`, structured clone);
+  (3) the only bridge to the telemetry layer is `toTelemetrySafe()`, which
+  returns a NEW plain object of exactly `{code, errorClass, stack}` — the payload
+  builder's signature takes `TelemetrySafeError` and never `Error`, so it does
+  not merely decline to read the detail, it never holds the object the detail is
+  attached to. Layer 3 is the load-bearing one; 1 and 2 hold the guarantee on
+  paths that don't go through it.
+  **Two non-obvious leaks closed along the way.** `toTelemetrySafe()` never reads
+  `.message` even for foreign errors — Postgres echoes submitted values back
+  inside constraint-violation messages, so a Supabase error's message is
+  untrusted text. And it strips the `"Name: message"` header from `stack`, or the
+  message would smuggle itself back in through the field next to the one we just
+  refused to read; frames are matched POSITIVELY (a line must look like a frame
+  to survive) rather than by dropping the first line, because a multi-line
+  message defeats a drop-the-first-line rule. Positive matching fails closed.
+  Verified live in a real browser, not just asserted: with `fetch` stubbed to 404
+  for helloao, reading John 9 logged `message = BIBLE_FETCH_FAILED` with
+  `detailForConsole() = "404 Not Found (JHN 9)"`, and the self-hosted fallback
+  still served the real chapter. 11 new tests (116 total, was 105), including
+  end-to-end ones over the real throw sites that would have caught the original
+  bug without anyone remembering to check a particular string.
+
 - **Category/accent text contrast fixed with an `-ink` token (2026-07-21).**
   Measured, not eyeballed. Every light theme failed WCAG AA for category text:
   2.98–3.68:1 on the pill's own 12% tint and 3.39–4.25:1 on the canvas, against

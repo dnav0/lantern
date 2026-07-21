@@ -1,4 +1,5 @@
 import type { BibleProvider, BibleVerseLine } from './provider'
+import { CodedError } from '../errors'
 
 // The self-hosted complete-BSB fallback. helloao.ts is the PRIMARY scripture
 // source; this provider exists so that helloao being down never takes the read
@@ -41,7 +42,7 @@ const BUNDLE_URL = '/bible/bsb.json.gz'
 async function fetchBundle(url: string): Promise<BsbBundle> {
   const res = await fetch(url)
   if (!res.ok) {
-    throw new Error(`self-hosted BSB fetch failed: ${res.status} ${res.statusText}`)
+    throw new CodedError('BIBLE_BUNDLE_FETCH_FAILED', `${res.status} ${res.statusText}`)
   }
   const bytes = new Uint8Array(await res.arrayBuffer())
   const isGzip = bytes[0] === 0x1f && bytes[1] === 0x8b
@@ -72,7 +73,11 @@ export class SelfHostedBibleProvider implements BibleProvider {
     const bundle = await this.load()
     const verses = bundle[String(bookNumber)]?.[String(chapter)]
     if (!verses) {
-      throw new Error(`self-hosted BSB has no book ${bookNumber} chapter ${chapter}`)
+      // Book + chapter is a passage reference — detail only. See src/errors.ts.
+      throw new CodedError(
+        'BIBLE_BUNDLE_CHAPTER_MISSING',
+        `no book ${bookNumber} chapter ${chapter}`
+      )
     }
     return verses.map(([verse, text]) => ({ verse, text }))
   }
