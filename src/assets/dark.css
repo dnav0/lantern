@@ -209,6 +209,15 @@ body.dark .note-hint-dismiss {
 body.dark .note-hint-dismiss:hover {
   background: var(--accent-soft);
 }
+body.dark .verse-select-hint {
+  background: var(--surface);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+body.dark .verse-select-hint-dismiss {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
 body.dark .note-chip-row {
   background: rgba(20, 19, 26, 0.92);
   border-top-color: rgba(255, 255, 255, 0.06);

@@ -62,6 +62,27 @@ function markHintSeen(): void {
   }
 }
 
+// One-time discoverability hint the first time a note grows a second line —
+// the point-of-use moment for Tab-to-indent (sub-notes). Desktop only (see
+// .note-hint-popover--indent's mobile media rule): there is no Tab key on
+// touch, and quick notes never reach this state since they are single-line
+// by construction.
+const INDENT_HINT_SEEN_KEY = 'berean.indentHintSeen'
+function indentHintAlreadySeen(): boolean {
+  try {
+    return localStorage.getItem(INDENT_HINT_SEEN_KEY) === '1'
+  } catch {
+    return true
+  }
+}
+function markIndentHintSeen(): void {
+  try {
+    localStorage.setItem(INDENT_HINT_SEEN_KEY, '1')
+  } catch {
+    /* ignore */
+  }
+}
+
 // Tap-to-insert chips for the mobile chip row. Same data model as typing the
 // tokens by hand — an input method only, no new schema.
 interface ChipOption {
@@ -191,6 +212,21 @@ export default function NoteEditor({
   const elRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const [tagDropdown, setTagDropdown] = useState<TagDropdown | null>(null)
   const [showHint, setShowHint] = useState(false)
+  const [showIndentHint, setShowIndentHint] = useState(false)
+  const [indentHintLineId, setIndentHintLineId] = useState<string | null>(null)
+  const prevLineCountRef = useRef(lines.length)
+
+  // Trigger: the note's line count transitions from 1 to 2 for the first
+  // time — the moment Tab-to-indent becomes relevant. Anchored to the new
+  // (second) line so the popover appears where the tip applies.
+  useEffect(() => {
+    const prevCount = prevLineCountRef.current
+    prevLineCountRef.current = lines.length
+    if (prevCount === 1 && lines.length === 2 && !indentHintAlreadySeen()) {
+      setIndentHintLineId(lines[1].id)
+      setShowIndentHint(true)
+    }
+  }, [lines.length])
 
   // Imperative focus request (e.g. after committing the reference). Runs after
   // paint so the target line's contentEditable is mounted.
@@ -330,6 +366,12 @@ export default function NoteEditor({
   const dismissHint = useCallback(() => {
     markHintSeen()
     setShowHint(false)
+  }, [])
+
+  const dismissIndentHint = useCallback(() => {
+    markIndentHintSeen()
+    setShowIndentHint(false)
+    setIndentHintLineId(null)
   }, [])
 
   // ── input handler ──────────────────────────────────────────────────────────
@@ -666,23 +708,44 @@ export default function NoteEditor({
                 </div>
               )}
 
-              {isFocused && showHint && (
-                <div className="note-hint-popover" role="note">
+              {isFocused && showIndentHint && line.id === indentHintLineId ? (
+                <div className="note-hint-popover note-hint-popover--indent" role="note">
                   <span className="note-hint-text">
-                    Tip: type <strong>@</strong> to tag a category, or <strong>v4</strong> to anchor
-                    a note to verse 4. A reference like <strong>Matt 5:9</strong> becomes a link.
+                    Press <strong>Tab</strong> to tuck this line under the one above.{' '}
+                    <strong>Shift+Tab</strong> moves it back out.
                   </span>
                   <button
                     type="button"
                     className="note-hint-dismiss"
                     onMouseDown={e => {
                       e.preventDefault()
-                      dismissHint()
+                      dismissIndentHint()
                     }}
                   >
                     Got it
                   </button>
                 </div>
+              ) : (
+                isFocused &&
+                showHint && (
+                  <div className="note-hint-popover" role="note">
+                    <span className="note-hint-text">
+                      Tip: type <strong>@</strong> to tag a category, or <strong>v4</strong> to
+                      anchor a note to verse 4. A reference like <strong>Matt 5:9</strong> becomes a
+                      link.
+                    </span>
+                    <button
+                      type="button"
+                      className="note-hint-dismiss"
+                      onMouseDown={e => {
+                        e.preventDefault()
+                        dismissHint()
+                      }}
+                    >
+                      Got it
+                    </button>
+                  </div>
+                )
               )}
             </div>
           )

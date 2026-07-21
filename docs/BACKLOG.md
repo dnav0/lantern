@@ -159,6 +159,25 @@ prioritized.
 
 ## Done
 
+- **Point-of-use onboarding hints + Onboarding.tsx trim (2026-07-21).**
+  Implements `docs/proposals/onboarding-hints.md`'s two recommended hints —
+  none of its four rejected candidates (Alt-drag copy, `@`/verse tagging,
+  study-vs-reading explainer, desktop marquee). Verse selectability:
+  a dismissible tip in `BookDetailPage`'s `ChapterView`, shown once near the
+  verse list until the reader's first real selection (localStorage
+  `berean.verseSelectHintSeen`), with separate desktop/mobile click-vs-tap
+  copy via the existing `.hint-text-desktop`/`.hint-text-mobile` split.
+  Sub-notes via Tab: a second one-time popover in `NoteEditor`, triggered the
+  first time a full-Study-mode note's line count goes from 1 to 2
+  (`berean.indentHintSeen`), desktop-only — hidden at the mobile breakpoint
+  since there's no Tab key on touch, and out of reach for Quick note, which
+  is single-line by construction. Both reuse the `note-hint-popover`
+  look/pattern. `Onboarding.tsx` dropped the two front-loaded Study-mode/
+  Reading-mode explainer screens per the proposal's recommendation — their
+  content is now taught in context by these hints and existing nav/library
+  copy — keeping only the optional name step; `berean.onboarded` and its
+  localStorage fallback gate are untouched.
+
 - **Outline the wordmark to SVG paths (2026-07-20).** `Wordmark.tsx` now
   renders static `<path>` geometry instead of a live text node, so it no
   longer depends on the self-hosted static Source Serif 4 having loaded.
