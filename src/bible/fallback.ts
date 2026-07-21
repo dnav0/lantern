@@ -1,5 +1,6 @@
 import type { BibleProvider, BibleVerseLine } from './provider'
 import { CodedError } from '../errors'
+import { reportOccurrence } from '../telemetry/client'
 
 // Serves `primary`, dropping to `fallback` only when primary throws.
 //
@@ -35,6 +36,13 @@ export class FallbackBibleProvider implements BibleProvider {
           primaryError,
           primaryError instanceof CodedError ? primaryError.detailForConsole() : ''
         )
+        // Scalar 6 (scripture_fallback_serves_24h). This is one of the two
+        // numbers Postgres cannot produce — the fallback firing is a client-side
+        // event that leaves no trace in the database — so it rides the events
+        // channel and is aggregated server-side. The code is a fixed literal;
+        // the book and chapter deliberately do NOT travel with it, for the same
+        // reason they no longer travel in the error message.
+        reportOccurrence('scripture_fallback_serve', 'SCRIPTURE_FALLBACK_SERVED')
         return verses
       } catch {
         // The fallback missing a chapter is noise; the network failure is the

@@ -49,6 +49,33 @@ prioritized.
   ratio is better — so this needs a per-site measurement, not a blanket
   find-and-replace.
 
+- **Telemetry: user-facing opt-out toggle.** Diagnostic reports (see Done) ship
+  with no way for a user to turn them off. Deferred deliberately, not
+  overlooked, and the reasoning is written into `public/privacy.html`'s header
+  so it can't quietly become an oversight: the payload is content-free by
+  construction, aggregate, and diagnostic rather than behavioural, and the only
+  user today is the operator. That stops being a good enough answer the moment
+  Lantern has users who did not build it. **Revisit before any real user signs
+  up.** Implementation is small — a `berean.telemetry-optout` key checked in
+  `src/telemetry/client.ts`'s `send()`, plus a row in the profile/settings UI.
+
+- **Telemetry: the endpoint has not been exercised against a live database.**
+  Migrations 0003-0006 and `supabase/functions/hq-telemetry` are written but
+  have never run against real Postgres. Docker Desktop could not start in the
+  session that built them (WSL reported no installed distributions), so the
+  `supabase db reset` path that verified the 0002 analytics views was
+  unavailable, and applying migrations to the hosted project was not something
+  to do unilaterally. What IS verified: the whole client side in a real browser,
+  the build/strip pipeline, and the symbolicator's hand-written Base64-VLQ
+  decoder against a real esbuild-generated source map (123 tests). What is NOT:
+  the SQL parses and returns the contract's shape, the guard trigger actually
+  drops rows past its limits, RLS really is insert-only, and the three curl
+  checks the contract calls for — wrong bearer token rejected, `since` genuinely
+  filtering, and a deliberately-thrown error arriving with a code and NO passage
+  reference anywhere in the grepped response body. Do this before pointing HQ at
+  it. Nothing degrades in the meantime: the endpoint is inert standing alone and
+  nothing in the app reads it.
+
 - **Offline write outbox.** Queue failed mutations locally and replay them on
   reconnect. `docs/proposals/offline-write-outbox.md` researched this in full
   and recommended waiting: the narrower, actually-dangerous gap (in-progress
@@ -167,6 +194,76 @@ prioritized.
   experience so it never feels crippled.
 
 ## Done
+
+- **Telemetry pipeline — buffer, endpoint and symbolication (2026-07-21).**
+  The Lantern side of `D:/Projects/hq/TELEMETRY.md`, built end to end. HQ's
+  ingest is P2 and NOT built, so every piece is designed to be inert standing
+  alone: nothing in the app reads the endpoint, and nothing degrades if HQ never
+  calls it.
+  - **The buffer (`0004_telemetry_buffer.sql`)** with flood defence at the
+    project boundary, because the contract's correction matters here: pulling
+    rather than accepting pushes does NOT remove the flood risk. The client
+    still writes into this table with the same public anon key; pull moves the
+    untrusted writer one hop upstream. So five server-side defences, all
+    assuming a hostile writer holding a valid anon key — an RLS insert policy,
+    CHECK-enforced payload caps, a per-install burst limit, a hard daily
+    ceiling, and sampling above a soft per-hour threshold. The rate limiting
+    counts on `created_at` (server time), never `occurred_at` (client-claimed),
+    so a client cannot evade a limit by lying about when something happened.
+    **The table is write-only:** there is an INSERT policy and deliberately no
+    SELECT policy, so the public anon key can add rows and never read one back.
+    Two details worth not undoing: the insert policy constrains `occurred_at` to
+    a plausible window, because a far-future timestamp would push HQ's `since`
+    cursor past events that haven't happened and silently skip every real one
+    written before it caught up; and sampling stamps a `sample_weight` so
+    aggregates scale back up with `sum(sample_weight)` instead of quietly
+    reading low exactly when volume was high enough to matter.
+  - **The scalars (`0005_telemetry_scalars.sql`)** as one `security definer`
+    function returning the contract's `{key, value, unit, window}` shape, so the
+    edge function stays a thin transport with no SQL in it. Each of the seven is
+    annotated with the decision it changes — the contract's standard, since a
+    number that changes no decision generates opinions. `median_session_ms`
+    stays rejected. Scalars 6 and 7 are the two that Postgres cannot compute
+    from app data (a fallback serve and a draft recovery leave no trace in any
+    table), which is why they ride the events channel as non-error kinds — so
+    `kind` is genuinely not always `"error"`.
+  - **The endpoint (`supabase/functions/hq-telemetry`)**: bearer auth with a
+    constant-time compare, failing CLOSED when the token is unset (an unset
+    secret must never mean "no auth required"), `since` filtering events while
+    scalars are always the current snapshot, a ~7-day retention sweep that can
+    never fail a pull, and an explicit `truncated` flag so a capped response is
+    never mistaken for a complete one. It computes no fingerprint: that is HQ's
+    job, so the logic can improve without every project redeploying.
+  - **Symbolication (piece E)** resolves the contract's trap. Symbolicating in
+    the BROWSER would require publicly fetchable source maps — publishing the
+    app's source to the entire internet to avoid showing frames to HQ. Instead
+    maps go to a PRIVATE Supabase Storage bucket at build time
+    (`0006_sourcemap_bucket.sql`, no storage policies at all, so only
+    service_role reaches them) and the edge function maps frames on the way out.
+    HQ never sees a `.map`. The Base64-VLQ decoder is written out rather than
+    pulled from npm, to keep a whole class of "does this package work under the
+    edge runtime" failure out of a function whose job is to be boring; it is
+    tested against a real esbuild-generated map, not a hand-built fixture, since
+    a fixture would only prove the decoder agrees with its author.
+    `scripts/upload-sourcemaps.mjs` uploads and then **always** deletes maps
+    from `dist/`, including when the upload is skipped or fails — `dist/` is
+    what Cloudflare Pages serves, so the failure mode must be "symbolication
+    degrades to raw frames", never "the source is public". Its guard earned its
+    place immediately: it caught that vite-plugin-pwa emits its OWN
+    service-worker maps with `sourceMappingURL` comments regardless of
+    `build.sourcemap`, and refused to ship. Fixed at the source with
+    `workbox.sourcemap: false`.
+  - **`public/privacy.html` updated in the SAME commit as the collection code**,
+    per the contract's explicit checklist step. No new processor (the data goes
+    to Supabase, already the processor for notes and auth), so the "no
+    third-party advertising or behavioral tracking" claim is untouched. The
+    "does not record what you read" claim also survives, and this is the
+    load-bearing bit: it is now backed by construction rather than by promise,
+    because a passage reference cannot reach a report even if someone later
+    writes a new error message mentioning one. A user-facing opt-out is
+    deliberately deferred — see Deferred.
+  - **Not yet exercised against a live database** — see Deferred for exactly
+    what is and isn't verified, and the three curl checks still owed.
 
 - **Telemetry indexes — migration 0003 (2026-07-21).** Three additive indexes
   (`notes(created_at)`, `notes(created_by)`, `profiles(created_at)`) that four of

@@ -41,10 +41,34 @@
       the deployed system; the host can add behaviour the repo has no record of.
     - Governing law is deliberately left neutral (see terms.html).
 
+  AMENDED 2026-07-21 — DIAGNOSTIC REPORTS. The app now sends error reports and
+  two client-side counters to its own Supabase project, pulled from there by the
+  operator's HQ dashboard (contract: D:/Projects/hq/TELEMETRY.md). This section
+  landed in the SAME commit as the collection code, which is the rule, not a
+  courtesy — the contract makes disclosure an explicit checklist step precisely
+  so it cannot become an afterthought.
+    - No third party is added. The data goes to Supabase, which is already the
+      processor for notes and auth, so the processor list needed no new entry.
+      That is also why the "no third-party advertising or behavioral tracking"
+      claim survives intact: nothing here is an ad network or an analytics
+      vendor.
+    - The "does not record what you read" claim ALSO survives, and this is the
+      load-bearing part to re-check if the error code ever changes. Error
+      messages used to interpolate the passage ("helloao fetch failed: 404 Not
+      Found (JHN 3)"). They no longer can: a thrown error carries a fixed
+      machine code plus a separate detail held in a private field the reporting
+      path cannot reach, so the page's claim is backed by construction rather
+      than by a promise. See src/errors.ts.
+    - NOT offered yet: a user-facing opt-out toggle. Deferred deliberately
+      rather than overlooked (see docs/BACKLOG.md). Revisit before Lantern has
+      users beyond the operator.
+
   STANDING CONSTRAINTS — re-check these whenever the app changes:
     - The "no third-party advertising or behavioral tracking" claim stays true
       only while the app ships none. Adding ANY analytics means updating this
       page in the same change.
+    - If a new field is ever added to a diagnostic report, check it against the
+      "A report does not contain..." paragraph below before shipping it.
     - Adding a new service that touches user data (a new host, a new provider)
       means adding it to the "Who processes your data" list.
     - Bump the "Last updated" date whenever the substance changes.
@@ -86,6 +110,13 @@
     line-height: 1.2; margin: 0 0 8px;
   }
   .updated { color: var(--faint); font-size: 14px; margin: 0 0 40px; }
+  /* Only used for the example error code in "Diagnostic reports". Sized down a
+     touch because a monospace face runs visually larger than the body serif. */
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.88em; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 5px; word-break: break-word;
+  }
   h2 {
     font-family: var(--serif); font-weight: 700; font-size: 21px;
     margin: 40px 0 10px;
@@ -120,7 +151,7 @@
   <main>
     <div class="wrap">
       <h1>Privacy</h1>
-      <p class="updated">Last updated July 19, 2026</p>
+      <p class="updated">Last updated July 21, 2026</p>
 
       <p class="lead">
         Lantern is a personal Bible-study notes app. This page explains what it
@@ -139,6 +170,11 @@
         <li><strong>Basic technical data.</strong> Ordinary server and security
           logs (such as timestamps and error records) needed to run the service
           and keep accounts safe.</li>
+        <li><strong>Diagnostic reports when something breaks.</strong> If part of
+          the app fails, Lantern sends a short report so the problem can be
+          found and fixed. These reports carry no note text and no passage
+          references. See "Diagnostic reports" below for exactly what is in
+          one.</li>
       </ul>
 
       <h2>What it does not do</h2>
@@ -149,7 +185,9 @@
           it does not build a profile of you for marketing.</li>
         <li>It does not record what you read, what you write, or which passages
           you study. Traffic measurement (see Cloudflare, below) counts visits to
-          the site as a whole and cannot see inside your account.</li>
+          the site as a whole and cannot see inside your account, and the
+          diagnostic reports described below are built so that a passage
+          reference cannot travel in one.</li>
       </ul>
 
       <h2>Who processes your data</h2>
@@ -176,6 +214,47 @@
           Lantern falls back to a copy of the same public-domain text served from
           lanternword.com itself, so no additional third party is involved.</li>
       </ul>
+
+      <h2>Diagnostic reports</h2>
+      <p>
+        When something in Lantern fails, it sends a short report so the problem
+        can be found and fixed. It also counts two things that only the app
+        itself can see: how often it had to fall back to its own copy of the
+        scripture text because the usual source was unreachable, and how often it
+        recovered a note you were partway through writing. Those two counts are
+        what tell us whether the safety nets are working.
+      </p>
+      <p>A report contains:</p>
+      <ul>
+        <li>A fixed code naming which failure happened, such as
+          <code>BIBLE_FETCH_FAILED</code>. These are a short, fixed list. They
+          are never assembled from anything you typed or read.</li>
+        <li>The technical location in Lantern's own code where the failure
+          happened.</li>
+        <li>Which browser family you use, whether your window is narrow or wide,
+          and whether you were online.</li>
+        <li>Which version of Lantern you were running, so a new problem can be
+          traced to the release that introduced it.</li>
+        <li>A random identifier for your browser, so that one person hitting the
+          same bug ten times can be told apart from ten people hitting it once.
+          It is generated at random, it is not derived from your account or your
+          email, and clearing your browser storage resets it.</li>
+      </ul>
+      <p>
+        A report does not contain your notes, your journal entries, the passages
+        you were reading, your email address, or your account id. That is
+        enforced by how the app is built rather than by a filter that strips
+        things out afterwards: the part of Lantern that assembles a report has no
+        access to the descriptive text of an error at all, only to the fixed
+        code. A passage reference cannot reach a report even if someone later
+        writes a new error message that mentions one.
+      </p>
+      <p>
+        These reports go to Lantern's own database, and from there to the
+        operator's private project dashboard. They are kept for about seven days
+        on Lantern's side and are not shared with an advertising network or any
+        third-party analytics company.
+      </p>
 
       <h2>Where your notes are cached</h2>
       <p>

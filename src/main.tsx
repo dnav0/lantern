@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import Root from './Root'
+import { installGlobalErrorHandlers } from './telemetry/globalHandlers'
 // Scripture reading faces, self-hosted (see tokens.css --scripture-font per
 // [data-theme]; Georgia is still the fallback if a woff2 fails to load).
 // Only the weights actually referenced by tokens.css are pulled in.
@@ -14,6 +15,12 @@ import './assets/tokens.css'
 import './assets/main.css'
 import './assets/dark.css'
 import './assets/motion.css'
+
+// Error capture for what the React boundaries can't see (event handlers, timers,
+// unhandled rejections). Installed before render so a throw during the very
+// first mount is still caught. Content-free by construction — see src/errors.ts.
+// No-ops entirely when Supabase isn't configured.
+installGlobalErrorHandlers()
 
 // Service worker: precache the app shell, auto-update in the background with
 // no user prompt (registerType: 'autoUpdate' in vite.config.ts). Supabase API

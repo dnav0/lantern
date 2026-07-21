@@ -15,8 +15,28 @@ import {
   clearDraft,
   type DraftLine
 } from '../offline/draft'
+import { reportOccurrence } from '../telemetry/client'
 
 const DRAFT_SAVE_DEBOUNCE_MS = 600
+
+// A draft was actually recovered — i.e. the safety net caught something real.
+//
+// Scalar 7 (draft_recoveries_24h). Like the scripture fallback, this leaves no
+// trace in the database (a recovered draft is local until it saves, and once it
+// saves it is indistinguishable from a note typed normally), so it can only be
+// counted in the browser and has to ride the events channel.
+//
+// It matters because it is the only evidence that draft persistence is earning
+// its keep: a recovery count of zero over weeks says the narrower fix was
+// enough and the full offline write outbox stays deferred; a rising one says
+// people are genuinely losing work and it isn't.
+//
+// Module-scope, taking the setter, so call sites inside useCallback bodies do
+// not acquire a new dependency (React state setters are stable).
+function markDraftRestored(setDraftRestored: (restored: boolean) => void): void {
+  setDraftRestored(true)
+  reportOccurrence('draft_recovery', 'DRAFT_RECOVERED')
+}
 
 function toDraftLines(lines: LineData[]): DraftLine[] {
   return lines.map(l => ({ text: l.text, indent: l.indent, noteId: l.noteId }))
@@ -182,7 +202,7 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
           // Focus the last restored line, cursor at the end, so the user can
           // pick up typing immediately rather than having to click in first.
           setFocusedLineId(restored[restored.length - 1].id)
-          setDraftRestored(true)
+          markDraftRestored(setDraftRestored)
         }
       })
     }
@@ -244,7 +264,7 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
           const restored = fromDraftLines(draft.lines)
           setLines(restored)
           setFocusedLineId(restored[restored.length - 1].id)
-          setDraftRestored(true)
+          markDraftRestored(setDraftRestored)
         }
       }
     }
@@ -320,7 +340,7 @@ const StudyMode = forwardRef<StudyModeHandle, StudyModeProps>(function StudyMode
               const restored = fromDraftLines(draft.lines)
               setLines(restored)
               setFocusedLineId(restored[restored.length - 1].id)
-              setDraftRestored(true)
+              markDraftRestored(setDraftRestored)
             }
           })
         }

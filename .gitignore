@@ -16,6 +16,14 @@ node_modules/
 dist/
 dist-ssr/
 
+# Source maps are NEVER committed. They are generated at build time, uploaded to
+# a PRIVATE Supabase Storage bucket, and deleted from dist/ before deploy — see
+# scripts/upload-sourcemaps.mjs. dist/ is already ignored above; this is the
+# belt-and-braces line that catches a map written anywhere else. Publishing
+# these would expose the app's original source to the entire internet, which is
+# the exact disclosure the server-side symbolication design exists to avoid.
+*.map
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
