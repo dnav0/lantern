@@ -197,7 +197,7 @@
 }
 .ll-lamp {
   font-style: italic;
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .ll-lead {
   font-size: 18px;
@@ -940,7 +940,7 @@
   text-decoration: none;
 }
 .ll-foot-links a:hover {
-  color: var(--accent);
+  color: var(--accent-ink);
   text-decoration: underline;
 }
 
@@ -1065,7 +1065,7 @@
   text-underline-offset: 2px;
 }
 .ll-legal a:hover {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .ll-form {
