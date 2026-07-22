@@ -49,20 +49,6 @@ prioritized.
   ratio is better — so this needs a per-site measurement, not a blanket
   find-and-replace.
 
-- **Telemetry: hand HQ the bearer token, and re-verify after the first real
-  deploy.** The endpoint is live and verified (see Done), but two things are
-  outstanding. (1) `HQ_TELEMETRY_TOKEN` is set as a Supabase secret on the
-  `berean` project and the value was handed to Dennis in-session — it is not in
-  the repo, not in `.env`, and not recoverable from the dashboard, so if it is
-  lost, generate a new one and `supabase secrets set` it again. HQ's ingest is
-  P2 and not built, so nothing consumes it yet. (2) Source-map upload has only
-  been exercised with a hand-set `COMMIT_SHA`; on Cloudflare Pages the sha comes
-  from `CF_PAGES_COMMIT_SHA`, and `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`
-  must be added to the Pages build environment or every deploy silently skips
-  the upload and symbolication degrades to raw frames. **That skip is by design
-  and is not an error**, so it will not fail a build — check the build log for
-  `[sourcemaps] uploaded N/N` after the first deploy rather than assuming.
-
 - **Offline write outbox.** Queue failed mutations locally and replay them on
   reconnect. `docs/proposals/offline-write-outbox.md` researched this in full
   and recommended waiting: the narrower, actually-dangerous gap (in-progress
@@ -181,6 +167,39 @@ prioritized.
   experience so it never feels crippled.
 
 ## Done
+
+- **Telemetry loop proven end to end, producer ↔ HQ ingest (2026-07-21).**
+  Closes the "hand HQ the token / re-verify after first deploy" follow-up, which
+  is now fully done rather than outstanding. What was verified against the LIVE
+  system, not asserted:
+  - **Source-map upload on a real Cloudflare deploy.** `SUPABASE_SERVICE_ROLE_KEY`
+    is in the Pages build environment (`VITE_SUPABASE_URL` was already there and
+    the upload script falls back to it, so no second URL var was needed). The
+    deploy at commit `a4b38f5` uploaded all three maps to the private bucket
+    within ~40s; production served zero `sourceMappingURL` references and the
+    maps are unfetchable both anonymously and with the anon key. The build-log
+    line to confirm on future deploys is `[sourcemaps] uploaded N/N` — the skip
+    path is silent by design, so check it rather than assume.
+  - **HQ ingest, end to end.** HQ pulled the live endpoint and confirmed: auth
+    (wrong/missing → 401, bad `since` → 400, right token → 200), all 7 scalars
+    in the contract shape ingested into `project_metrics`, `since` treated as a
+    cursor with scalars always a snapshot, and — the last unexercised path — a
+    real error event fingerprinted, stored in `project_events`, and raised as
+    exactly ONE deduped inbox card. The events path was loaded by posting three
+    identical error rows through the PUBLIC anon write path (same path a browser
+    uses, not a service_role hand-seed) with a stack pointing at a real position
+    in the live bundle; the endpoint symbolicated each
+    `index-Du28reZL.js:74:59833` → `src/bible/helloao.ts:144:9` on the way out,
+    and the three shared one fingerprint so HQ's dedup had a genuine test. All
+    test rows deleted afterward; buffer back to zero.
+  - **`HQ_TELEMETRY_TOKEN`** remains a Supabase secret on the `berean` project,
+    handed to Dennis in-session. Write-only and unrecoverable from the dashboard
+    — if lost, regenerate and `supabase secrets set` it again, then re-issue to
+    HQ. Nothing in the repo or `.env` holds it.
+  **Telemetry is now live and collecting in production** (client errors,
+  scripture-fallback serves, draft recoveries), disclosed on the privacy page,
+  default-on with a working opt-out, bounded and self-pruning (0007 pg_cron,
+  daily 03:17 UTC).
 
 - **Interpolated-throw guardrail widened to all leak shapes (2026-07-21).** The
   guardrail added just above (`errors.guardrail.test.ts`) only caught
