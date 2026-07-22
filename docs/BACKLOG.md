@@ -48,6 +48,19 @@ prioritized.
   `--surface` (white in scholarly/modern) rather than the canvas, where the
   ratio is better — so this needs a per-site measurement, not a blanket
   find-and-replace.
+- **Telemetry: hand HQ the bearer token, and re-verify after the first real
+  deploy.** The endpoint is live and verified (see Done), but two things are
+  outstanding. (1) `HQ_TELEMETRY_TOKEN` is set as a Supabase secret on the
+  `berean` project and the value was handed to Dennis in-session — it is not in
+  the repo, not in `.env`, and not recoverable from the dashboard, so if it is
+  lost, generate a new one and `supabase secrets set` it again. HQ's ingest is
+  P2 and not built, so nothing consumes it yet. (2) Source-map upload has only
+  been exercised with a hand-set `COMMIT_SHA`; on Cloudflare Pages the sha comes
+  from `CF_PAGES_COMMIT_SHA`, and `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`
+  must be added to the Pages build environment or every deploy silently skips
+  the upload and symbolication degrades to raw frames. **That skip is by design
+  and is not an error**, so it will not fail a build — check the build log for
+  `[sourcemaps] uploaded N/N` after the first deploy rather than assuming.
 
 - **Offline write outbox.** Queue failed mutations locally and replay them on
   reconnect. `docs/proposals/offline-write-outbox.md` researched this in full
@@ -210,6 +223,63 @@ prioritized.
   scripture-fallback serves, draft recoveries), disclosed on the privacy page,
   default-on with a working opt-out, bounded and self-pruning (0007 pg_cron,
   daily 03:17 UTC).
+- **Accent-as-text contrast sweep applied (2026-07-22).** Closes the item
+  deferred above. Every `color: var(--accent)` site in `main.css` and
+  `landing.css` — links, buttons, active nav/tab states — switched to
+  `color: var(--accent-ink)`. **The real site count was 64 `color:` +
+  `*-color:` occurrences of `var(--accent)`, not the ~19 the entry
+  estimated**; of those, exactly **47** are the literal `color:` property
+  (44 in `main.css`, 3 in `landing.css`) — the rest are `background`,
+  `border-color`, `border-left-color` and `accent-color`, which are
+  non-text and correctly left untouched. All 47 were switched uniformly, on
+  purpose: some already passed individually (e.g. the `modern` theme's
+  topnav tab sits on a background where bare `--accent` already cleared
+  4.5:1), but switching only the failing ones would leave two different
+  accent-text darknesses depending on background, which reads worse than a
+  single consistent accent-text colour.
+  Measured live via computed styles in a real browser (Playwright against
+  the in-memory stub, `.env` untouched since none was present), before/after,
+  across all 4 themes × light/dark × desktop/mobile, walking each element's
+  ancestor chain and alpha-compositing backgrounds rather than reading the
+  nearest `background-color` alone (a 13%-tint pill over the canvas is not
+  the tint colour alone):
+
+  | site | theme | before | after |
+  |---|---|---|---|
+  | topnav/bottomnav active tab | berean | 3.89 | 4.88 |
+  | topnav/bottomnav active tab | scholarly | 4.32 | 4.98 |
+  | topnav/bottomnav active tab | paper | 3.12 | 4.94 |
+  | topnav/bottomnav active tab | modern | 4.74 (already passing) | 4.96 |
+  | `.bible-book-count` pill text | berean | 3.72 | 4.67 |
+  | `.bible-book-count` pill text | scholarly | 4.10 | 4.71 |
+  | `.bible-book-count` pill text | paper | 2.93 | 4.63 |
+  | `.bible-book-count` pill text | modern | 4.45 | 4.66 |
+  | `.btn-study-chapter` | berean | 3.91 | 4.90 |
+  | `.btn-study-chapter` | scholarly | 4.30 | 4.96 |
+  | `.btn-study-chapter` | paper | 3.12 | 4.94 |
+  | `.btn-study-chapter` | modern | 4.69 | 4.92 |
+  | `.book-detail-back:hover` | berean | 4.25 | 5.33 |
+  | `.book-detail-back:hover` | scholarly | 4.64 | 5.34 |
+  | `.book-detail-back:hover` | paper | 3.36 | 5.31 |
+  | `.book-detail-back:hover` | modern | 5.09 | 5.33 |
+
+  Every light-theme site measured now clears 4.5:1 (4.63–5.34); the two
+  outliers below 4.5 in the raw sweep were `topnav`/`modern` and
+  `.bible-book-count`/`modern`, both already-passing before the switch and
+  unaffected in direction. Dark themes confirmed unchanged **by
+  construction, not just by spot check**: `--accent-ink` aliases straight to
+  `--accent` in all 4 dark blocks (`tokens.css`, out of scope here and
+  untouched), and computed-style dark colours were verified byte-identical
+  to each theme's `--accent` hex (e.g. berean dark resolved to
+  `rgb(164,156,240)` = `#a49cf0`, its own `--accent`). One pre-existing,
+  unrelated quirk found and left alone: `body.dark .book-detail-back` sets
+  `color: var(--text-faint)` and wins over `.book-detail-back:hover`'s
+  `--accent-ink` on specificity order in dark mode — predates this change,
+  never used `--accent`, out of scope.
+  `npm test` (124/124), `npm run build`, and `prettier --list-different`
+  all clean. No layout or functional change — screenshots (light/dark ×
+  desktop/mobile, library + book-detail) attached to the PR for the
+  ship-gate look-at-it review this item was deferred for.
 
 - **Interpolated-throw guardrail widened to all leak shapes (2026-07-21).** The
   guardrail added just above (`errors.guardrail.test.ts`) only caught
