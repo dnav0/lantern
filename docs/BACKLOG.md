@@ -75,11 +75,39 @@ prioritized.
   "Trigger to revisit" section).
 
 - **KJV + translation switcher.** Second `BibleProvider` implementation plus a UI
-  to pick translation. The provider interface already exists for this; note
-  versification papercuts across translations (verse numbers mostly line up).
+  to pick translation. `docs/proposals/translations-esv-niv.md` (2026-07-22)
+  researched the licensing for this in full: KJV is public domain in the US,
+  identical legal shape to BSB, and is the recommended first translation to
+  add — no blocker, ship whenever wanted. The proposal also covers
+  versification papercuts (verse numbers mostly line up, with named
+  exceptions) and the switcher UX (global preference, `berean-theme`-style
+  localStorage key, default stays BSB).
 
-- **User-key ESV provider.** `BibleProvider` implementation that takes a user's
-  own ESV API key (licensing requires per-user keys). Settings UI to store it.
+- **ESV provider (single application key, not per-user).** `BibleProvider`
+  implementation using Crossway's ESV API. `docs/proposals/translations-esv-niv.md`
+  (2026-07-22) resolved this item's own previous premise as wrong: the ESV API
+  authenticates ONE application-level key (`api.esv.org/account/`), not a key
+  per end user — there is no per-user settings UI to build. The proposal
+  covers what the free non-commercial tier actually allows (500-verse/half-book
+  cache and per-query caps, 5,000 queries/day shared across the whole app,
+  required attribution) and what `BibleProvider` needs to change (translation
+  param on the seam, a quota-aware evicting cache instead of cache-forever, a
+  server-side key proxy, no self-hosted offline fallback — copyrighted text
+  can't ship as a static bundle). Recommended as the second translation to add,
+  after KJV, when a real second translation is wanted.
+
+- **NIV provider — researched, not recommended yet.** `docs/proposals/translations-esv-niv.md`
+  (2026-07-22) found a free non-commercial path exists (API.Bible / American
+  Bible Society) but NIV is the worst fit of the three translations it
+  examined: commercial use is blocked outright with no published unlock
+  price, Biblica's approval process is heavier and more subjective than
+  Crossway's, it's genuinely unclear whether a full reading app is even the
+  "quotation" use case Biblica's blanket permission covers, and no local-
+  storage/caching cap distinct from the per-query limit was confirmed (so the
+  cache design can't be fully scoped yet). Recommendation: don't build until
+  a real user asks for NIV specifically and Dennis is willing to get Biblica's
+  direct written confirmation that an app is a licensable use — see the
+  proposal's "Trigger to revisit."
 
 - **Groups / shared workspaces.** `docs/proposals/groups-shared-workspaces.md`
   (2026-07-22) researched this in full and found the "no migration" framing
