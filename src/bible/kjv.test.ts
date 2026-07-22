@@ -24,9 +24,7 @@ describe('KjvBibleProvider', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () =>
-        fakeResponse([
-          { type: 'verse', number: 1, content: ['Hello, ', { text: 'world' }, '.'] }
-        ])
+        fakeResponse([{ type: 'verse', number: 1, content: ['Hello, ', { text: 'world' }, '.'] }])
       )
     )
     const p = new KjvBibleProvider()
@@ -41,9 +39,7 @@ describe('KjvBibleProvider', () => {
           {
             type: 'verse',
             number: 16,
-            content: [
-              { text: '¶ For God so loved the world', wordsOfJesus: false }
-            ]
+            content: [{ text: '¶ For God so loved the world', wordsOfJesus: false }]
           }
         ])
       )
