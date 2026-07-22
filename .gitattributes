@@ -1,0 +1,10 @@
+# Convention / ledger files: append-only shared docs that many parallel agents
+# update (HQ's convention tells every agent to update docs/BACKLOG.md). The
+# `union` merge driver auto-resolves append collisions by keeping BOTH sides, so
+# two branches that each add a backlog entry never conflict — while real code
+# conflicts still surface normally. HQ's own merge (clone → git merge → push)
+# honours this; the GitHub merge API does not.
+#
+# Only ever apply `union` to genuinely append-only ledgers — NEVER to files whose
+# existing lines get edited (union would keep both versions of an edited line).
+docs/BACKLOG.md merge=union
