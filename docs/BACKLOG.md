@@ -68,10 +68,20 @@ prioritized.
 - **User-key ESV provider.** `BibleProvider` implementation that takes a user's
   own ESV API key (licensing requires per-user keys). Settings UI to store it.
 
-- **Groups / shared workspaces.** Create `kind = 'group'` workspaces and add
-  members. The schema (`workspace_id`, `workspace_members`) and the single RLS
-  pattern are already in place — this is new rows plus invite/role UI, no
-  migration.
+- **Groups / shared workspaces.** `docs/proposals/groups-shared-workspaces.md`
+  (2026-07-22) researched this in full and found the "no migration" framing
+  above was only half true: the `workspace_id`/`workspace_members` tables and
+  the passages/sessions/notes RLS pattern really are already in place, but the
+  member-list visibility policy is deliberately own-rows-only (recursion
+  avoidance), `role` is unenforced by any CRUD policy, `workspace_members` has
+  no INSERT/UPDATE/DELETE policy at all (membership writes need new
+  `security definer` RPCs, same pattern as the signup trigger), and
+  `SupabaseBereanApi` resolves one hard-coded personal workspace at
+  construction with no multi-workspace concept anywhere in the client. The
+  proposal recommends a staged MVP (member-visibility fix + invite/accept →
+  conflict-safe `updateNote` → role enforcement → leave/remove + privacy/terms
+  updates) rather than one migration, and to wait for an actual expressed want
+  for shared study before starting. Revisit per the proposal's own trigger.
 
 - **AI features over notes.** Summaries, thematic linking, question-answering
   across a user's own notes and passages. Needs an embedding/index strategy and a
